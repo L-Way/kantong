@@ -935,7 +935,9 @@ html.lk-on #lockScreen{display:flex}
 /* ================= PWA: tampil layar penuh ================= */
 .topbar-in{padding-top:calc(12px + env(safe-area-inset-top));padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}
 body{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
-@media (display-mode:standalone){html,body{overscroll-behavior-y:none}}
+/* PWA di HP: matikan tarik-untuk-muat-ulang. HANYA untuk layar sentuh: di desktop (>=900px) <body> jadi wadah gulir sendiri
+   (overflow-x:hidden), dan overscroll-behavior:none di sana memutus gulir roda mouse ke halaman sehingga isi tidak bisa digulir. */
+@media (display-mode:standalone) and (pointer:coarse){html,body{overscroll-behavior-y:none}}
 </style>
 <script>/* kunci aplikasi: tutup tampilan sebelum apa pun sempat tergambar */
 try{var c=JSON.parse(localStorage.getItem('kantong.lock')||'null');if(c&&c.on&&c.hash)document.documentElement.classList.add('lk-on');}catch(e){}
@@ -1946,7 +1948,7 @@ function wirePwaInstall(){
 }
 $('#installBtn').addEventListener('click',installApp);
 
-const APP_VERSION='2026.09.20-6'; /* samakan dengan VERSION di sw.js */
+const APP_VERSION='2026.09.20-7'; /* samakan dengan VERSION di sw.js */
 let swReg=null,pendingReload=false;
 function applyUpdate(){ /* versi baru sudah aktif: muat ulang, tapi jangan saat pengguna sedang mengisi form */
   if(sheetOpen||document.querySelector('.dlg')){pendingReload=true;toast('Versi baru siap, dimuat setelah kamu selesai');return;}
@@ -3618,6 +3620,23 @@ addEventListener('keydown',e=>{if(e.key==='Escape'){if(closeLightbox())return;if
   }
   [gripEl,headEl,bodyEl].forEach(el=>{if(el)el.addEventListener('pointerdown',onDown);});
 })();
+/* pengaman: kalau roda mouse diputar dan browser TIDAK menggulir apa pun (mis. karena aturan overscroll/hit-test di jendela PWA),
+   gulirkan halaman sendiri. Kalau gulir bawaan bekerja, bagian ini tidak melakukan apa-apa. */
+addEventListener('wheel',e=>{
+  if(e.ctrlKey||e.shiftKey||e.defaultPrevented||!e.deltaY)return;
+  if(sheetOpen||document.querySelector('.dlg')||document.documentElement.classList.contains('lk-on'))return;
+  for(let n=e.target;n&&n!==document.body&&n!==document.documentElement;n=n.parentElement){ /* wadah gulir lain yang masih bisa bergerak? biarkan */
+    if(n.nodeType!==1)continue;
+    if(/(auto|scroll)/.test(getComputedStyle(n).overflowY)&&n.scrollHeight>n.clientHeight+1){
+      const atEnd=e.deltaY>0?n.scrollTop+n.clientHeight>=n.scrollHeight-1:n.scrollTop<=0;
+      if(!atEnd)return;
+    }
+  }
+  const el=document.scrollingElement||document.documentElement,y0=el.scrollTop;
+  if(e.deltaY>0?y0+innerHeight>=el.scrollHeight-1:y0<=0)return; /* sudah di ujung */
+  const dy=e.deltaY*(e.deltaMode===1?16:(e.deltaMode===2?innerHeight:1));
+  setTimeout(()=>{if(Math.abs(el.scrollTop-y0)<0.5&&!sheetOpen)el.scrollTop=y0+dy;},90);
+},{passive:true});
 /* roda mouse: selama pop-up/dialog terbuka, beranda terkunci, jadi gulir dari MANA PUN posisi kursornya
    (area gelap, judul, tepi layar) diteruskan ke isi pop-up. Di dalam isi pop-up sendiri biarkan gulir bawaan browser. */
 addEventListener('wheel',e=>{
