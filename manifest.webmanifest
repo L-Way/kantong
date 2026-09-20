@@ -1,0 +1,28 @@
+{
+  "id": "./",
+  "name": "Kantong, Catatan Keuangan",
+  "short_name": "Kantong",
+  "description": "Catat pemasukan, pengeluaran, utang, dan jasa transfer. Tersimpan di perangkatmu, bisa dipakai tanpa internet, dan bisa disinkronkan lewat akun.",
+  "lang": "id",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#F2F0F8",
+  "theme_color": "#5B3DF5",
+  "categories": ["finance", "productivity"],
+  "prefer_related_applications": false,
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Catat pengeluaran", "short_name": "Pengeluaran", "description": "Langsung buka form pengeluaran", "url": "./?a=expense", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "Catat pemasukan", "short_name": "Pemasukan", "description": "Langsung buka form pemasukan", "url": "./?a=income", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "Jasa transfer", "short_name": "Jasa transfer", "description": "Catat transfer untuk orang lain", "url": "./?a=svc", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "Catat cepat", "short_name": "Cepat", "description": "Cukup nominal, waktu terekam otomatis", "url": "./?a=quick", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" }] }
+  ]
+}

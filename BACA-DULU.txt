@@ -1,0 +1,104 @@
+KANTONG (PWA) - CARA PASANG KE LAYAR UTAMA
+==========================================
+
+Isi folder ini:
+  index.html            aplikasinya
+  manifest.webmanifest  data aplikasi (nama, ikon, pintasan)
+  sw.js                 service worker (supaya bisa dibuka tanpa internet)
+  icons/                ikon aplikasi
+  _headers              pengaturan cache untuk Netlify / Cloudflare Pages
+  config.js             alamat & kunci Supabase (isi sekali, lihat bagian SUPABASE)
+  sync.js               logika penggabungan data antar perangkat
+  supabase-setup.sql    perintah SQL untuk menyiapkan database (jalankan sekali)
+
+PENTING
+-------
+"Tambah ke Layar Utama" sebagai aplikasi sungguhan hanya berfungsi kalau file ini
+dibuka lewat alamat HTTPS (situs). Kalau hanya dibuka dari file (file://) atau
+di dalam tampilan pratinjau, browser menolak service worker dan pemasangan.
+Jadi folder ini perlu ditaruh di hosting statis. Semua pilihan di bawah gratis.
+
+PILIHAN 1 - Netlify Drop (paling gampang, tanpa akun untuk mencoba)
+  1. Buka https://app.netlify.com/drop
+  2. Seret seluruh folder "kantong-pwa" ke halaman itu.
+  3. Tunggu sebentar, kamu dapat alamat seperti https://nama-acak.netlify.app
+  4. Buka alamat itu di HP.
+
+PILIHAN 2 - Cloudflare Pages
+  1. Masuk dash.cloudflare.com > Workers & Pages > Create > Pages > Upload assets.
+  2. Beri nama proyek, unggah folder "kantong-pwa", lalu Deploy.
+
+PILIHAN 3 - GitHub Pages
+  1. Buat repositori baru, unggah semua isi folder ini (index.html harus di root).
+  2. Settings > Pages > Deploy from a branch > main / (root).
+  3. Alamatnya https://namamu.github.io/nama-repo/
+
+CARA MEMASANG DI HP
+-------------------
+Android (Chrome / Edge):
+  - Buka alamatnya. Ketuk ikon unduh di pojok kanan atas Kantong,
+    atau menu titik tiga > "Instal aplikasi" / "Tambahkan ke layar utama".
+  - Tekan lama ikon Kantong di layar utama untuk pintasan:
+    Catat pengeluaran, Catat pemasukan, Jasa transfer, Catat cepat.
+
+iPhone / iPad (Safari):
+  - Buka alamatnya di Safari, ketuk ikon unduh di pojok kanan atas Kantong
+    untuk melihat panduan, atau: ikon Bagikan > "Tambah ke Layar Utama" > Tambah.
+  - Setelah terpasang, buka dari ikon barunya (bukan dari Safari).
+
+Komputer (Chrome / Edge):
+  - Ikon pasang muncul di kolom alamat dan di dalam Kantong.
+
+SUPABASE (SINKRON AKUN) - LANGKAH SEKALI SAJA
+---------------------------------------------
+Tanpa langkah ini Kantong tetap jalan, tapi datanya hanya di satu perangkat.
+  1. Buat proyek di https://supabase.com (gratis) atau pakai proyek yang sudah ada.
+  2. Dashboard > SQL Editor > New query > tempel seluruh isi supabase-setup.sql > Run.
+     (Membuat tabel kantong_data + aturan keamanan RLS: tiap orang hanya melihat datanya sendiri.)
+  3. Dashboard > Project Settings > API: salin "Project URL" dan kunci "publishable"
+     (sb_publishable_...) atau "anon". Tempel ke config.js. Jangan pakai kunci secret/service_role.
+  4. Dashboard > Authentication > URL Configuration: isi "Site URL" dengan alamat situs Kantong
+     (mis. https://nama.netlify.app/) dan tambahkan alamat yang sama ke "Redirect URLs".
+  5. Supaya daftar akun terasa mulus: Authentication > Sign In / Providers > Email.
+     - Kalau "Confirm email" DIMATIKAN, orang langsung masuk setelah daftar (paling enak di HP).
+     - Kalau DINYALAKAN, orang harus mengetuk tautan di email dulu, lalu kembali ke Kantong dan masuk.
+       (Di iPhone tautan itu terbuka di Safari, bukan di aplikasi yang sudah dipasang; itu normal.)
+  6. Unggah ulang folder (naikkan VERSION di sw.js). Buka Kantong: ketuk tulisan status di bagian
+     bawah halaman atau Pengaturan > Akun & sinkron > Daftar / Masuk.
+
+CARA KERJA SINKRON
+------------------
+- Data SELALU disimpan di perangkat dulu, jadi aplikasi cepat dan tetap bisa dipakai tanpa internet.
+  Setelah masuk akun, salinannya dikirim ke Supabase dan ditarik ke perangkat lain otomatis
+  (langsung lewat Realtime, ditambah pengecekan tiap menit dan saat aplikasi dibuka kembali).
+- Kalau dua perangkat sama-sama mencatat (mis. satu offline), catatan keduanya DIGABUNG per catatan,
+  bukan saling menimpa. Kalau catatan yang sama diubah di dua tempat, versi perangkat yang sedang
+  dipakai yang dipakai.
+- Pertama kali masuk di perangkat yang sudah berisi catatan, ditawarkan: Gabungkan / Pakai data akun /
+  Pakai data perangkat ini. Ada tombol unduh cadangan dulu.
+- Keluar dari akun hanya keluar di perangkat itu. Pilih apakah data perangkat ikut dihapus.
+- Foto struk tetap hanya di perangkat tempat foto diambil (tidak ikut sinkron).
+- Kunci PIN tetap per perangkat dan tidak ikut sinkron.
+- Kunci "publishable/anon" di config.js memang publik; keamanan data dijaga aturan RLS di database.
+- Menghapus akun sepenuhnya (bukan hanya data) dilakukan dari dashboard Supabase > Authentication > Users.
+
+DATA
+----
+- Catatan tersimpan di browser perangkat itu sendiri, dan (kalau sudah masuk akun) disalin ke Supabase.
+- Data di versi lama (mis. yang dibuka lewat Claude) TIDAK otomatis pindah.
+  Untuk memindahkan: di versi lama buka Pengaturan > Cadangan JSON (unduh),
+  lalu di versi PWA buka Pengaturan > Pulihkan dari cadangan > pilih file itu.
+- Tetap rutin unduh Cadangan JSON, apalagi sebelum menghapus data browser.
+- Di iPhone, aplikasi yang sudah ditaruh di layar utama lebih aman dari
+  pembersihan data otomatis dibanding yang hanya dibuka di Safari.
+
+MEMPERBARUI APLIKASI
+--------------------
+Ganti index.html (dan berkas lain kalau perlu, termasuk config.js / sync.js), lalu ubah angka VERSION di baris
+paling atas sw.js (mis. 2026.09.20-1 menjadi 2026.10.01-1) sebelum diunggah ulang.
+Pengguna akan diberi tahu "Versi baru siap" dan cukup membuka ulang aplikasinya.
+
+UJI DI KOMPUTER SENDIRI
+-----------------------
+Buka terminal di folder ini lalu jalankan:  python3 -m http.server 8080
+Kemudian buka http://localhost:8080 di Chrome (localhost dianggap aman).
