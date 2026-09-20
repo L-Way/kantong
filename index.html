@@ -3603,6 +3603,20 @@ addEventListener('keydown',e=>{if(e.key==='Escape'){if(closeLightbox())return;if
   }
   [gripEl,headEl,bodyEl].forEach(el=>{if(el)el.addEventListener('pointerdown',onDown);});
 })();
+/* roda mouse: selama pop-up/dialog terbuka, beranda terkunci, jadi gulir dari MANA PUN posisi kursornya
+   (area gelap, judul, tepi layar) diteruskan ke isi pop-up. Di dalam isi pop-up sendiri biarkan gulir bawaan browser. */
+addEventListener('wheel',e=>{
+  if(e.ctrlKey||document.documentElement.classList.contains('lk-on'))return; /* ctrl+wheel = zoom browser */
+  const dlg=$('.dlg');
+  const box=dlg?$('.dlg-card',dlg):(sheetOpen?$('#sheetBody'):null);
+  if(!box)return;
+  const t=e.target;
+  if(box.contains(t))return;                          /* kursor di atas isi: gulir bawaan */
+  if(t.closest&&t.closest('#toast'))return;
+  const line=e.deltaMode===1?16:(e.deltaMode===2?box.clientHeight:1);
+  box.scrollTop+=e.deltaY*line;
+  if(e.cancelable)e.preventDefault();
+},{passive:false});
 function exprSanitize(v){
   v=(v||'').toString().replace(/[×xX]/g,'*').replace(/[÷]/g,'/');
   v=v.replace(/[^0-9+\-*/]/g,'');
