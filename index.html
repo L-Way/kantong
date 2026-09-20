@@ -3560,6 +3560,7 @@ addEventListener('keydown',e=>{if(e.key==='Escape'){if(closeLightbox())return;if
   function reset(){sheetEl.style.transition='';sheetEl.style.transform='';}
   function onDown(e){
     if(!sheetOpen||e.target.closest('#closeSheet'))return;
+    if(matchMedia('(min-width:900px)').matches)return; /* tampilan desktop (sama dengan media query CSS-nya): sheet berupa dialog di tengah layar, tidak ada gestur geser */
     if(e.pointerType==='mouse'&&e.button!==0)return;
     fromBody=(e.currentTarget===bodyEl);
     if(fromBody&&bodyEl.scrollTop>0)return;
