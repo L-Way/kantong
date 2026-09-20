@@ -95,8 +95,12 @@ DATA
 MEMPERBARUI APLIKASI
 --------------------
 Ganti index.html (dan berkas lain kalau perlu, termasuk config.js / sync.js), lalu ubah angka VERSION di baris
-paling atas sw.js (mis. 2026.09.20-1 menjadi 2026.10.01-1) sebelum diunggah ulang.
-Pengguna akan diberi tahu "Versi baru siap" dan cukup membuka ulang aplikasinya.
+paling atas sw.js (dan APP_VERSION di index.html, samakan angkanya) sebelum diunggah ulang.
+Aplikasi yang sudah terpasang memeriksa versi baru tiap kali dibuka kembali dan tiap 30 menit. Kalau ada,
+aplikasi memuat ulang sendiri (ditunda dulu kalau kamu sedang mengisi form). Pengaturan > "Periksa pembaruan"
+memeriksa manual, dan nomor versi yang sedang berjalan tampil di sana.
+Kalau di PWA terasa masih versi lama: buka Pengaturan, lihat nomor versinya, ketuk "Periksa pembaruan".
+Untuk versi lama yang belum punya fitur ini, tutup jendela PWA lalu buka lagi dua kali, atau tekan Ctrl+Shift+R.
 
 UJI DI KOMPUTER SENDIRI
 -----------------------

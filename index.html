@@ -1946,15 +1946,29 @@ function wirePwaInstall(){
 }
 $('#installBtn').addEventListener('click',installApp);
 
+const APP_VERSION='2026.09.20-6'; /* samakan dengan VERSION di sw.js */
+let swReg=null,pendingReload=false;
+function applyUpdate(){ /* versi baru sudah aktif: muat ulang, tapi jangan saat pengguna sedang mengisi form */
+  if(sheetOpen||document.querySelector('.dlg')){pendingReload=true;toast('Versi baru siap, dimuat setelah kamu selesai');return;}
+  pendingReload=false;toast('Memasang versi baru…');setTimeout(()=>location.reload(),900);
+}
+function checkUpdate(manual){
+  if(!swReg){if(manual)toast('Pembaruan hanya berlaku di aplikasi yang sudah dibuka lewat alamat web');return;}
+  swReg.update().then(()=>{if(manual)toast(swReg.installing||swReg.waiting?'Mengunduh versi baru…':'Sudah versi terbaru ('+APP_VERSION+')');}).catch(()=>{if(manual)toast('Belum bisa memeriksa, cek koneksi');});
+}
 /* service worker: hanya di http(s). Di file:// atau sandbox, browser memang tidak mengizinkannya. */
 (function(){
   if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol))return;
   let hadController=!!navigator.serviceWorker.controller;
   navigator.serviceWorker.addEventListener('controllerchange',()=>{
-    if(hadController)toast('Versi baru siap. Buka ulang Kantong untuk memakainya');
+    if(hadController)applyUpdate();
     hadController=true;
   });
-  addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{scope:'./'}).catch(()=>{});});
+  addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{scope:'./'}).then(r=>{swReg=r;}).catch(()=>{});});
+  /* PWA yang dibiarkan terbuka berhari-hari tidak pernah memuat ulang sendiri, jadi cek versi baru tiap kali dibuka kembali & berkala */
+  let lastUpd=0;
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&Date.now()-lastUpd>10*60000){lastUpd=Date.now();checkUpdate(false);}});
+  setInterval(()=>checkUpdate(false),30*60000);
   /* minta penyimpanan permanen supaya data tidak dibersihkan browser (hanya saat sudah terpasang, agar tidak memunculkan izin yang mengejutkan) */
   if(isStandaloneApp()&&navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
 })();
@@ -3552,6 +3566,7 @@ function closeSheet(){
   sheetOpen=false;document.body.style.overflow='';document.documentElement.classList.remove('sheet-lock');
   setTimeout(checkRemind,400);
   setTimeout(cloudResume,700);
+  setTimeout(()=>{if(pendingReload&&!sheetOpen&&!document.querySelector('.dlg'))applyUpdate();},1000);
 }
 $('#scrim').addEventListener('click',closeSheet);
 $('#closeSheet').addEventListener('click',closeSheet);
@@ -4153,8 +4168,11 @@ $('#setBtn').addEventListener('click',()=>{
       '<button class="btn ghost sm" id="sImpPaste">Tempel teks</button></div>'+
       '<input type="file" id="sImpFile" accept="application/json,.json" style="display:none"></div>'+
     '<div class="field" style="margin-top:20px"><label style="color:var(--rose)">Zona hati-hati</label>'+
-      '<button class="btn danger" id="wipe">Hapus semua catatan</button></div>',
+      '<button class="btn danger" id="wipe">Hapus semua catatan</button></div>'+
+    '<div class="field" style="margin-top:20px;text-align:center"><p class="qhint" style="margin:0 0 8px">Kantong versi '+APP_VERSION+'</p>'+
+      '<button type="button" class="btn ghost sm" id="chkUpd">Periksa pembaruan</button></div>',
     ()=>{
+      $('#chkUpd').addEventListener('click',()=>checkUpdate(true));
       $('#stAcct').addEventListener('click',openAccount);
       lkWireSettings();
       wireRemindSettings();

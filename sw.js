@@ -6,7 +6,7 @@
    - Pustaka Supabase (cdn.jsdelivr.net): disimpan juga, supaya sinkron akun tetap bisa dimulai saat offline.
    Data keuanganmu TIDAK lewat sini: permintaan ke Supabase (*.supabase.co) sengaja tidak disentuh service worker.
    Tiap kali mengganti index.html/ikon, naikkan VERSION supaya pengguna diberi tahu ada versi baru. */
-const VERSION = '2026.09.20-5';
+const VERSION = '2026.09.20-6';
 const SHELL = 'kantong-shell-' + VERSION;
 const FONTS = 'kantong-fonts-v1';
 const LIB = 'kantong-lib-v1';
@@ -17,7 +17,17 @@ const PRECACHE = [
 ];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(SHELL).then(c => c.addAll(PRECACHE)).then(() => self.skipWaiting()));
+  /* ambil semua berkas langsung dari server (cache:'reload'), bukan dari cache HTTP browser/GitHub Pages
+     yang bisa menyimpan salinan lama beberapa menit; jadi versi baru selalu utuh dan kompak */
+  e.waitUntil((async () => {
+    const c = await caches.open(SHELL);
+    await Promise.all(PRECACHE.map(async u => {
+      const res = await fetch(new Request(u, { cache: 'reload' }));
+      if (!res.ok) throw new Error(u + ' ' + res.status);
+      await c.put(u, res);
+    }));
+    await self.skipWaiting();
+  })());
 });
 
 self.addEventListener('activate', e => {
@@ -49,7 +59,7 @@ function withTimeout(p, ms) {
 async function navigate(req) {
   const cache = await caches.open(SHELL);
   try {
-    const res = await withTimeout(fetch(req), 4000);
+    const res = await withTimeout(fetch(req.url, { cache: 'no-cache' }), 4000); /* selalu tanya server dulu (murah, pakai ETag) */
     if (res && res.ok) cache.put('./index.html', res.clone());
     return res;
   } catch (err) {
@@ -60,7 +70,7 @@ async function navigate(req) {
 async function sameOrigin(req) {
   const cache = await caches.open(SHELL);
   const cached = await cache.match(req, { ignoreSearch: true });
-  const net = fetch(req).then(res => { if (res && res.ok) cache.put(req, res.clone()); return res; }).catch(() => null);
+  const net = fetch(req, { cache: 'no-cache' }).then(res => { if (res && res.ok) cache.put(req, res.clone()); return res; }).catch(() => null);
   return cached || (await net) || Response.error();
 }
 
