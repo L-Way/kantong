@@ -1958,18 +1958,30 @@ async function getSwVersion(){
     return k?k.slice('kantong-shell-'.length):null;
   }catch(e){return null;}
 }
-let swReg=null,pendingReload=false;
+let swReg=null,pendingReload=false,lastHtml=null;
 function applyUpdate(){ /* versi baru sudah aktif: muat ulang, tapi jangan saat pengguna sedang mengisi form */
   if(sheetOpen||document.querySelector('.dlg')){pendingReload=true;toast('Versi baru siap, dimuat setelah kamu selesai');return;}
   pendingReload=false;toast('Memasang versi baru…');setTimeout(()=>location.reload(),900);
 }
+/* bandingkan index.html di server dengan yang sedang berjalan di tab ini. Perlu ini karena controllerchange
+   (di bawah) hanya kepicu kalau sw.js ikut berubah; kalau yang berubah cuma index.html saja, tab yang sudah
+   lama terbuka tidak akan pernah tahu ada versi baru tanpa pengecekan aktif seperti ini. */
+async function checkHtmlUpdate(){
+  try{
+    const r=await fetch('./index.html',{cache:'no-cache'});
+    if(!r.ok)return false;
+    const t=await r.text();
+    if(lastHtml==null){lastHtml=t;return false;} /* pertama kali dicek: jadikan baseline, belum tentu ada yang berubah */
+    if(t!==lastHtml){lastHtml=t;return true;}
+    return false;
+  }catch(e){return false;}
+}
 function checkUpdate(manual){
   if(!swReg){if(manual)toast('Pembaruan hanya berlaku di aplikasi yang sudah dibuka lewat alamat web');return;}
-  swReg.update().then(async()=>{
-    if(!manual)return;
-    if(swReg.installing||swReg.waiting){toast('Mengunduh versi baru…');return;}
-    const v=await getSwVersion();
-    toast('Sudah versi terbaru'+(v?' ('+v+')':''));
+  Promise.all([swReg.update().catch(()=>{}),checkHtmlUpdate()]).then(async r=>{
+    if(r[1]){applyUpdate();return;} /* index.html sudah beda dari yang sedang jalan: muat ulang otomatis */
+    if(swReg.installing||swReg.waiting){if(manual)toast('Mengunduh versi baru…');return;}
+    if(manual){const v=await getSwVersion();toast('Sudah versi terbaru'+(v?' ('+v+')':''));}
   }).catch(()=>{if(manual)toast('Belum bisa memeriksa, cek koneksi');});
 }
 /* service worker: hanya di http(s). Di file:// atau sandbox, browser memang tidak mengizinkannya. */
@@ -1980,7 +1992,10 @@ function checkUpdate(manual){
     if(hadController)applyUpdate();
     hadController=true;
   });
-  addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{scope:'./'}).then(r=>{swReg=r;}).catch(()=>{});});
+  addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js',{scope:'./'}).then(r=>{swReg=r;}).catch(()=>{});
+    fetch('./index.html',{cache:'no-cache'}).then(r=>r.ok?r.text():null).then(t=>{if(t!=null&&lastHtml==null)lastHtml=t;}).catch(()=>{});
+  });
   /* PWA yang dibiarkan terbuka berhari-hari tidak pernah memuat ulang sendiri, jadi cek versi baru tiap kali dibuka kembali & berkala */
   let lastUpd=0;
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&Date.now()-lastUpd>10*60000){lastUpd=Date.now();checkUpdate(false);}});
