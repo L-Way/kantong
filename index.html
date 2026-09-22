@@ -1949,7 +1949,15 @@ function wirePwaInstall(){
 }
 $('#installBtn').addEventListener('click',installApp);
 
-const APP_VERSION='2026.09.20-7'; /* samakan dengan VERSION di sw.js */
+/* versi ditentukan tunggal dari sw.js (nama cache 'kantong-shell-VERSION'); dibaca di sini, tidak perlu disalin manual */
+async function getSwVersion(){
+  try{
+    if(!('caches' in window))return null;
+    const keys=await caches.keys();
+    const k=keys.find(x=>x.indexOf('kantong-shell-')===0);
+    return k?k.slice('kantong-shell-'.length):null;
+  }catch(e){return null;}
+}
 let swReg=null,pendingReload=false;
 function applyUpdate(){ /* versi baru sudah aktif: muat ulang, tapi jangan saat pengguna sedang mengisi form */
   if(sheetOpen||document.querySelector('.dlg')){pendingReload=true;toast('Versi baru siap, dimuat setelah kamu selesai');return;}
@@ -1957,7 +1965,12 @@ function applyUpdate(){ /* versi baru sudah aktif: muat ulang, tapi jangan saat 
 }
 function checkUpdate(manual){
   if(!swReg){if(manual)toast('Pembaruan hanya berlaku di aplikasi yang sudah dibuka lewat alamat web');return;}
-  swReg.update().then(()=>{if(manual)toast(swReg.installing||swReg.waiting?'Mengunduh versi baru…':'Sudah versi terbaru ('+APP_VERSION+')');}).catch(()=>{if(manual)toast('Belum bisa memeriksa, cek koneksi');});
+  swReg.update().then(async()=>{
+    if(!manual)return;
+    if(swReg.installing||swReg.waiting){toast('Mengunduh versi baru…');return;}
+    const v=await getSwVersion();
+    toast('Sudah versi terbaru'+(v?' ('+v+')':''));
+  }).catch(()=>{if(manual)toast('Belum bisa memeriksa, cek koneksi');});
 }
 /* service worker: hanya di http(s). Di file:// atau sandbox, browser memang tidak mengizinkannya. */
 (function(){
@@ -4170,8 +4183,9 @@ function openBudget(){
 }
 
 /* ================= settings ================= */
-$('#setBtn').addEventListener('click',()=>{
+$('#setBtn').addEventListener('click',async()=>{
   const totalExp=sum(expOf(state.tx)),totalInc=sum(incOf(state.tx));
+  const ver=await getSwVersion();
   openSheet('Pengaturan',
     '<div class="li-item" style="animation:none"><span class="ic" style="background:var(--accent-soft)">📦</span>'+
       '<span class="mid"><span class="t">'+state.tx.length+' transaksi tercatat</span>'+
@@ -4191,7 +4205,7 @@ $('#setBtn').addEventListener('click',()=>{
       '<input type="file" id="sImpFile" accept="application/json,.json" style="display:none"></div>'+
     '<div class="field" style="margin-top:20px"><label style="color:var(--rose)">Zona hati-hati</label>'+
       '<button class="btn danger" id="wipe">Hapus semua catatan</button></div>'+
-    '<div class="field" style="margin-top:20px;text-align:center"><p class="qhint" style="margin:0 0 8px">Kantong versi '+APP_VERSION+'</p>'+
+    '<div class="field" style="margin-top:20px;text-align:center"><p class="qhint" style="margin:0 0 8px">Kantong versi '+(ver?esc(ver):'—')+'</p>'+
       '<button type="button" class="btn ghost sm" id="chkUpd">Periksa pembaruan</button></div>',
     ()=>{
       $('#chkUpd').addEventListener('click',()=>checkUpdate(true));
