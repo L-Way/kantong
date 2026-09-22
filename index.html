@@ -620,7 +620,7 @@ html.sheet-lock,html:has(#sheet.on),html:has(.dlg),html:has(.lightbox.on){overfl
 /* ================= desktop: layar lebar tampil penuh, bukan kolom sempit ala hp ================= */
 @media (min-width:900px){
   html{overflow-x:hidden;scrollbar-gutter:stable} /* ruang scrollbar tetap ada, jadi halaman tidak bergeser ke kanan saat pop-up mengunci scroll */
-  body{padding-left:248px}
+  html body{padding-left:calc(248px + env(safe-area-inset-left))} /* selektor lebih spesifik dari aturan safe-area umum di bawah, supaya tidak ketiban & menimpa ruang sidebar */
   .side-nav{display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;width:248px;z-index:50;
     background:var(--surface);border-right:1px solid var(--line);padding:18px 14px 16px;overflow-y:auto}
   .wrap{max-width:1180px;padding:0 24px}
@@ -1853,8 +1853,9 @@ function elapsedDays(){
 }
 function daysLeft(){
   const now=new Date();
-  if(view.y!==now.getFullYear()||view.m!==now.getMonth())return daysInMonth(view.y,view.m);
-  return Math.max(1,daysInMonth(view.y,view.m)-now.getDate()+1);
+  if(view.y===now.getFullYear()&&view.m===now.getMonth())return Math.max(1,daysInMonth(view.y,view.m)-now.getDate()+1);
+  if(new Date(view.y,view.m,1)>now)return daysInMonth(view.y,view.m); /* bulan depan: semua hari masih tersisa */
+  return 0; /* bulan lalu (arsip): sudah tidak ada hari tersisa */
 }
 function prevExpenseAvg(n){
   const vals=[];
@@ -2212,12 +2213,13 @@ function renderBudget(total){
   if(!b){
     w.innerHTML='<button class="budget-set" id="setBudget">＋ Pasang batas belanja bulan ini</button>';
   }else{
-    const p=Math.min(100,total/b*100),left=b-total;
+    const p=Math.min(100,total/b*100),left=b-total,dl=daysLeft();
     const cls=total>b?'over':(p>=80?'warn':'');
     w.innerHTML='<div class="budget-top"><span>Batas belanja <b>'+rp(b)+'</b></span><span>'+Math.round(total/b*100)+'%</span></div>'+
       '<div class="track"><i class="'+cls+'" style="width:0"></i></div>'+
       '<div class="budget-hint">'+
-      (left>=0?'Sisa <b style="color:var(--ink)">'+rp(left)+'</b> untuk '+daysLeft()+' hari ke depan, sekitar '+rp(left/daysLeft())+'/hari.'
+      (left>=0?(dl>0?'Sisa <b style="color:var(--ink)">'+rp(left)+'</b> untuk '+dl+' hari ke depan, sekitar '+rp(left/dl)+'/hari.'
+                    :'Sisa <b style="color:var(--ink)">'+rp(left)+'</b>, batas tidak terlampaui bulan itu.')
               :'Lewat <b style="color:var(--rose)">'+rp(-left)+'</b> dari batas.')+
       ' <button class="budget-set" id="setBudget" style="margin-left:4px">Ubah</button></div>';
     requestAnimationFrame(()=>{const i=w.querySelector('.track i');if(i)i.style.width=p+'%';});
@@ -2348,9 +2350,10 @@ function renderHint(){
           ['✍️','Catat begitu selesai bayar, paling akurat dan cuma butuh 5 detik.']];
   }else{
     if(a.basis==='batas'){
-      const useP=Math.round(a.total/a.budget*100),paceP=Math.round(a.pace*100),left=a.budget-a.total;
+      const useP=Math.round(a.total/a.budget*100),paceP=Math.round(a.pace*100),left=a.budget-a.total,dl=daysLeft();
       msg='Kamu sudah memakai <b>'+useP+'%</b> batas belanja, padahal bulan baru jalan <b>'+paceP+'%</b>. '+
-        (left>0?'Sisa <b>'+rp(left)+'</b> untuk '+daysLeft()+' hari, maksimal <b>'+rp(left/daysLeft())+' per hari</b> supaya tetap aman.'
+        (left>0?(dl>0?'Sisa <b>'+rp(left)+'</b> untuk '+dl+' hari, maksimal <b>'+rp(left/dl)+' per hari</b> supaya tetap aman.'
+                     :'Sisa <b>'+rp(left)+'</b>, batas tidak terlampaui bulan itu.')
                 :'Batas sudah terlampaui <b>'+rp(-left)+'</b>. Rem dulu pengeluaran yang bisa ditunda.');
     }else if(a.basis==='rata-rata'){
       const dd=Math.round((a.projected/a.refAvg-1)*100);
@@ -2438,7 +2441,7 @@ function syncSideNav(){
   });
 }
 function openNewType(type){
-  openSheet(type==='income'?'Catat pemasukan':'Catat pengeluaran',entryForm(null,type),()=>wireEntry(null));
+  openSheet(type==='income'?'Catat pemasukan':'Catat pengeluaran',entryForm(null,type),()=>wireEntry(null,null,type));
 }
 function renderQuickActions(){
   const ICO={
@@ -3121,7 +3124,7 @@ function renderWallets(){
   const list=inMonth(view.y,view.m);
   const h='<div class="card"><h3>Total saldo</h3><p class="sub">Pemasukan dikurangi pengeluaran, sepanjang waktu'+(goals.length?', termasuk tabungan':'')+'</p>'+
     '<div class="total-amt money" style="font-size:28px;margin-bottom:10px"><span class="rp" style="font-size:.5em">Rp</span>'+fmt(totalBal)+'</div>'+
-    '<div class="bar-sub"><span>pemasukan total '+rp(totalIncAll)+'</span><span>pengeluaran total '+rp(totalExpAll)+'</span></div>'+
+    '<div class="bar-sub"><span title="Termasuk perpindahan dompet, utang/piutang, dan dana titipan">arus masuk total '+rp(totalIncAll)+'</span><span title="Termasuk perpindahan dompet, utang/piutang, dan dana titipan">arus keluar total '+rp(totalExpAll)+'</span></div>'+
     (goals.length?'<div class="bar-sub" style="margin-top:4px"><span>dompet bisa dipakai '+rp(totalBal-totalSavings)+'</span><span>tabungan '+rp(totalSavings)+'</span></div>':'')+
     '</div>'+
   debtCardHtml()+
@@ -3833,9 +3836,9 @@ function transferForm(existing,draft){
     (existing?'<button class="btn danger" id="delEntry">Hapus</button>':'')+
     '<button class="btn" id="saveEntry">'+(existing?'Simpan perubahan':'Pindahkan dana')+'</button></div>';
 }
-function wireEntry(existing,draft){
+function wireEntry(existing,draft,forceType){
   draft=draft||{};
-  let curType=existing?existing.type:(lastUsed.type||'expense');
+  let curType=existing?existing.type:(forceType||lastUsed.type||'expense');
   const amt=$('#amt');moneyMask(amt);wireOpButtons(amt);
   if(!existing)setTimeout(()=>amt.focus(),420);
   $$('#sheetBody .q').forEach(b=>b.addEventListener('click',()=>{
@@ -4080,7 +4083,7 @@ function wireTransfer(existing,draft){
       if(b.dataset.t==='transfer')return;
       const d={amount:readMoney(amt),note:$('#note').value,date:$('#date').value||todayKey(),time:$('#time').value||nowTime(),approx:tb.approx()};
       lastUsed.type=b.dataset.t;
-      openSheet(b.dataset.t==='income'?'Catat pemasukan':'Catat pengeluaran',entryForm(null,b.dataset.t,d),()=>wireEntry(null,d));
+      openSheet(b.dataset.t==='income'?'Catat pemasukan':'Catat pengeluaran',entryForm(null,b.dataset.t,d),()=>wireEntry(null,d,b.dataset.t));
     }));
   }
   $('#saveEntry').addEventListener('click',()=>{
@@ -4128,7 +4131,7 @@ function openTransferNew(){
 }
 function openNew(){
   const t=view.tab==='list'?view.listType:(lastUsed.type||'expense');
-  openSheet(t==='income'?'Catat pemasukan':'Catat pengeluaran',entryForm(null,t),()=>wireEntry(null));
+  openSheet(t==='income'?'Catat pemasukan':'Catat pengeluaran',entryForm(null,t),()=>wireEntry(null,null,t));
 }
 function openEntry(id){
   const e=state.tx.find(x=>x.id===id);
@@ -4939,7 +4942,7 @@ function recEdit(r,date){
   lastUsed.type=r.type;lastUsed.wal=recWalId(r.walletId);
   if(r.type==='expense')lastUsed.cat=recCatId(r);else lastUsed.icat=recCatId(r);
   const d={amount:r.amount,note:r.note,date,time:r.time,approx:true};
-  openSheet(r.type==='income'?'Catat pemasukan':'Catat pengeluaran',entryForm(null,r.type,d),()=>wireEntry(null,d));
+  openSheet(r.type==='income'?'Catat pemasukan':'Catat pengeluaran',entryForm(null,r.type,d),()=>wireEntry(null,d,r.type));
   Object.assign(lastUsed,keep);
   recCtx={id:r.id,date}; /* dipakai saat disimpan: menautkan catatan ke aturan dan memajukan jadwalnya */
 }
