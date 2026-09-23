@@ -22,9 +22,13 @@ self.addEventListener('install', e => {
   e.waitUntil((async () => {
     const c = await caches.open(SHELL);
     await Promise.all(PRECACHE.map(async u => {
-      const res = await fetch(new Request(u, { cache: 'reload' }));
-      if (!res.ok) throw new Error(u + ' ' + res.status);
-      await c.put(u, res);
+      try {
+        const res = await fetch(new Request(u, { cache: 'reload' }));
+        if (!res.ok) { console.warn('[sw] precache lewati (status ' + res.status + '):', u); return; }
+        await c.put(u, res);
+      } catch (err) {
+        console.warn('[sw] precache lewati (gagal fetch):', u, err); /* satu file gagal jangan sampai batalkan seluruh update */
+      }
     }));
     await self.skipWaiting();
   })());
