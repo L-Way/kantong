@@ -1230,8 +1230,9 @@ function dtVal(e){return e.date+' '+(e.time||'00:00');} /* kunci urut gabungan t
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function shortRp(n){
   n=Math.round(n||0);const sign=n<0?'-':'';n=Math.abs(n);
-  if(n>=1e9)return sign+(n/1e9).toFixed(n>=1e10?0:1).replace('.',',')+'M';
-  if(n>=1e6)return sign+(n/1e6).toFixed(n>=1e7?0:1).replace('.',',')+'jt';
+  const u=(v,suf)=>{let t=v.toFixed(1);if(parseFloat(t)>=10)t=v.toFixed(0);return sign+t.replace('.',',')+suf;};
+  if(n>=999.5e6)return u(n/1e9,'M');
+  if(n>=999500)return u(n/1e6,'jt');
   if(n>=1e3)return sign+Math.round(n/1e3)+'rb';
   return sign+String(n);
 }
@@ -1253,6 +1254,23 @@ const MOTOR_CATS=[
 const ELEC_CATS=[
   {id:'c-listrik',name:'Listrik',emoji:'⚡',color:'#FBBF24',meter:true}
 ];
+/* kategori usaha foto: 5 pertama biaya langsung per klien/acara (berproyek), 4 terakhir biaya operasional bulanan */
+const PHOTO_EXP_CATS=[
+  {id:'c-shooter',name:'Second Shooter & Asisten',emoji:'🤝',color:'#3B82F6',project:true},
+  {id:'c-sewaalat',name:'Sewa Alat & Lensa',emoji:'📷',color:'#F97316',project:true},
+  {id:'c-transacara',name:'Transport & Akomodasi Acara',emoji:'🚗',color:'#0EA5E9',project:true},
+  {id:'c-cetakbiaya',name:'Cetak & Album (biaya)',emoji:'🖨️',color:'#EC4899',project:true},
+  {id:'c-editing',name:'Editing & Retouch',emoji:'🎨',color:'#8B5CF6',project:true},
+  {id:'c-studiobiaya',name:'Sewa & Operasional Studio',emoji:'🏢',color:'#14B8A6'},
+  {id:'c-alatrawat',name:'Peralatan & Perawatan',emoji:'🛠️',color:'#DD8B1E'},
+  {id:'c-software',name:'Software & Langganan',emoji:'💻',color:'#64748B'},
+  {id:'c-promo',name:'Iklan & Promosi',emoji:'📣',color:'#F2506E'}
+];
+function ensurePhotoExpCats(cats){
+  const have={};cats.forEach(c=>{have[c.id]=1;});
+  const extra=PHOTO_EXP_CATS.filter(c=>!have[c.id]);
+  return extra.length?cats.concat(extra):cats;
+}
 const DEFAULT_CATS=[
   {id:'c-makan',name:'Makan & Minum',emoji:'🍜',color:'#F2506E'},
   {id:'c-transport',name:'Transportasi',emoji:'🛵',color:'#3B82F6'},
@@ -1262,7 +1280,7 @@ const DEFAULT_CATS=[
   {id:'c-hiburan',name:'Hiburan',emoji:'🎬',color:'#8B5CF6'},
   {id:'c-rumah',name:'Rumah',emoji:'🏠',color:'#14B8A6'},
   {id:'c-lain',name:'Lainnya',emoji:'✨',color:'#64748B'}
-].concat(MOTOR_CATS).concat(ELEC_CATS);
+].concat(PHOTO_EXP_CATS).concat(MOTOR_CATS).concat(ELEC_CATS);
 function ensureMotorCats(cats){
   const have={};cats.forEach(c=>{have[c.id]=1;});
   const extra=MOTOR_CATS.filter(c=>!have[c.id]);
@@ -1277,11 +1295,22 @@ const DEFAULT_INCOME_CATS=[
   {id:'ic-saldo',name:'Saldo Awal',emoji:'💰',color:'#DD8B1E'},
   {id:'ic-gaji',name:'Gaji',emoji:'💼',color:'#3B82F6'},
   {id:'ic-bonus',name:'Bonus & THR',emoji:'🎉',color:'#8B5CF6'},
-  {id:'ic-usaha',name:'Usaha & Freelance',emoji:'🧾',color:'#14B8A6'},
+  {id:'ic-usaha',name:'Usaha & Freelance',emoji:'🧾',color:'#14B8A6',project:true},
+  {id:'ic-wedding',name:'Wedding',emoji:'💍',color:'#F2506E',project:true},
+  {id:'ic-prewed',name:'Prewedding',emoji:'💑',color:'#EC4899',project:true},
+  {id:'ic-studio',name:'Foto Studio',emoji:'📸',color:'#3B82F6',project:true},
+  {id:'ic-acara',name:'Acara Lain',emoji:'🎊',color:'#8B5CF6',project:true},
+  {id:'ic-cetak',name:'Cetak & Album',emoji:'🖼️',color:'#DD8B1E',project:true},
   {id:'ic-investasi',name:'Investasi',emoji:'📈',color:'#0FA88E'},
   {id:'ic-hadiah',name:'Hadiah',emoji:'🎁',color:'#EC4899'},
   {id:'ic-lain',name:'Lainnya',emoji:'✨',color:'#64748B'}
 ];
+const PHOTO_INC_IDS=['ic-wedding','ic-prewed','ic-studio','ic-acara','ic-cetak'];
+function ensurePhotoIncCats(cats){
+  const have={};cats.forEach(c=>{have[c.id]=1;});
+  const extra=DEFAULT_INCOME_CATS.filter(c=>PHOTO_INC_IDS.includes(c.id)&&!have[c.id]);
+  return extra.length?cats.concat(extra):cats;
+}
 const DEFAULT_WALLETS=[
   {id:'w-tunai',name:'Tunai',emoji:'💵',color:'#0FA88E',balance:0},
   {id:'w-bank',name:'Rekening bank',emoji:'🏦',color:'#3B82F6',balance:0},
@@ -1302,7 +1331,7 @@ function normPrefs(p){
   const r=(p&&p.remind)||{},ev=+r.every,hm=/^\d{2}:\d{2}$/;
   return{remind:{on:r.on!==false,every:[1,2,3,4,6].indexOf(ev)>=0?ev:3,from:hm.test(r.from||'')?r.from:'08:00',to:hm.test(r.to||'')?r.to:'21:00',notify:!!r.notify}};
 }
-let state={v:7,tx:[],cats:DEFAULT_CATS.slice(),incomeCats:DEFAULT_INCOME_CATS.slice(),wallets:DEFAULT_WALLETS.slice(),motors:DEFAULT_MOTORS.slice(),meters:DEFAULT_METERS.slice(),budgets:{},recurring:[],debts:[],svcs:[],prefs:normPrefs(),updatedAt:0};
+let state={v:8,tx:[],cats:DEFAULT_CATS.slice(),incomeCats:DEFAULT_INCOME_CATS.slice(),wallets:DEFAULT_WALLETS.slice(),motors:DEFAULT_MOTORS.slice(),meters:DEFAULT_METERS.slice(),budgets:{},recurring:[],debts:[],svcs:[],prefs:normPrefs(),updatedAt:0};
 let view={y:new Date().getFullYear(),m:new Date().getMonth(),tab:'list',listType:'expense',filter:'all',wfilter:'all',q:''};
 let lastUsed={type:'expense',cat:null,icat:null,wal:null,motor:null,meter:null};
 
@@ -1318,6 +1347,9 @@ function normalize(d){
   let cats=(d.cats&&d.cats.length)?d.cats:DEFAULT_CATS.slice();
   if(!d.v||d.v<4)cats=ensureMotorCats(cats); /* migrasi sekali: tambahkan kategori Bensin/Oli/Servis kalau belum ada */
   if(!d.v||d.v<6)cats=ensureElecCats(cats); /* migrasi sekali: tambahkan kategori Listrik kalau belum ada */
+  if(!d.v||d.v<8)cats=ensurePhotoExpCats(cats); /* migrasi sekali: tambahkan kategori biaya usaha foto kalau belum ada */
+  let incCatsIn=(d.incomeCats&&d.incomeCats.length)?d.incomeCats:DEFAULT_INCOME_CATS.slice();
+  if(!d.v||d.v<8)incCatsIn=ensurePhotoIncCats(incCatsIn);
   const motorCatIds={},meterCatIds={};cats.forEach(c=>{if(c.motor)motorCatIds[c.id]=1;if(c.meter)meterCatIds[c.id]=1;});
   let raw=[];
   if(Array.isArray(d.tx)){
@@ -1337,6 +1369,7 @@ function normalize(d){
       date:e.date,
       time:e.time||(e.createdAt?new Date(e.createdAt).toTimeString().slice(0,5):'00:00'), /* migrasi: catatan lama tanpa jam ditebak dari createdAt */
       note:e.note||'',
+      client:e.client?String(e.client).trim().slice(0,40):undefined,
       odo:(e.odo===null||e.odo===undefined||e.odo==='')?null:+e.odo,
       /* migrasi: catatan motor lama (tanpa motorId) dianggap milik motor pertama, supaya riwayat tetap utuh & tersambung */
       motorId:motorCatIds[catId]?(e.motorId||m0):(e.motorId||undefined),
@@ -1358,9 +1391,9 @@ function normalize(d){
     };
   });
   return{
-    v:7,tx,
+    v:8,tx,
     cats,
-    incomeCats:(d.incomeCats&&d.incomeCats.length)?d.incomeCats:DEFAULT_INCOME_CATS.slice(),
+    incomeCats:incCatsIn,
     wallets:wallets.map(w=>w.isSavings?
       {id:w.id,name:w.name,emoji:w.emoji,color:w.color,balance:+w.balance||0,isSavings:true,target:+w.target||0}:
       {id:w.id,name:w.name,emoji:w.emoji,color:w.color,balance:+w.balance||0}),
@@ -1394,7 +1427,7 @@ function bootRec(){if(bootedRec)return;bootedRec=true;recRun(true);renderAll();}
 
 function docOf(s){return{v:s.v,tx:s.tx,cats:s.cats,incomeCats:s.incomeCats,wallets:s.wallets,motors:s.motors,meters:s.meters,budgets:s.budgets,recurring:s.recurring,debts:s.debts,svcs:s.svcs,prefs:s.prefs,updatedAt:s.updatedAt};}
 function capture(){return{doc:JSON.parse(JSON.stringify(docOf(state))),seq:cloud.seq};}
-function freshState(){return normalize({v:7,tx:[],cats:JSON.parse(JSON.stringify(DEFAULT_CATS)),incomeCats:JSON.parse(JSON.stringify(DEFAULT_INCOME_CATS)),wallets:JSON.parse(JSON.stringify(DEFAULT_WALLETS)),motors:JSON.parse(JSON.stringify(DEFAULT_MOTORS)),meters:JSON.parse(JSON.stringify(DEFAULT_METERS)),budgets:{},recurring:[],debts:[],svcs:[],prefs:normPrefs(),updatedAt:0});}
+function freshState(){return normalize({v:8,tx:[],cats:JSON.parse(JSON.stringify(DEFAULT_CATS)),incomeCats:JSON.parse(JSON.stringify(DEFAULT_INCOME_CATS)),wallets:JSON.parse(JSON.stringify(DEFAULT_WALLETS)),motors:JSON.parse(JSON.stringify(DEFAULT_MOTORS)),meters:JSON.parse(JSON.stringify(DEFAULT_METERS)),budgets:{},recurring:[],debts:[],svcs:[],prefs:normPrefs(),updatedAt:0});}
 function wipeLocal(){state=freshState();saveLocal();phClear();meta={};saveMeta();renderAll();}
 function applyDoc(doc){state=normalize(doc);saveLocal();renderAll();}
 
@@ -1771,6 +1804,41 @@ function catOf(id){
   return state.cats.find(c=>c.id===id)||state.incomeCats.find(c=>c.id===id)||{id:'?',name:'Tanpa kategori',emoji:'❔',color:'#94A3B8'};
 }
 function isTransfer(e){return !!(e&&e.transferId);}
+/* ===== klien / proyek: satu nama bebas per catatan (mis. "Wedding Andi & Sari"), untung dihitung lintas bulan ===== */
+/* kategori berproyek: kolom Klien / proyek hanya muncul untuk kategori yang dicentang. Usaha & Freelance bawaan ikut aktif selama belum diubah manual */
+function isProjectCat(id){const c=catOf(id);return c.project===true||(c.project===undefined&&c.id==='ic-usaha');}
+function defIncCat(){return (state.incomeCats.find(c=>c.id!=='ic-saldo')||state.incomeCats[0]||{}).id;} /* kategori pemasukan bawaan: bukan Saldo Awal, karena tidak dihitung sebagai pemasukan */
+function clientNames(){
+  const seen={},out=[];
+  state.tx.slice().sort((a,b)=>dtVal(a)<dtVal(b)?1:-1).forEach(e=>{const c=(e.client||'').trim(),k=c.toLowerCase();if(c&&!seen[k]){seen[k]=1;out.push(c);}});
+  return out.slice(0,40);
+}
+function projectStats(){
+  const m={};
+  state.tx.forEach(e=>{
+    const c=(e.client||'').trim();
+    if(!c||e.transferId||e.debtId||e.pass||e.catId==='ic-saldo')return;
+    const o=m[c.toLowerCase()]||(m[c.toLowerCase()]={name:c,inc:0,exp:0,n:0,last:''});
+    if(e.type==='income')o.inc+=+e.amount||0;else o.exp+=+e.amount||0;
+    o.n++;if(e.date>o.last)o.last=e.date;
+  });
+  return Object.keys(m).map(k=>m[k]).sort((a,b)=>a.last<b.last?1:(a.last>b.last?-1:0));
+}
+function projectRecapHtml(){
+  const ps=projectStats();
+  const head='<div class="card"><h3>Untung per klien / proyek</h3>';
+  if(!ps.length)return head+'<p class="sub">Di tab Kategori, ubah kategori seperti Wedding atau Foto Studio dan centang <b>Kaitkan ke klien / proyek</b>. Setelah itu kolom nama klien muncul saat kategori itu dipilih, dan untung tiap proyek tampil di sini, lintas bulan.</p></div>';
+  const tot=ps.reduce((s,x)=>s+x.inc-x.exp,0);
+  return head+'<p class="sub">'+ps.length+' proyek · untung total <b style="color:'+(tot>=0?'var(--mint)':'var(--rose)')+'">'+(tot<0?'−':'')+rp(Math.abs(tot))+'</b>. Semua bulan, tanpa transfer & Saldo Awal.</p>'+
+    ps.slice(0,12).map(x=>{
+      const pr=x.inc-x.exp,d=parseKey(x.last);
+      return '<div class="bar-row"><div class="bar-top"><span class="e">👤</span><span class="nm">'+esc(x.name)+'<span class="c">'+x.n+'×</span></span>'+
+        '<span class="v" style="color:'+(pr>=0?'var(--mint)':'var(--rose)')+'">'+(pr<0?'−':'')+rp(Math.abs(pr))+'</span></div>'+
+        '<div class="bar-sub"><span>Masuk '+rp(x.inc)+' · Biaya '+rp(x.exp)+'</span><span>'+d.getDate()+' '+MON3[d.getMonth()]+' '+d.getFullYear()+'</span></div></div>';
+    }).join('')+(ps.length>12?'<p class="sub" style="margin-top:6px">+'+(ps.length-12)+' proyek lebih lama tidak ditampilkan</p>':'')+'</div>';
+}
+/* catatan bawaan perpindahan ("Transfer ke X" / "Transfer dari X") dianggap kosong saat diubah, supaya dibuat ulang sesuai dompet terbaru */
+function isAutoTransferNote(n){const m=/^Transfer (?:ke|dari) (.+)$/.exec(n||'');return !!m&&state.wallets.some(w=>w.name===m[1]);}
 function findTransferPeer(tx){return state.tx.find(x=>x.transferId===tx.transferId&&x.id!==tx.id);}
 function walOf(id){return state.wallets.find(w=>w.id===id)||{id:'?',name:'Tanpa dompet',emoji:'❔',color:'#94A3B8',balance:0};}
 /* ================= tabungan (dompet dengan isSavings=true, target opsional) ================= */
@@ -1841,7 +1909,7 @@ function expOf(list){return list.filter(e=>e.type==='expense');}
 function incOf(list){return list.filter(e=>e.type==='income');}
 /* "real" = tidak termasuk perpindahan antar dompet sendiri - bukan pengeluaran/pemasukan sungguhan */
 function realExpOf(list){return list.filter(e=>e.type==='expense'&&!e.transferId&&!e.debtId&&!e.pass);}
-function realIncOf(list){return list.filter(e=>e.type==='income'&&!e.transferId&&!e.debtId&&!e.pass);}
+function realIncOf(list){return list.filter(e=>e.type==='income'&&!e.transferId&&!e.debtId&&!e.pass&&e.catId!=='ic-saldo');} /* Saldo Awal = uang yang sudah ada sebelumnya, bukan pemasukan periode itu */
 function sum(a){return a.reduce((x,e)=>x+(+e.amount||0),0);}
 function bKey(y,m){return y+'-'+String(m+1).padStart(2,'0');}
 function daysInMonth(y,m){return new Date(y,m+1,0).getDate();}
@@ -2540,7 +2608,7 @@ function renderList(){
   if(q)list=list.filter(e=>{
     const c=catOf(e.catId),w=walOf(e.walletId);
     return (e.note||'').toLowerCase().includes(q)||c.name.toLowerCase().includes(q)||
-      w.name.toLowerCase().includes(q)||String(e.amount).includes(q.replace(/\D/g,''));
+      w.name.toLowerCase().includes(q)||(e.client||'').toLowerCase().includes(q)||(/^[\d.,\s]+$/.test(q)&&String(e.amount).includes(q.replace(/\D/g,'')));
   });
   list.sort((a,b)=>dtVal(a)===dtVal(b)?(b.createdAt||0)-(a.createdAt||0):(dtVal(a)<dtVal(b)?1:-1));
 
@@ -2559,7 +2627,7 @@ function renderList(){
   Object.keys(groups).sort().reverse().forEach(k=>{
     const d=parseKey(k);
     const label=k===todayKey()?'Hari ini':(k===keyOf(yest)?'Kemarin':DAYS[d.getDay()]+', '+d.getDate()+' '+MON3[d.getMonth()]);
-    html+='<div class="day-head"><span>'+label+'</span><em>'+rp(sum(groups[k].filter(e=>!e.pass)))+' · '+groups[k].length+' transaksi</em></div>';
+    html+='<div class="day-head"><span>'+label+'</span><em>'+rp(sum(groups[k].filter(e=>!e.pass&&!e.transferId&&!e.debtId&&e.catId!=='ic-saldo')))+' · '+groups[k].length+' transaksi</em></div>';
     groups[k].forEach(e=>{
       const c=catOf(e.catId),w=walOf(e.walletId),isInc=e.type==='income';
       const odoTxt=e.odo!=null?motorBadge(e):(e.meter!=null?meterBadge(e):'');
@@ -2568,7 +2636,7 @@ function renderList(){
       html+='<button class="tx" data-id="'+e.id+'" style="animation-delay:'+Math.min(n*22,300)+'ms">'+
         '<span class="ic" style="--cat:'+c.color+'22">'+c.emoji+'<em>'+w.emoji+'</em></span>'+
         '<span class="mid"><span class="t">'+esc(e.note||c.name)+'</span>'+
-        '<span class="s">'+timeTxt(e)+(e.photo?' 📷':'')+(e.recId?' 🔁':'')+(e.incomplete?' · <b class="pendtxt">lengkapi</b>':'')+' · '+esc(c.name)+' · '+esc(w.name)+(motorTxt?' · '+motorTxt:'')+(odoTxt?' · '+odoTxt:'')+'</span></span>'+
+        '<span class="s">'+timeTxt(e)+(e.photo?' 📷':'')+(e.recId?' 🔁':'')+(e.incomplete?' · <b class="pendtxt">lengkapi</b>':'')+' · '+esc(c.name)+' · '+esc(w.name)+(e.client?' · 👤 '+esc(e.client):'')+(motorTxt?' · '+motorTxt:'')+(odoTxt?' · '+odoTxt:'')+'</span></span>'+
         '<span class="amt num '+(e.pass?'':(isInc?'inc':'exp'))+'">'+(isInc?'+':'−')+rp(e.amount)+'</span></button>';
       n++;
     });
@@ -2698,7 +2766,7 @@ function renderRecap(){
   const el=$('#p-recap');
   if(!a.list.length&&!a.incList.length){
     el.innerHTML='<div class="card"><div class="empty"><span class="em">📊</span><b>Rekap masih kosong</b>'+
-      '<p>Begitu ada transaksi di '+MONTHS[view.m]+', semua ringkasan muncul di sini.</p></div></div>';
+      '<p>Begitu ada transaksi di '+MONTHS[view.m]+', semua ringkasan muncul di sini.</p></div></div>'+projectRecapHtml();
     return;
   }
   const list=a.list,total=a.total,dim=a.dim,elp=a.el,totalIncome=a.totalIncome,net=a.net;
@@ -2719,6 +2787,7 @@ function renderRecap(){
     (totalIncome>0?'<div style="margin-top:6px;font-size:11.5px;color:var(--ink-3);font-weight:600">Tingkat menabung: '+pct(Math.max(net,0),totalIncome)+'% dari pemasukan</div>':'')+
     '</div>';
 
+  html+=projectRecapHtml();
   if(!list.length){
     html+='<div class="card"><div class="empty"><span class="em">🧾</span><b>Belum ada pengeluaran</b>'+
       '<p>Rincian kategori, kalender, dan pola belanja akan muncul begitu ada pengeluaran tercatat.</p></div></div>';
@@ -3023,11 +3092,13 @@ function mdToHtml(t){
 async function exportCSV(list,filename){
   if(!list.length){toast('Tidak ada data untuk diunduh');return;}
   list=list.slice().sort((a,b)=>dtVal(a)<dtVal(b)?-1:1);
-  const rows=[['Tanggal','Waktu','Tipe','Kategori','Dompet','Motor','Odometer (km)','Meteran Listrik','Angka Meteran (kWh)','Token Diisi (kWh)','Catatan','Nominal','Waktu Perkiraan']];
-  list.forEach(e=>rows.push([e.date,timeOf(e),e.type==='income'?'Pemasukan':'Pengeluaran',catOf(e.catId).name,walOf(e.walletId).name,
-    isMotorCat(e.catId)?motorOf(motorIdOf(e)).name:'',e.odo!=null?String(e.odo):'',
-    isMeterCat(e.catId)?meterOf(meterIdOf(e)).name:'',e.meter!=null?String(e.meter):'',e.topup!=null?String(e.topup):'',
-    e.note||'',String(Math.round(e.amount)),e.approx?'Ya':'']));
+  const safe=t=>{t=String(t==null?'':t);return /^[=+\-@\t\r]/.test(t)?"'"+t:t;}; /* cegah teks dibaca sebagai rumus di Excel */
+  const rows=[['Tanggal','Waktu','Tipe','Kategori','Dompet','Motor','Odometer (km)','Meteran Listrik','Angka Meteran (kWh)','Token Diisi (kWh)','Catatan','Nominal','Waktu Perkiraan','Dihitung di ringkasan','Klien/Proyek']];
+  list.forEach(e=>rows.push([e.date,timeOf(e),e.type==='income'?'Pemasukan':'Pengeluaran',safe(catOf(e.catId).name),safe(walOf(e.walletId).name),
+    isMotorCat(e.catId)?safe(motorOf(motorIdOf(e)).name):'',e.odo!=null?String(e.odo):'',
+    isMeterCat(e.catId)?safe(meterOf(meterIdOf(e)).name):'',e.meter!=null?String(e.meter):'',e.topup!=null?String(e.topup):'',
+    safe(e.note||''),String(Math.round(e.amount)),e.approx?'Ya':'',
+    (e.transferId||e.debtId||e.pass||e.catId==='ic-saldo')?'Tidak':'Ya',safe(e.client||'')]));
   const csv='\uFEFF'+rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(';')).join('\r\n');
   await deliver(filename,csv,'text/csv');
 }
@@ -3194,12 +3265,13 @@ function renderWallets(){
     const w=walOf(b.dataset.delw);
     const used=state.tx.filter(e=>e.walletId===w.id).length;
     const fallback=regularWallets().find(x=>x.id!==w.id)||state.wallets.find(x=>x.id!==w.id);
-    if(!confirm('Hapus dompet "'+w.name+'"?'+(used?'\n'+used+' transaksi akan dipindahkan ke "'+fallback.name+'".':'')))return;
+    const carry=+w.balance||0; /* saldo awal dompet ikut dipindahkan, supaya total saldo tidak berubah diam-diam */
+    if(!confirm('Hapus dompet "'+w.name+'"?'+(used?'\n'+used+' transaksi akan dipindahkan ke "'+fallback.name+'".':'')+(carry?'\nSaldo awal '+rp(carry)+' ikut dipindahkan ke "'+fallback.name+'".':'')))return;
     const idx=state.wallets.indexOf(w);
     const affected=state.tx.filter(e=>e.walletId===w.id);
     deleteWithUndo('Dompet "'+w.name+'" dihapus',
-      ()=>{affected.forEach(e=>{e.walletId=fallback.id;});state.wallets=state.wallets.filter(x=>x.id!==w.id);},
-      ()=>{state.wallets.splice(idx,0,w);affected.forEach(e=>{e.walletId=w.id;});});
+      ()=>{affected.forEach(e=>{e.walletId=fallback.id;});fallback.balance=(+fallback.balance||0)+carry;state.wallets=state.wallets.filter(x=>x.id!==w.id);},
+      ()=>{fallback.balance=(+fallback.balance||0)-carry;state.wallets.splice(idx,0,w);affected.forEach(e=>{e.walletId=w.id;});});
   }));
   attachReorder($('#walList'),wallets,()=>{
     /* wallets = subset (dompet biasa) yang baru saja disusun ulang; sisipkan kembali ke state.wallets
@@ -3216,8 +3288,9 @@ function openWalletSheet(existing){
     '<div class="field"><label for="wname">Nama dompet</label>'+
       '<input class="inp" id="wname" placeholder="Contoh: Dana, BCA, Uang tunai" maxlength="24" value="'+esc(existing?existing.name:'')+'"></div>'+
     '<div class="field"><label for="wbal">Saldo awal <span style="color:var(--ink-3);font-weight:500">(opsional)</span></label>'+
-      '<input class="inp num" id="wbal" inputmode="numeric" placeholder="0" value="'+(existing&&existing.balance?nf.format(existing.balance):'')+'">'+
-      opRowHtml()+'</div>'+
+      '<input class="inp num" id="wbal" inputmode="numeric" placeholder="0" value="'+(existing&&existing.balance?nf.format(Math.abs(existing.balance)):'')+'">'+
+      opRowHtml()+
+      '<label class="chk" style="margin-top:10px"><input type="checkbox" id="wneg"'+(existing&&existing.balance<0?' checked':'')+'><span><b>Saldo awal berupa utang (minus)</b>Untuk kartu kredit atau dompet yang dimulai dari posisi minus.</span></label></div>'+
     '<div class="field"><label>Ikon</label><div class="emo-grid" id="emoGrid">'+
       WEMOJIS.map(e=>'<button class="emo" data-e="'+e+'" aria-pressed="'+(e===emoji)+'">'+e+'</button>').join('')+'</div></div>'+
     '<div class="field"><label>Warna</label><div class="swatches" id="swGrid">'+
@@ -3233,7 +3306,7 @@ function openWalletSheet(existing){
       $('#saveWal').addEventListener('click',()=>{
         const name=$('#wname').value.trim();
         if(!name){$('#wname').focus();toast('Nama dompet belum diisi');return;}
-        const balance=readMoney($('#wbal'));
+        const balance=readMoney($('#wbal'))*($('#wneg').checked?-1:1);
         if(existing){Object.assign(existing,{name,emoji,color,balance});}
         else{state.wallets.push({id:'w-'+uid(),name,emoji,color,balance});}
         save();closeSheet();renderAll();toast(existing?'Dompet diperbarui':'Dompet "'+name+'" ditambahkan');
@@ -3293,12 +3366,14 @@ function renderSavings(){
     const used=state.tx.filter(e=>e.walletId===w.id).length;
     const fallback=regularWallets()[0];
     if(used&&!fallback){toast('Tambah dompet biasa dulu ya, minimal 1');return;}
-    if(!confirm('Hapus tabungan "'+w.name+'"?'+(used?'\n'+used+' transaksi akan dipindahkan ke "'+fallback.name+'".':'')))return;
+    const carry=+w.balance||0;
+    if(fallback&&!confirm('Hapus tabungan "'+w.name+'"?'+(used?'\n'+used+' transaksi akan dipindahkan ke "'+fallback.name+'".':'')+(carry?'\nSaldo awal '+rp(carry)+' ikut dipindahkan ke "'+fallback.name+'".':'')))return;
+    if(!fallback&&!confirm('Hapus tabungan "'+w.name+'"?'))return;
     const idx=state.wallets.indexOf(w);
     const affected=state.tx.filter(e=>e.walletId===w.id);
     deleteWithUndo('Tabungan "'+w.name+'" dihapus',
-      ()=>{affected.forEach(e=>{e.walletId=fallback.id;});state.wallets=state.wallets.filter(x=>x.id!==w.id);},
-      ()=>{state.wallets.splice(idx,0,w);affected.forEach(e=>{e.walletId=w.id;});});
+      ()=>{affected.forEach(e=>{e.walletId=fallback.id;});if(fallback)fallback.balance=(+fallback.balance||0)+carry;state.wallets=state.wallets.filter(x=>x.id!==w.id);},
+      ()=>{if(fallback)fallback.balance=(+fallback.balance||0)-carry;state.wallets.splice(idx,0,w);affected.forEach(e=>{e.walletId=w.id;});});
   }));
   $$('[data-savdep]').forEach(b=>b.addEventListener('click',()=>openSavingsMove(b.dataset.savdep,'in')));
   $$('[data-savwd]').forEach(b=>b.addEventListener('click',()=>openSavingsMove(b.dataset.savwd,'out')));
@@ -3563,6 +3638,7 @@ function openCatSheet(existing,type){
       emojiSet.map(e=>'<button class="emo" data-e="'+e+'" aria-pressed="'+(e===emoji)+'">'+e+'</button>').join('')+'</div></div>'+
     '<div class="field"><label>Warna</label><div class="swatches" id="swGrid">'+
       PALETTE.map(c=>'<button class="sw" data-c="'+c+'" style="background:'+c+'" aria-pressed="'+(c===color)+'" aria-label="Warna"></button>').join('')+'</div></div>'+
+    ((existing&&(existing.motor||existing.meter))?'':'<label class="chk"><input type="checkbox" id="cproj"'+((existing&&isProjectCat(existing.id))?' checked':'')+'><span><b>Kaitkan ke klien / proyek</b>Kolom nama klien muncul saat kategori ini dipilih, dan untungnya dihitung per proyek di Rekap. Cocok untuk Wedding, Foto Studio, atau biaya acara.</span></label>')+
     '<button class="btn" id="saveCat" style="margin-top:8px">'+(existing?'Simpan perubahan':'Tambah kategori')+'</button>',
     ()=>{
       $$('#emoGrid .emo').forEach(b=>b.addEventListener('click',()=>{emoji=b.dataset.e;
@@ -3573,9 +3649,10 @@ function openCatSheet(existing,type){
       $('#saveCat').addEventListener('click',()=>{
         const name=$('#cname').value.trim();
         if(!name){$('#cname').focus();toast('Nama kategori belum diisi');return;}
-        if(existing){Object.assign(existing,{name,emoji,color});}
-        else if(isInc){state.incomeCats.splice(state.incomeCats.length-1,0,{id:'ic-'+uid(),name,emoji,color});}
-        else{state.cats.splice(state.cats.length-1,0,{id:'c-'+uid(),name,emoji,color});}
+        const pj=$('#cproj'),proj=pj?pj.checked:undefined;
+        if(existing){Object.assign(existing,{name,emoji,color});if(pj)existing.project=proj;}
+        else if(isInc){state.incomeCats.splice(state.incomeCats.length-1,0,{id:'ic-'+uid(),name,emoji,color,project:proj||undefined});}
+        else{state.cats.splice(state.cats.length-1,0,{id:'c-'+uid(),name,emoji,color,project:proj||undefined});}
         save();closeSheet();renderAll();toast(existing?'Kategori diperbarui':'Kategori "'+name+'" ditambahkan');
       });
     });
@@ -3689,17 +3766,19 @@ function exprSanitize(v){
   v=v.replace(/^[+\-*/]+/,'');
   return v;
 }
-function exprEval(v){
+function exprCalc(v){
   const s=exprSanitize(v).replace(/[+\-*/]+$/,'');
   const tokens=s.match(/\d+|[+\-*/]/g);
-  if(!tokens||!tokens.length)return 0;
+  if(!tokens||!tokens.length)return{val:0,err:''};
+  let err='';
   let i=0;
   const num=()=>parseFloat(tokens[i++]||0);
   function term(){
     let r=num();
     while(tokens[i]==='*'||tokens[i]==='/'){
       const op=tokens[i++],rhs=num();
-      r=op==='*'?r*rhs:(rhs?r/rhs:r);
+      if(op==='/'&&!rhs){err='tidak bisa dibagi nol';continue;}
+      r=op==='*'?r*rhs:r/rhs;
     }
     return r;
   }
@@ -3712,8 +3791,11 @@ function exprEval(v){
     return r;
   }
   const r=full();
-  return isFinite(r)?Math.max(0,Math.round(r)):0;
+  if(!err&&r<0)err='hasil negatif';
+  return{val:(!err&&isFinite(r))?Math.max(0,Math.round(r)):0,err};
 }
+function exprEval(v){return exprCalc(v).val;}
+function exprErr(v){return exprCalc(v).err;}
 function exprDisplay(raw){
   if(!raw)return '';
   return raw.replace(/\d+/g,m=>nf.format(+m)).replace(/([+\-*/])/g,' $1 ');
@@ -3744,7 +3826,8 @@ function moneyMask(el){
     const raw=exprSanitize(el.value);
     el.classList.toggle('expr-mode',exprHasOp(raw));
     if(exprHasOp(raw)){
-      hint.textContent='= Rp '+nf.format(exprEval(raw));
+      const er=exprErr(raw);
+      hint.textContent=er?('Hitungan tidak valid: '+er):('= Rp '+nf.format(exprEval(raw)));
       hint.classList.add('on');
     }else{
       hint.textContent='';
@@ -3784,7 +3867,7 @@ function entryForm(e,forceType,draft){
   draft=draft||{};
   const type=e?e.type:(forceType||lastUsed.type||'expense');
   const selW=e?e.walletId:(lastUsed.wal||(state.wallets[0]||{}).id);
-  const selC=e?e.catId:(type==='expense'?(lastUsed.cat||(state.cats[0]||{}).id):(lastUsed.icat||(state.incomeCats[0]||{}).id));
+  const selC=e?e.catId:(type==='expense'?(lastUsed.cat||(state.cats[0]||{}).id):(lastUsed.icat||defIncCat()));
   const selM=e?motorIdOf(e):(draft.motor||lastUsed.motor||(state.motors[0]||{}).id);
   const selMe=e?meterIdOf(e):(draft.meter||lastUsed.meter||(state.meters[0]||{}).id);
   const amtVal=e?e.amount:(draft.amount||0);
@@ -3823,6 +3906,9 @@ function entryForm(e,forceType,draft){
   '<div class="field"><label>'+(type==='income'?'Masuk ke dompet':'Bayar pakai dompet')+'</label><div class="pick" id="walPick">'+walPickHtml(selW)+'</div></div>'+
   '<div class="field"><label for="note">Catatan <span style="color:var(--ink-3);font-weight:500">(opsional)</span></label>'+
     '<input class="inp" id="note" placeholder="'+(type==='income'?'Contoh: gaji bulan ini':'Contoh: nasi padang + es teh')+'" value="'+esc(noteVal)+'" maxlength="80"></div>'+
+  '<div class="field" id="clientField"'+((isProjectCat(selC)||(e&&e.client))?'':' style="display:none"')+'><label for="client">Klien / proyek <span style="color:var(--ink-3);font-weight:500">(opsional)</span></label>'+
+    '<input class="inp" id="client" list="clientList" autocomplete="off" placeholder="Contoh: Wedding Andi &amp; Sari" value="'+esc(e&&e.client?e.client:(draft.client||''))+'" maxlength="40">'+
+    '<datalist id="clientList">'+clientNames().map(n=>'<option value="'+esc(n)+'"></option>').join('')+'</datalist></div>'+
   photoFieldHtml()+
   timeBlockHtml(dateVal,timeVal,approxVal)+
   repeatFieldHtml(e)+
@@ -3839,7 +3925,7 @@ function transferForm(existing,draft){
     const inTx=existing.type==='income'?existing:peer;
     fromId=outTx?outTx.walletId:existing.walletId;
     toId=inTx?inTx.walletId:(state.wallets.find(w=>w.id!==fromId)||state.wallets[0]).id;
-    amount=existing.amount;note=existing.note;date=existing.date;time=timeOf(existing);
+    amount=existing.amount;note=isAutoTransferNote(existing.note)?'':existing.note;date=existing.date;time=timeOf(existing);
   }else{
     fromId=draft.from||lastUsed.wal||(state.wallets[0]||{}).id;
     toId=draft.to||(state.wallets.find(w=>w.id!==fromId)||state.wallets[0]||{}).id;
@@ -3874,7 +3960,7 @@ function wireEntry(existing,draft,forceType){
     amt.dispatchEvent(new Event('input'));
     amt.focus();
   }));
-  let cat=existing?existing.catId:(curType==='expense'?(lastUsed.cat||(state.cats[0]||{}).id):(lastUsed.icat||(state.incomeCats[0]||{}).id));
+  let cat=existing?existing.catId:(curType==='expense'?(lastUsed.cat||(state.cats[0]||{}).id):(lastUsed.icat||defIncCat()));
   let wal=existing?existing.walletId:(lastUsed.wal||(state.wallets[0]||{}).id);
   let motorId=existing?motorIdOf(existing):(draft.motor||lastUsed.motor||(state.motors[0]||{}).id);
   let meterId=existing?meterIdOf(existing):(draft.meter||lastUsed.meter||(state.meters[0]||{}).id);
@@ -3936,6 +4022,7 @@ function wireEntry(existing,draft,forceType){
     }
   }
   function updateOdoField(){
+    const cf=$('#clientField');if(cf)cf.style.display=(isProjectCat(cat)||(existing&&existing.client))?'':'none';
     const f=$('#odoField');if(!f)return;
     f.style.display=isMotorCat(cat)?'':'none';
     const mf=$('#motorField');if(mf)mf.style.display=isMotorCat(cat)?'':'none';
@@ -4000,7 +4087,7 @@ function wireEntry(existing,draft,forceType){
       $$('#typeSeg button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
       moveSegGlider(seg);
       const cats=curType==='expense'?state.cats:state.incomeCats;
-      cat=cats[0].id;
+      cat=(curType==='income'?defIncCat():cats[0].id);
       $('#catPick').innerHTML=catPickHtml(cats,cat);
       wireCatClicks();
       updateOdoField();
@@ -4017,6 +4104,7 @@ function wireEntry(existing,draft,forceType){
     const time=$('#time').value||nowTime();
     const approx=tb.approx()||undefined;
     const note=$('#note').value.trim();
+    const cfEl=$('#clientField'),client=(cfEl&&cfEl.style.display!=='none')?(($('#client').value||'').trim().slice(0,40)||undefined):undefined;
     let odo=null;
     if(isMotorCat(cat)){
       const odoEl=$('#odo'),raw=odoEl?odoEl.value.trim():'';
@@ -4038,10 +4126,10 @@ function wireEntry(existing,draft,forceType){
     let ph={},phErr=false;
     try{ph=await pf.commit(txId);}catch(err){phErr=true;}
     if(existing){
-      Object.assign(existing,{amount:v,catId:cat,walletId:wal,date,time,approx,incomplete:undefined,note,odo,motorId:mid,meter:mtr,topup,meterId:meid},ph);
+      Object.assign(existing,{amount:v,catId:cat,walletId:wal,date,time,approx,incomplete:undefined,note,client,odo,motorId:mid,meter:mtr,topup,meterId:meid},ph);
       toast('Perubahan tersimpan');
     }else{
-      state.tx.push(Object.assign({id:txId,type:curType,amount:v,catId:cat,walletId:wal,date,time,approx,note,odo,motorId:mid,meter:mtr,topup,meterId:meid,createdAt:Date.now()},ph));
+      state.tx.push(Object.assign({id:txId,type:curType,amount:v,catId:cat,walletId:wal,date,time,approx,note,client,odo,motorId:mid,meter:mtr,topup,meterId:meid,createdAt:Date.now()},ph));
       celebrate(curType==='income'?'var(--mint)':'var(--accent)');
     }
     lastUsed.type=curType;lastUsed.wal=wal;
@@ -4421,15 +4509,21 @@ function guessAmountFromText(text){
   const lines=text.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
   const numRe=/\d{1,3}(?:[.,]\d{3})+|\d{4,}/g;
   const toNum=s=>parseInt(s.replace(/\D/g,''),10)||0;
-  const kwRe=/(grand\s*total|total\s*belanja|total\s*bayar|total\s*tagihan|^total\b|jumlah\s*bayar|^jumlah\b|^bayar\b|tunai)/i;
-  let best=0;
+  /* 1) baris TOTAL (grand total, total belanja, dst) */
+  const totRe=/(grand\s*total|total\s*belanja|total\s*bayar|total\s*tagihan|total\s*harga|^total\b|jumlah\s*bayar|^jumlah\b)/i;
+  /* 2) uang yang diserahkan (tunai/bayar) dan kembaliannya: tunai − kembali = total */
+  const tenRe=/(^bayar\b|tunai|cash)/i,chgRe=/(kembali|change)/i;
+  let best=0,tender=0,change=0;
   lines.forEach(line=>{
-    if(kwRe.test(line)){
-      const m=line.match(numRe);
-      if(m){const n=toNum(m[m.length-1]);if(n>=100&&n>best)best=n;}
-    }
+    const m=line.match(numRe);if(!m)return;
+    const n=toNum(m[m.length-1]);
+    if(n<100)return;
+    if(totRe.test(line)){if(n>best)best=n;}
+    else if(chgRe.test(line)){if(n>change)change=n;}
+    else if(tenRe.test(line)){if(n>tender)tender=n;}
   });
   if(best)return best;
+  if(tender)return (change>0&&change<tender)?tender-change:tender;
   let max=0;
   (text.match(numRe)||[]).forEach(s=>{const n=toNum(s);if(n>max&&n<100000000)max=n;});
   return max||null;
