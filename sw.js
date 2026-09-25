@@ -6,7 +6,7 @@
    - Pustaka Supabase (cdn.jsdelivr.net): disimpan juga, supaya sinkron akun tetap bisa dimulai saat offline.
    Data keuanganmu TIDAK lewat sini: permintaan ke Supabase (*.supabase.co) sengaja tidak disentuh service worker.
    Tiap kali mengganti index.html/ikon, naikkan VERSION supaya pengguna diberi tahu ada versi baru. */
-const VERSION = '2026.09.25-1';
+const VERSION = '2026.09.25-2';
 const SHELL = 'kantong-shell-' + VERSION;
 const FONTS = 'kantong-fonts-v1';
 const LIB = 'kantong-lib-v1';
