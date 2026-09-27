@@ -5242,7 +5242,7 @@ function renderRecEntry(){
 /* --- daftar & pengelola --- */
 function recRowHtml(r){
   const c=recLook(r),fin=r.left===0,nx=recLive(r)?recNext(r):null;
-  const status=fin?'Selesai':(!r.active?'Dijeda':(nx?'Berikutnya '+recLbl(nx)+(r.left>0?' · sisa '+r.left+'×':''):''));
+  const status=fin?'Selesai':(!r.active?'Dijeda':(nx?'Berikutnya '+recLbl(nx)+' · '+esc(r.time||'08:00')+(r.left>0?' · sisa '+r.left+'×':''):''));
   return '<button type="button" class="li-item rec-item'+(recLive(r)?'':' off')+'" data-rid="'+esc(r.id)+'">'+
     '<span class="ic" style="background:'+c.color+'22">'+c.emoji+'</span>'+
     '<span class="mid"><span class="t">'+esc(recTitle(r))+'</span>'+
@@ -5294,7 +5294,7 @@ function openRecManager(){
 function openRecEditor(ex,preset){
   const isNew=!ex,fin=!!ex&&ex.left===0,now=new Date();
   const o=ex||Object.assign({type:'expense',amount:0,catId:'',walletId:'',toWalletId:'',note:'',freq:'monthly',day:now.getDate(),month:now.getMonth(),start:todayKey(),lastRun:null,auto:true,left:null,active:true,time:'08:00'},preset||{});
-  let type=o.type,cat=o.catId,wal=recWalId(o.walletId||lastUsed.wal),to=o.toWalletId,freq=o.freq,day=o.day,month=o.month,auto=o.auto;
+  let type=o.type,cat=o.catId,wal=recWalId(o.walletId||lastUsed.wal),to=o.toWalletId,freq=o.freq,day=o.day,month=o.month,auto=o.auto,time=/^\d{2}:\d{2}$/.test(o.time||'')?o.time:'08:00';
   const canT=state.wallets.length>1;
   const catsOf=t=>t==='income'?state.incomeCats.filter(c=>c.id!=='ic-saldo'):state.cats.filter(c=>!c.motor&&!c.meter);
   if(type==='transfer'&&!canT)type='expense';
@@ -5327,6 +5327,7 @@ function openRecEditor(ex,preset){
     '<div class="field"><label>Seberapa sering</label><div class="tchips" id="rFreq" style="margin-bottom:10px">'+
       chip('f','weekly','Mingguan',freq==='weekly')+chip('f','monthly','Bulanan',freq==='monthly')+chip('f','yearly','Tahunan',freq==='yearly')+'</div>'+
       '<div id="rDayZone">'+dayZone()+'</div></div>'+
+    '<div class="field"><label for="rTime">Jam pencatatan</label><input class="inp" id="rTime" type="time" value="'+time+'"></div>'+
     (isNew?'<div class="field"><label for="rStart">Mulai dari</label><input class="inp" id="rStart" type="date" min="'+todayKey()+'" value="'+o.start+'"></div>':'')+
     '<div class="field"><label>Cara mencatat</label><div class="tchips" id="rMode" style="margin-bottom:6px">'+
       chip('m','auto','Catat otomatis',auto)+chip('m','ask','Tanya dulu',!auto)+'</div>'+
@@ -5397,6 +5398,7 @@ function openRecEditor(ex,preset){
       auto=b.dataset.m==='auto';$$('#rMode .tchip').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));paint();
     }));
     const st=$('#rStart');if(st)st.addEventListener('change',paint);
+    const rt=$('#rTime');if(rt)rt.addEventListener('change',()=>{time=/^\d{2}:\d{2}$/.test(rt.value)?rt.value:time;});
     paint();
     $('#rSave').addEventListener('click',()=>{
       const v=readMoney(amt);
@@ -5404,7 +5406,8 @@ function openRecEditor(ex,preset){
       if(isT()&&wal===to){toast('Pilih dua dompet yang berbeda dulu ya');return;}
       if(freq!=='weekly'){const dEl=$('#rDay'),dv=Math.round(+dEl.value);if(!(dv>=1&&dv<=31)){dEl.focus();toast('Tanggal harus antara 1 dan 31',ICO_ALERT);return;}day=dv;}
       const lv=Math.round(+$('#rLeft').value),hasLeft=$('#rLeft').value!==''&&lv>0;
-      const p={type,amount:v,catId:isT()?'x-transfer':cat,walletId:wal,toWalletId:isT()?to:'',note:$('#rNote').value.trim(),freq,day,month,auto};
+      const rtv=$('#rTime').value;
+      const p={type,amount:v,catId:isT()?'x-transfer':cat,walletId:wal,toWalletId:isT()?to:'',note:$('#rNote').value.trim(),freq,day,month,auto,time:/^\d{2}:\d{2}$/.test(rtv)?rtv:time};
       if(isNew){
         const s=($('#rStart')&&$('#rStart').value)||todayKey();
         state.recurring.push(recNorm(Object.assign({id:'r-'+uid(),start:s<todayKey()?todayKey():s,lastRun:null,left:hasLeft?lv:null,active:true,time:'08:00',createdAt:Date.now()},p)));
