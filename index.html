@@ -744,7 +744,7 @@ html.sheet-lock,html:has(#sheet.on),html:has(.dlg),html:has(.lightbox.on){overfl
 .toast{z-index:9100}
 /* selama kunci/verifikasi tampil, isi aplikasi disembunyikan total (tampilan, fokus keyboard, pembaca layar) */
 html.lk-on,html.lk-on body{overflow:hidden!important}
-html.lk-on body>*:not(#lockScreen):not(#toast):not(script){visibility:hidden!important}
+html.lk-on:not(.ag-on) body>*:not(#lockScreen):not(#toast):not(script){visibility:hidden!important}
 #lockScreen{--lk-key:clamp(58px,min(20vw,11vh),76px);--lk-gap:clamp(10px,2.2vh,16px);
   position:fixed;inset:0;z-index:9000;display:none;flex-direction:column;overflow-y:auto;overscroll-behavior:contain;
   padding:max(18px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left));
@@ -933,6 +933,34 @@ html.lk-on #lockScreen{display:flex}
 .svc-open{cursor:pointer}
 .svc-row+.rec-entry{margin-top:8px}
 
+/* ================= gerbang masuk (wajib login sebelum memakai aplikasi) ================= */
+html.ag-on,html.ag-on body{overflow:hidden!important}
+html.ag-on body>*:not(#authGate):not(#toast):not(script){visibility:hidden!important}
+#authGate{position:fixed;inset:0;z-index:9050;display:none;overflow-y:auto;overscroll-behavior:contain;
+  padding:max(24px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left));
+  background:radial-gradient(1100px 560px at 12% -8%,color-mix(in srgb,var(--accent) 18%,transparent),transparent 60%),
+    radial-gradient(800px 480px at 108% 6%,color-mix(in srgb,var(--mint) 13%,transparent),transparent 55%),var(--paper);
+  color:var(--ink)}
+html.ag-on #authGate{display:flex}
+.ag-wrap{margin:auto;width:100%;max-width:392px}
+.ag-brand{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:24px;text-align:center}
+.ag-mark{width:54px;height:54px;border-radius:17px;background:linear-gradient(140deg,var(--accent),var(--accent-2));display:grid;place-items:center;box-shadow:0 10px 26px -8px color-mix(in srgb,var(--accent) 65%,transparent)}
+.ag-mark svg{width:26px;height:26px;color:var(--on-accent)}
+.ag-title{font-family:"Fraunces",Georgia,serif;font-weight:700;font-size:23px;letter-spacing:-.01em;color:var(--ink)}
+.ag-sub{margin:0;font-size:13.5px;font-weight:500;color:var(--ink-2);max-width:290px;line-height:1.5}
+.ag-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-l);box-shadow:var(--shadow-m);padding:22px 20px 20px}
+.ag-tabs{display:flex;gap:4px;background:var(--paper-2);border-radius:14px;padding:4px;margin-bottom:18px}
+.ag-tab{flex:1;border:none;background:transparent;padding:9px 0;border-radius:11px;font-size:13.5px;font-weight:700;color:var(--ink-2);transition:background .18s,color .18s,box-shadow .18s}
+.ag-tab[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow-s)}
+.ag-foot{margin:16px 0 0;text-align:center;font-size:11.5px;line-height:1.6;color:var(--ink-3);font-weight:500}
+.ag-spin-wrap{display:flex;flex-direction:column;align-items:center;gap:14px;padding:28px 4px 22px}
+.ag-spin{width:30px;height:30px;border-radius:50%;border:3px solid var(--accent-soft);border-top-color:var(--accent);animation:agSpin .8s linear infinite}
+@keyframes agSpin{to{transform:rotate(360deg)}}
+.ag-spin-wrap span{font-size:13px;font-weight:600;color:var(--ink-2)}
+@media (min-width:900px) and (min-height:600px){
+  .ag-card{padding:26px 24px 22px}
+}
+
 /* ================= PWA: tampil layar penuh ================= */
 .topbar-in{padding-top:calc(12px + env(safe-area-inset-top));padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}
 body{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
@@ -942,6 +970,7 @@ body{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-ri
 </style>
 <script>/* kunci aplikasi: tutup tampilan sebelum apa pun sempat tergambar */
 try{var c=JSON.parse(localStorage.getItem('kantong.lock')||'null');if(c&&c.on&&c.hash)document.documentElement.classList.add('lk-on');}catch(e){}
+try{if(localStorage.getItem('kantong.gate')==='show')document.documentElement.classList.add('ag-on');}catch(e){}
 </script>
 </head>
 <body>
@@ -1199,6 +1228,17 @@ try{var c=JSON.parse(localStorage.getItem('kantong.lock')||'null');if(c&&c.on&&c
   </div>
 </div>
 
+<div id="authGate" role="dialog" aria-modal="true" aria-label="Masuk ke Kantong">
+  <div class="ag-wrap">
+    <div class="ag-brand">
+      <div class="ag-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7H6a3 3 0 0 0-3 3v7a3 3 0 0 0 3 3h13a1 1 0 0 0 1-1v-3"/><path d="M17 13.5h.01"/><path d="M3 9.5V7a3 3 0 0 1 3-3h10"/></svg></div>
+      <div class="ag-title">Kantong</div>
+      <p class="ag-sub" id="agSub">Masuk untuk mulai mencatat dan menyinkronkan keuanganmu dengan aman.</p>
+    </div>
+    <div class="ag-card" id="agCard"></div>
+  </div>
+</div>
+
 <script src="config.js"></script>
 <script src="sync.js"></script>
 <script>
@@ -1424,6 +1464,7 @@ let meta=loadMeta(); /* {uid,email,rev,dirty,base,at}: rev = versi server yang t
 function saveMeta(){try{localStorage.setItem(META_KEY,JSON.stringify(meta));}catch(e){}}
 let cloud={sb:null,user:null,uid:null,status:SB_ON?'boot':'off',err:'',busy:false,again:false,timer:null,chan:null,poll:null,seq:0,deferred:false,retry:0,loading:null,initP:null};
 let bootedRec=false;
+gateSync(); /* gerbang masuk wajib: tutup aplikasi sampai status akun diketahui (kalau sinkron aktif) */
 function bootRec(){if(bootedRec)return;bootedRec=true;recRun(true);renderAll();}
 
 function docOf(s){return{v:s.v,tx:s.tx,cats:s.cats,incomeCats:s.incomeCats,wallets:s.wallets,motors:s.motors,meters:s.meters,budgets:s.budgets,recurring:s.recurring,debts:s.debts,svcs:s.svcs,prefs:s.prefs,updatedAt:s.updatedAt};}
@@ -1487,17 +1528,17 @@ function initCloud(){
   return cloud.initP;
 }
 async function initCloudInner(){
-  if(!SB_ON){setStatus('off');bootRec();return false;}
+  if(!SB_ON){setStatus('off');bootRec();gateSync();return false;}
   if(cloud.sb)return true;
   setStatus('boot');
   const ok=await loadSb();
-  if(!ok){setStatus(meta.uid?'wait':'off');bootRec();return false;}
+  if(!ok){setStatus(meta.uid?'wait':'off');bootRec();gateSync();return false;}
   try{
     cloud.sb=window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'implicit',storageKey:'kantong.sb-auth'}});
     /* jangan memanggil method Supabase lain langsung di dalam callback ini (bisa buntu), makanya dibungkus setTimeout */
     cloud.sb.auth.onAuthStateChange((ev,session)=>{setTimeout(()=>onAuth(ev,session),0);});
-  }catch(e){cloud.sb=null;setStatus('off');bootRec();return false;}
-  setTimeout(()=>{if(cloud.status==='boot'){setStatus(cloud.user?'syncing':'out');bootRec();}},7000);
+  }catch(e){cloud.sb=null;setStatus('off');bootRec();gateSync();return false;}
+  setTimeout(()=>{if(cloud.status==='boot'){setStatus(cloud.user?'syncing':'out');bootRec();gateSync();}},7000);
   return true;
 }
 function onAuth(ev,session){
@@ -1512,6 +1553,7 @@ function onAuth(ev,session){
     setStatus('out');
     if(!was)bootRec();
   }
+  gateSync();
 }
 async function startSync(){
   setStatus('syncing');
@@ -1679,6 +1721,73 @@ async function doSignUp(email,pw){
   return{exists:!!(u&&Array.isArray(u.identities)&&u.identities.length===0),needsConfirm:!(r.data&&r.data.session)};
 }
 async function doReset(email){const r=await cloud.sb.auth.resetPasswordForEmail(email,{redirectTo:REDIRECT()});if(r.error)throw r.error;}
+
+/* ---- gerbang masuk wajib (halaman penuh, tampil sampai berhasil masuk/daftar) ---- */
+function gateCache(v){try{if(v)localStorage.setItem('kantong.gate',v);else localStorage.removeItem('kantong.gate');}catch(e){}}
+function gateOpen(){document.documentElement.classList.add('ag-on');gateCache('show');}
+function gateClose(){document.documentElement.classList.remove('ag-on');gateCache('');}
+function gateLoading(){
+  const s=$('#agSub');if(s)s.textContent='Menyiapkan…';
+  const c=$('#agCard');if(c)c.innerHTML='<div class="ag-spin-wrap"><div class="ag-spin" aria-hidden="true"></div><span>Memeriksa status akun…</span></div>';
+}
+function gateSync(){
+  if(!SB_ON){gateClose();return;}
+  if(cloud.user){gateClose();return;}
+  gateOpen();
+  if(cloud.status==='boot'){gateLoading();return;}
+  if(!$('#agForm'))gateRender('in','');
+}
+function gateRender(mode,email,note){
+  const up=mode==='up';
+  const sub=$('#agSub');if(sub)sub.textContent=up?'Buat akun untuk menyimpan catatanmu dengan aman dan membukanya dari perangkat lain.':'Masuk untuk melanjutkan ke Kantong.';
+  $('#agCard').innerHTML=
+    '<div class="ag-tabs" id="agTabs"><button type="button" class="ag-tab" data-m="in" aria-pressed="'+!up+'">Masuk</button><button type="button" class="ag-tab" data-m="up" aria-pressed="'+up+'">Daftar</button></div>'+
+    '<form id="agForm" novalidate>'+
+      '<div class="field"><label for="agEmail">Email</label><input class="inp" id="agEmail" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="nama@email.com" value="'+esc(email||'')+'"></div>'+
+      '<div class="field"><label for="agPw">Kata sandi</label><div class="pw-wrap"><input class="inp" id="agPw" name="password" type="password" autocomplete="'+(up?'new-password':'current-password')+'" placeholder="'+(up?'Minimal 8 karakter':'Kata sandimu')+'" style="padding-right:78px"><button type="button" class="pw-eye" id="agEye" aria-label="Tampilkan kata sandi" aria-pressed="false">Lihat</button></div></div>'+
+      '<p class="au-msg" id="agMsg" role="status" aria-live="polite">'+esc(note||'')+'</p>'+
+      '<button type="submit" class="btn" id="agGo">'+(up?'Buat akun':'Masuk')+'</button>'+
+    '</form>'+
+    (up?'':'<button type="button" class="au-link" id="agForgot">Lupa kata sandi?</button>')+
+    '<p class="ag-foot">'+(up?'Catatan yang sudah ada di perangkat ini ikut tersimpan ke akunmu setelah daftar.':'Catatan yang sudah ada di perangkat ini tidak akan hilang saat masuk.')+'</p>';
+  const msg=(t,k)=>{const m=$('#agMsg');m.textContent=t||'';m.className='au-msg'+(k?' '+k:'');};
+  $$('#agTabs .ag-tab').forEach(b=>b.addEventListener('click',()=>gateRender(b.dataset.m,$('#agEmail').value)));
+  $('#agEye').addEventListener('click',e=>{const p=$('#agPw'),show=p.type==='password';p.type=show?'text':'password';e.currentTarget.textContent=show?'Sembunyi':'Lihat';e.currentTarget.setAttribute('aria-pressed',String(show));});
+  const busy=v=>{const g=$('#agGo');g.disabled=v;g.textContent=v?'Memproses…':(up?'Buat akun':'Masuk');const f=$('#agForgot');if(f)f.disabled=v;};
+  $('#agForm').addEventListener('submit',async ev=>{
+    ev.preventDefault();
+    const em=$('#agEmail').value.trim(),pw=$('#agPw').value;
+    if(!/^\S+@\S+\.\S+$/.test(em)){msg('Isi alamat email dengan benar.','err');$('#agEmail').focus();return;}
+    if(!pw){msg('Isi kata sandi.','err');$('#agPw').focus();return;}
+    if(up&&pw.length<8){msg('Kata sandi minimal 8 karakter.','err');$('#agPw').focus();return;}
+    msg('');busy(true);
+    try{
+      if(!cloud.sb)await initCloud();
+      if(!cloud.sb){busy(false);msg('Belum bisa terhubung. Cek koneksi internet lalu coba lagi.','err');return;}
+      if(!up){await doSignIn(em,pw);toast('Berhasil masuk');return;}
+      const r=await doSignUp(em,pw);
+      if(r.exists){busy(false);gateRender('in',em,'Email ini sudah terdaftar. Silakan masuk.');return;}
+      if(r.needsConfirm){
+        $('#agCard').innerHTML='<div class="li-item" style="animation:none"><span class="ic" style="background:var(--accent-soft)">✉️</span><span class="mid"><span class="t">Cek email kamu</span><span class="s">'+esc(em)+'</span></span></div>'+
+          '<p class="qhint" style="font-size:12.5px;color:var(--ink-2)">Kami mengirim tautan konfirmasi. Ketuk tautannya, lalu kembali ke Kantong dan masuk dengan kata sandi yang tadi kamu buat. Kalau belum ada, cek folder spam.</p>'+
+          '<button type="button" class="btn" id="agBack">Ke halaman masuk</button>';
+        $('#agBack').addEventListener('click',()=>gateRender('in',em));
+        return;
+      }
+      toast('Akun dibuat, kamu sudah masuk');
+    }catch(e){busy(false);msg(authErr(e),'err');}
+  });
+  const fg=$('#agForgot');
+  if(fg)fg.addEventListener('click',async()=>{
+    const em=$('#agEmail').value.trim();
+    if(!/^\S+@\S+\.\S+$/.test(em)){msg('Isi email dulu di atas, lalu ketuk Lupa kata sandi.','err');$('#agEmail').focus();return;}
+    busy(true);
+    try{await doReset(em);msg('Tautan atur ulang kata sandi dikirim ke '+em+'. Cek email kamu.','ok');}
+    catch(e){msg(authErr(e),'err');}
+    busy(false);
+  });
+  if(!email)setTimeout(()=>{const el=$('#agEmail');if(el)el.focus();},260);
+}
 
 let acctMode='in';
 function openAccount(){
