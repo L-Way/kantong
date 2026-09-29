@@ -992,7 +992,7 @@ body{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-ri
 .sdk-chunk .amt{font-weight:800;font-size:13.5px;white-space:nowrap;flex:none;font-variant-numeric:tabular-nums}
 .sdk-chunk .amt.exp{color:var(--rose)}
 .sdk-chunk .amt.inc{color:var(--mint)}
-.sdk-chunk .go{flex:none;padding:7px 11px;font-size:12px}
+.sdk-chunk .go{flex:none;width:auto;padding:7px 11px;font-size:12px}
 .sdk-acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .sdk-acts .btn{flex:1 1 128px;min-width:0}
 .sdk-sec{border-color:color-mix(in srgb,var(--amber) 55%,var(--line))}
@@ -1016,6 +1016,32 @@ body{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-ri
 .pill-sdk{display:inline-flex;align-items:center;padding:1px 7px;margin-left:6px;border-radius:99px;font-size:10px;font-weight:800;font-style:normal;
   background:color-mix(in srgb,var(--mint) 16%,transparent);color:var(--mint);vertical-align:middle}
 .sdk-h{font-size:13px;margin:16px 0 4px}
+/* --- target sedekah, pengingat, kesehatan data --- */
+.sdk-bar{height:9px;border-radius:99px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden;margin:8px 0 4px}
+.sdk-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--mint),color-mix(in srgb,var(--mint) 55%,var(--accent)));transition:width .5s cubic-bezier(.2,.8,.2,1)}
+.sdk-streak{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;min-width:0}
+.sdk-streak span{min-width:0}
+div.sdk-mini{cursor:default}
+.sdk-mini.nudge .t{white-space:normal;line-height:1.4}
+.sdk-mini.nudge b{cursor:pointer;padding:6px 4px}
+.sdk-x{flex:none;width:30px;height:30px;border-radius:10px;display:grid;place-items:center;color:var(--ink-3);font-size:14px;font-weight:800}
+.sdk-x:active{background:var(--surface-2)}
+.hl{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px dashed var(--line);min-width:0}
+.hl:first-of-type{border-top:0}
+.hl .ic{width:32px;height:32px;border-radius:11px;display:grid;place-items:center;flex:none;font-size:15px;background:var(--surface-2)}
+.hl .ic.ok{background:color-mix(in srgb,var(--mint) 16%,transparent)}
+.hl .ic.no{background:color-mix(in srgb,var(--amber) 20%,transparent)}
+.hl .mid{flex:1;min-width:0}
+.hl .mid b{display:block;font-size:13px;font-weight:700}
+.hl .mid span{display:block;font-size:11.5px;color:var(--ink-3);line-height:1.4}
+.hl .btn,.bak-row .btn{flex:none;width:auto;min-width:0;padding:7px 11px;font-size:12px}
+.hl-sum{font-size:12.5px;font-weight:700;margin:2px 0 8px}
+.hl-sum.ok{color:var(--mint)}
+.hl-sum.no{color:var(--amber)}
+.bak-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px dashed var(--line);min-width:0}
+.bak-row .mid{flex:1;min-width:0}
+.bak-row .mid b{display:block;font-size:13px;font-weight:700}
+.bak-row .mid span{display:block;font-size:11.5px;color:var(--ink-3)}
 </style>
 <script>/* kunci aplikasi: tutup tampilan sebelum apa pun sempat tergambar */
 try{var c=JSON.parse(localStorage.getItem('kantong.lock')||'null');if(c&&c.on&&c.hash)document.documentElement.classList.add('lk-on');}catch(e){}
@@ -1125,6 +1151,8 @@ try{if(localStorage.getItem('kantong.gate')==='show')document.documentElement.cl
     <div class="hint-act"><button type="button" id="lkNudgeGo">Atur PIN sekarang</button><button type="button" id="lkNudgeNo">Nanti saja</button></div>
   </section>
   <div id="sdkDue" class="rec-due" hidden></div>
+  <div id="sdkNudge" class="rec-due" hidden></div>
+  <div id="dataNudge" class="rec-due" hidden></div>
   <div id="debtDue" class="rec-due" hidden></div>
   <div id="recDue" class="rec-due" hidden></div>
   <div class="hero-grid">
@@ -1427,12 +1455,13 @@ const METER_EMOJIS=['⚡','🔌','💡','🏠','🏢','🏭','🔋','🧯'];
 const DEFAULT_METERS=[{id:'lm-1',name:'Meteran 1',emoji:'⚡',color:'#FBBF24',type:'prabayar'}];
 
 /* pengaturan pengingat catat (ikut tersimpan & tersinkron bersama data lain) */
-const DEFAULT_PREFS={remind:{on:true,every:3,from:'08:00',to:'21:00',notify:false},sdk:{on:true,days:1}};
+const DEFAULT_PREFS={remind:{on:true,every:3,from:'08:00',to:'21:00',notify:false},sdk:{on:true,days:1,goal:0,per:'day',nudge:false,nudgeAt:'17:00'}};
 function normPrefs(p){
   const r=(p&&p.remind)||{},ev=+r.every,hm=/^\d{2}:\d{2}$/;
   const sk=(p&&p.sdk)||{},sd=+sk.days; /* dompet sedekah: pengingat mengembalikan dana + batas hari bawaan (0 = hari itu juga) */
   return{remind:{on:r.on!==false,every:[1,2,3,4,6].indexOf(ev)>=0?ev:3,from:hm.test(r.from||'')?r.from:'08:00',to:hm.test(r.to||'')?r.to:'21:00',notify:!!r.notify},
-    sdk:{on:sk.on!==false,days:[0,1,2,3,7].indexOf(sd)>=0?sd:1}};
+    sdk:{on:sk.on!==false,days:[0,1,2,3,7].indexOf(sd)>=0?sd:1,
+      goal:Math.max(0,Math.min(1e9,Math.round(+sk.goal||0))),per:sk.per==='week'?'week':'day',nudge:!!sk.nudge,nudgeAt:hm.test(sk.nudgeAt||'')?sk.nudgeAt:'17:00'}};
 }
 let state={v:9,tx:[],cats:DEFAULT_CATS.slice(),incomeCats:DEFAULT_INCOME_CATS.slice(),wallets:DEFAULT_WALLETS.slice(),motors:DEFAULT_MOTORS.slice(),meters:DEFAULT_METERS.slice(),budgets:{},recurring:[],debts:[],svcs:[],prefs:normPrefs(),updatedAt:0};
 let view={y:new Date().getFullYear(),m:new Date().getMonth(),tab:'list',listType:'expense',filter:'all',wfilter:'all',q:''};
@@ -1576,7 +1605,7 @@ function choose(title,msg,opts,extra){
     const f=$('.dlg-btns .btn',w);if(f)setTimeout(()=>f.focus(),50);
   });
 }
-const backupNow=()=>deliver('kantong-backup.json',JSON.stringify(state,null,2),'application/json');
+const backupNow=()=>{markBackup();return deliver('kantong-backup.json',JSON.stringify(state,null,2),'application/json');};
 
 /* ---- memuat pustaka Supabase (sekali, di latar belakang; disimpan service worker) ---- */
 function loadSb(){
@@ -2088,7 +2117,7 @@ function expOf(list){return list.filter(e=>e.type==='expense');}
 function incOf(list){return list.filter(e=>e.type==='income');}
 /* "real" = tidak termasuk perpindahan antar dompet sendiri - bukan pengeluaran/pemasukan sungguhan */
 function realExpOf(list){return list.filter(e=>e.type==='expense'&&!e.transferId&&!e.debtId&&!e.pass);}
-function realIncOf(list){return list.filter(e=>e.type==='income'&&!e.transferId&&!e.debtId&&!e.pass&&e.catId!=='ic-saldo');} /* Saldo Awal = uang yang sudah ada sebelumnya, bukan pemasukan periode itu */
+function realIncOf(list){return list.filter(e=>e.type==='income'&&!e.transferId&&!e.debtId&&!e.pass&&e.sdk!=='ret'&&e.catId!=='ic-saldo');} /* Saldo Awal = uang yang sudah ada sebelumnya, bukan pemasukan periode itu */
 function sum(a){return a.reduce((x,e)=>x+(+e.amount||0),0);}
 function bKey(y,m){return y+'-'+String(m+1).padStart(2,'0');}
 function daysInMonth(y,m){return new Date(y,m+1,0).getDate();}
@@ -2207,6 +2236,362 @@ function sdkNotice(kind,wid,amount,due){
     toast(left>0?'Dikembalikan. Sisa yang perlu dikembalikan '+rp(left):'Lunas, dana sedekah utuh kembali 🤲',null,3400);
   }
 }
+
+/* ================= sedekah: target, rutinitas, pakai cepat ================= */
+const SDK_NDG='kantong.sdkNudgeOff';
+function sdkGiveTx(){return state.tx.filter(e=>e.type==='expense'&&!e.transferId&&isSdkCat(e.catId));}
+function sdkGiveSum(a,b){return sdkGiveTx().filter(e=>e.date>=a&&e.date<=b).reduce((t,e)=>t+(+e.amount||0),0);}
+function sdkWeekStart(k){const d=parseKey(k);return recShift(k,-((d.getDay()+6)%7));} /* Senin */
+function sdkStreak(){ /* hari berturut-turut bersedekah; kalau hari ini belum, hitung mundur dari kemarin */
+  const days={};sdkGiveTx().forEach(e=>{days[e.date]=1;});
+  let k=todayKey(),n=0;const today=!!days[k];
+  if(!today)k=recShift(k,-1);
+  while(days[k]&&n<3660){n++;k=recShift(k,-1);}
+  return{n,today};
+}
+function sdkGoal(){
+  const p=state.prefs.sdk||{},t=todayKey(),per=p.per==='week'?'week':'day',start=per==='week'?sdkWeekStart(t):t;
+  const goal=+p.goal||0,got=sdkGiveSum(start,t);
+  return{goal,per,got,pct:goal>0?Math.min(100,Math.round(got/goal*100)):0,met:goal>0&&got>=goal};
+}
+function sdkNudgeState(){ /* null = tidak perlu mengingatkan */
+  const p=state.prefs.sdk||{};
+  if(!p.nudge||p.on===false||!sedekahWallets().length)return null;
+  const now=new Date(),hm=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  if(hm<(p.nudgeAt||'17:00'))return null;
+  const t=todayKey();
+  if(sdkGiveSum(t,t)>0)return null;
+  const g=sdkGoal();
+  if(g.goal>0&&g.per==='week'&&g.met)return null;
+  return g;
+}
+let sdkNudgeKey='';
+function renderSdkNudge(){
+  const box=$('#sdkNudge');if(!box)return;
+  let off=false;try{off=localStorage.getItem(SDK_NDG)===todayKey();}catch(e){}
+  const g=off?null:sdkNudgeState(),st=sdkStreak();
+  const key=g?('1|'+todayKey()+'|'+g.goal+'|'+g.got+'|'+st.n):'0';
+  if(key===sdkNudgeKey)return;
+  sdkNudgeKey=key;
+  if(!g){box.hidden=true;box.innerHTML='';return;}
+  box.innerHTML='<div class="sdk-mini nudge"><span>🤲</span><span class="t">Hari ini belum bersedekah'+
+    (g.goal>0?' · target '+rp(g.goal)+(g.per==='week'?' minggu ini, terkumpul '+rp(g.got):''):'')+
+    (st.n>0?'. Jaga '+st.n+' hari berturut-turut.':'')+'</span><b data-nd="give" role="button" tabindex="0">Salurkan</b>'+
+    '<button type="button" class="sdk-x" data-nd="off" aria-label="Sembunyikan sampai besok">✕</button></div>';
+  box.hidden=false;
+  $('[data-nd="give"]',box).addEventListener('click',()=>openSdkGive());
+  $('[data-nd="off"]',box).addEventListener('click',()=>{try{localStorage.setItem(SDK_NDG,todayKey());}catch(e){}sdkNudgeKey='';renderSdkNudge();});
+}
+function sdkGoalCardHtml(){
+  if(!sedekahWallets().length)return '';
+  const g=sdkGoal(),st=sdkStreak();
+  const perTxt=g.per==='week'?'minggu ini':'hari ini';
+  return '<div class="card"><h3>🎯 Target & rutinitas</h3>'+
+    '<div class="sdk-streak"><span style="font-size:22px">'+(st.n>0?'🔥':'🌱')+'</span><span>'+
+      (st.n>0?st.n+' hari berturut-turut bersedekah'+(st.today?'':' <em style="font-weight:500;color:var(--ink-3)">(hari ini belum)</em>'):'Belum ada rangkaian. Mulai hari ini?')+'</span></div>'+
+    (g.goal>0?'<div class="bar-sub" style="margin-top:12px"><span>Target '+(g.per==='week'?'mingguan':'harian')+' '+rp(g.goal)+'</span><span class="num" style="font-weight:800">'+(g.met?'Tercapai ✓':rp(g.got)+' / '+rp(g.goal))+'</span></div>'+
+      '<div class="sdk-bar"><i style="width:'+g.pct+'%"></i></div><p class="qhint" style="margin:2px 0 0">'+(g.met?'Alhamdulillah, target '+perTxt+' tercapai.':'Kurang '+rp(g.goal-g.got)+' lagi '+perTxt+'.')+'</p>':
+      '<p class="sub" style="margin:8px 0 0">Belum ada target nominal. Atur target dan pengingat supaya bersedekah tiap hari lebih terjaga.</p>')+
+    '<div class="sdk-acts"><button class="btn ghost sm" data-sdk="goal">'+(g.goal>0||(state.prefs.sdk||{}).nudge?'Ubah target & pengingat':'Atur target & pengingat')+'</button></div></div>';
+}
+function openSdkGoal(){
+  const p=state.prefs.sdk;let per=p.per==='week'?'week':'day',nudge=!!p.nudge;
+  openSheet('Target & pengingat sedekah',
+    '<div class="amount-box" id="amountBox" style="--ab:var(--mint)"><label for="amt">Target nominal <span style="font-weight:500">(kosongkan kalau tanpa target)</span></label>'+
+      '<div class="amount-in"><span class="rp">Rp</span><input id="amt" inputmode="numeric" autocomplete="off" placeholder="0" value="'+(p.goal?String(p.goal):'')+'"></div>'+
+      '<div class="quick">'+[5000,10000,20000,50000,100000].map(v=>'<button class="q" data-add="'+v+'">+'+shortRp(v)+'</button>').join('')+'<button class="q" data-clear="1">Hapus</button></div></div>'+
+    '<span class="sdk-l" style="margin-top:0">Target dihitung per</span>'+
+    '<div class="tchips" id="sdkPer"><button type="button" class="tchip" data-p="day" aria-pressed="'+(per==='day')+'">Hari</button><button type="button" class="tchip" data-p="week" aria-pressed="'+(per==='week')+'">Minggu (Senin–Minggu)</button></div>'+
+    '<div class="sdk-box" style="margin-top:14px"><label class="chk"><input type="checkbox" id="ndOn"'+(nudge?' checked':'')+'><span><b>Ingatkan kalau hari ini belum bersedekah</b>Muncul di beranda setelah jam yang kamu pilih, sampai kamu mencatat penyaluran sedekah.</span></label>'+
+      '<div id="ndWrap"'+(nudge?'':' hidden')+'><span class="sdk-l">Mulai mengingatkan jam</span><input type="time" class="inp" id="ndAt" value="'+esc(p.nudgeAt||'17:00')+'" style="max-width:160px"></div></div>'+
+    '<button class="btn" id="saveGoal" style="margin-top:14px">Simpan</button>',
+    ()=>{
+      const amt=$('#amt');moneyMask(amt);
+      $$('#sheetBody .q').forEach(b=>b.addEventListener('click',()=>{
+        if(b.dataset.clear)amt.value='';else amt.value=String(readMoney(amt)+(+b.dataset.add));
+        amt.dispatchEvent(new Event('input'));
+      }));
+      $$('#sdkPer .tchip').forEach(b=>b.addEventListener('click',()=>{per=b.dataset.p;$$('#sdkPer .tchip').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));}));
+      $('#ndOn').addEventListener('change',e=>{nudge=e.target.checked;$('#ndWrap').hidden=!nudge;});
+      $('#saveGoal').addEventListener('click',()=>{
+        const hm=$('#ndAt').value;
+        p.goal=readMoney(amt);p.per=per;p.nudge=nudge;p.nudgeAt=/^\d{2}:\d{2}$/.test(hm)?hm:'17:00';
+        save();sdkNudgeKey='';closeSheet();renderAll();
+        toast(p.goal>0?'Target '+(per==='week'?'mingguan':'harian')+' '+rp(p.goal)+' disimpan':(nudge?'Pengingat harian aktif':'Pengaturan disimpan'));
+      });
+    });
+}
+const SDK_GO={
+  sdkuse:()=>openSdkUse(),sdkgive:()=>openSdkGive(),sdkret:()=>openSdkReturn(),sdkgoal:()=>openSdkGoal()
+};
+function openSdkUse(wid){
+  const sw=sedekahWallets();
+  if(!sw.length){toast('Buat dompet sedekah dulu ya');return;}
+  const dests=spendWallets();
+  if(!dests.length){toast('Tambah dompet biasa dulu ya');return;}
+  let walId=(wid&&isSdkWal(wid))?wid:sw[0].id;
+  let to=(dests.find(w=>w.id===lastUsed.wal)||dests.find(w=>/tunai/i.test(w.name))||dests[0]).id;
+  let days=sdkPrefDays();
+  const pick=(arr,sel)=>arr.map(w=>'<button class="cp" data-w="'+esc(w.id)+'" aria-pressed="'+(w.id===sel)+'"><span class="e">'+w.emoji+'</span><span class="n">'+esc(w.name)+'</span></button>').join('');
+  openSheet('Pakai dana sedekah',
+    '<div class="amount-box" id="amountBox" style="--ab:var(--amber)"><label for="amt">Nominal dipakai</label>'+
+      '<div class="amount-in"><span class="rp">Rp</span><input id="amt" inputmode="numeric" autocomplete="off" placeholder="0"></div>'+
+      opRowHtml()+
+      '<div class="quick">'+[10000,20000,50000,100000].map(v=>'<button class="q" data-add="'+v+'">+'+shortRp(v)+'</button>').join('')+'<button class="q" data-clear="1">Hapus</button></div></div>'+
+    (sw.length>1?'<div class="field"><label>Ambil dari</label><div class="pick" id="useFrom">'+pick(sw,walId)+'</div></div>':'')+
+    '<p class="sdk-t" id="sdkBalHint" style="margin:-4px 0 14px"></p>'+
+    '<div class="field"><label>Masuk ke dompet</label><div class="pick" id="useTo">'+pick(dests,to)+'</div></div>'+
+    '<div class="sdk-box warn"><span class="sdk-t">Dicatat sebagai pinjaman dari dana sedekah, bukan pengeluaran. Kantong akan mengingatkan untuk mengembalikannya.</span>'+
+      '<span class="sdk-l">Kembalikan paling lambat</span>'+sdkDaysChips(days)+'</div>'+
+    '<div class="field"><label for="note">Untuk apa <span style="color:var(--ink-3);font-weight:500">(opsional)</span></label>'+
+      '<input class="inp" id="note" placeholder="Contoh: beli bensin, uang tunai habis" maxlength="80"></div>'+
+    timeBlockHtml(todayKey(),nowTime(),false)+
+    '<button class="btn" id="saveUse" style="margin-top:8px">Catat pemakaian</button>',
+    ()=>{
+      const amt=$('#amt');moneyMask(amt);wireOpButtons(amt);
+      setTimeout(()=>amt.focus(),420);
+      $$('#sheetBody .q').forEach(b=>b.addEventListener('click',()=>{
+        if(b.dataset.clear)amt.value='';else amt.value=String(readMoney(amt)+(+b.dataset.add));
+        amt.dispatchEvent(new Event('input'));amt.focus();
+      }));
+      const tb=wireTimeBlock();
+      function hint(){
+        const h=$('#sdkBalHint');if(!h)return;
+        const w=walOf(walId),bal=walletBalance(w),v=readMoney(amt);
+        h.innerHTML='Saldo '+esc(w.name)+': <b>'+rp(bal)+'</b>'+(v>bal?' · <span style="color:var(--rose)">nominal melebihi saldo</span>':'');
+      }
+      amt.addEventListener('input',hint);hint();
+      $$('#useFrom .cp').forEach(b=>b.addEventListener('click',()=>{walId=b.dataset.w;$$('#useFrom .cp').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));hint();}));
+      $$('#useTo .cp').forEach(b=>b.addEventListener('click',()=>{to=b.dataset.w;$$('#useTo .cp').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));}));
+      $$('#sdkDays .tchip').forEach(b=>b.addEventListener('click',()=>{days=+b.dataset.d;$$('#sdkDays .tchip').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));}));
+      $('#saveUse').addEventListener('click',()=>{
+        const v=readMoney(amt);
+        if(!v){amt.focus();toast('Isi nominalnya dulu ya',ICO_ALERT);return;}
+        const bal=walletBalance(walOf(walId));
+        if(v>bal&&!confirm('Saldo dompet sedekah hanya '+rp(bal)+'. Tetap catat pemakaian '+rp(v)+'?'))return;
+        const date=$('#date').value||todayKey(),time=$('#time').value||nowTime(),approx=tb.approx()||undefined,note=$('#note').value.trim();
+        const fw=walOf(walId),tw=walOf(to),tid=uid(),due=recShift(date,days),now=Date.now();
+        state.tx.push({id:uid(),type:'expense',amount:v,catId:'x-transfer',walletId:walId,date,time,approx,note:note||('Transfer ke '+tw.name),createdAt:now,transferId:tid,sdkDue:due});
+        state.tx.push({id:uid(),type:'income',amount:v,catId:'x-transfer',walletId:to,date,time,approx,note:note||('Transfer dari '+fw.name),createdAt:now,transferId:tid});
+        save();
+        const d=parseKey(date);view.y=d.getFullYear();view.m=d.getMonth();
+        closeSheet();renderAll();
+        setTimeout(()=>sdkNotice('borrow',walId,v,due),350);
+      });
+    });
+}
+
+/* ================= keamanan data & cadangan ================= */
+const LBAK='kantong.lastBackup',DNUDGE='kantong.dataNudge';
+function lastBackupAt(){try{return +localStorage.getItem(LBAK)||0;}catch(e){return 0;}}
+function markBackup(){try{localStorage.setItem(LBAK,String(Date.now()));}catch(e){}}
+function daysAgoTxt(ts){
+  if(!ts)return 'belum pernah';
+  const n=Math.floor((Date.now()-ts)/86400000);
+  return n<=0?'hari ini':(n===1?'kemarin':n+' hari lalu');
+}
+function cloudProtected(){ /* salinan di akun sudah cocok dengan perangkat ini */
+  return !!(SB_ON&&cloud.user&&!meta.dirty&&(cloud.status==='ok'||(meta.at&&Date.now()-meta.at<7*86400000)));
+}
+function doBackupFile(){markBackup();renderDataNudge();return deliver('kantong-backup.json',JSON.stringify(state,null,2),'application/json');}
+
+/* cadangan otomatis di perangkat (IndexedDB): 1 salinan per hari (7 hari terakhir) + salinan "sebelum reset/pulihkan" (3 terakhir) */
+const BAK_DB='kantong-bak',BAK_ST='snap';
+function bakDb(){
+  return new Promise((res,rej)=>{
+    if(!window.indexedDB){rej(new Error('no idb'));return;}
+    const r=indexedDB.open(BAK_DB,1);
+    r.onupgradeneeded=()=>{r.result.createObjectStore(BAK_ST,{keyPath:'id'});};
+    r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);
+  });
+}
+function bakList(){
+  return bakDb().then(db=>new Promise((res,rej)=>{
+    const q=db.transaction(BAK_ST).objectStore(BAK_ST).getAll();
+    q.onsuccess=()=>{db.close();res((q.result||[]).sort((a,b)=>b.at-a.at));};q.onerror=()=>rej(q.error);
+  }));
+}
+function bakSnapshot(kind,label){ /* isi salinan diambil SEKARANG (sinkron) supaya tidak terpengaruh perubahan sesudahnya */
+  let doc;try{doc=JSON.parse(JSON.stringify(docOf(state)));}catch(e){return Promise.resolve();}
+  if(!doc.tx.length&&kind!=='p')return Promise.resolve();
+  const at=Date.now(),day=todayKey();
+  const rec={id:kind==='p'?'p-'+at:'d-'+day,kind:kind==='p'?'p':'d',day,at,n:doc.tx.length,label:label||'',doc};
+  return bakDb().then(db=>new Promise((res,rej)=>{
+    const tx=db.transaction(BAK_ST,'readwrite'),st=tx.objectStore(BAK_ST);
+    const g=st.get(rec.id);
+    g.onsuccess=()=>{
+      const old=g.result;
+      if(old&&rec.kind==='d'&&rec.n<old.n*0.6){rec.id='p-'+at;rec.kind='p';rec.label='data berkurang tajam';} /* jangan menimpa salinan yang jauh lebih lengkap */
+      st.put(rec);
+      const q=st.getAll();
+      q.onsuccess=()=>{
+        const all=q.result||[];
+        ['d','p'].forEach(k=>all.filter(x=>x.kind===k).sort((a,b)=>b.at-a.at).slice(k==='d'?7:3).forEach(x=>st.delete(x.id)));
+      };
+    };
+    tx.oncomplete=()=>{db.close();res();};tx.onerror=()=>{db.close();rej(tx.error);};
+  })).catch(()=>{});
+}
+let bakLast=0;
+function bakMaybe(){
+  if(!state.tx.length)return;
+  const now=Date.now();if(now-bakLast<30*60000)return;
+  bakLast=now;bakSnapshot('d');
+}
+function restoreApply(nrm,c){
+  if(c==='replace'){bakSnapshot('p','sebelum dipulihkan');state=nrm;save();closeSheet();renderAll();toast('Data dipulihkan');return;}
+  const r=KS.mergeBackup(docOf(state),docOf(nrm));
+  if(!r.added.tx&&!r.added.other){toast('Tidak ada yang baru: semuanya sudah ada');return;}
+  bakSnapshot('p','sebelum digabung');
+  r.doc.updatedAt=Date.now();
+  state=normalize(r.doc);save();closeSheet();renderAll();
+  toast(r.added.tx+' transaksi ditambahkan'+(r.skipped?', '+r.skipped+' dilewati karena sudah ada':''));
+}
+function bakDateTxt(ts){const d=new Date(ts);return d.getDate()+' '+MON3[d.getMonth()]+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
+async function openAutoBackups(){
+  let list=[];try{list=await bakList();}catch(e){}
+  openSheet('Cadangan otomatis di perangkat',
+    '<p class="sub" style="margin:0 0 6px">Kantong menyimpan salinan otomatis di perangkat ini: satu per hari, ditambah salinan sebelum reset atau pemulihan. Foto struk tidak ikut. Ini bukan pengganti cadangan file atau akun, karena ikut hilang kalau data browser dihapus.</p>'+
+    (list.length?list.map((r,i)=>'<div class="bak-row"><div class="mid"><b>'+esc(bakDateTxt(r.at))+(r.kind==='p'?' · '+esc(r.label||'sebelum perubahan besar'):'')+'</b><span>'+r.n+' transaksi</span></div><button type="button" class="btn ghost sm" data-bi="'+i+'">Pulihkan</button></div>').join(''):
+      '<p class="qhint">Belum ada salinan. Salinan pertama dibuat otomatis begitu ada transaksi.</p>'),
+    ()=>{
+      $$('#sheetBody [data-bi]').forEach(b=>b.addEventListener('click',()=>{
+        const r=list[+b.dataset.bi];let nrm;
+        try{nrm=normalize(JSON.parse(JSON.stringify(r.doc)));}catch(e){toast('Salinan ini tidak terbaca');return;}
+        choose('Pulihkan salinan '+bakDateTxt(r.at),'Salinan berisi '+nrm.tx.length+' transaksi, data sekarang '+state.tx.length+'. "Tambahkan" menyimpan semua yang sekarang dan hanya memasukkan yang belum ada.',
+          [{v:'merge',label:'Tambahkan ke data sekarang (disarankan)'},{v:'replace',label:'Ganti seluruh data dengan salinan ini',cls:'danger'},{v:null,label:'Batal',cls:'ghost'}],
+          {label:'Unduh cadangan data sekarang dulu',run:backupNow}).then(c=>{if(c)restoreApply(nrm,c);});
+      }));
+    });
+}
+
+/* ringkasan "seberapa aman datamu" di Pengaturan */
+function healthHtml(){
+  return '<div class="field" style="margin-top:16px"><label>Keamanan data</label><div class="card" style="margin:0;padding:12px 14px" id="hlBox"><p class="qhint" style="margin:0">Memeriksa…</p></div></div>';
+}
+async function wireHealth(){
+  const box=$('#hlBox');if(!box)return;
+  let persisted=null,bak=[];
+  try{if(navigator.storage&&navigator.storage.persisted)persisted=await navigator.storage.persisted();}catch(e){}
+  try{bak=await bakList();}catch(e){}
+  if(!$('#hlBox'))return;
+  const lb=lastBackupAt(),cp=cloudProtected(),pin=lkIsOn();
+  const rows=[
+    {ok:pin,ic:'🔒',t:'PIN aplikasi',d:pin?'Aktif. Kantong meminta PIN saat dibuka.':'Belum aktif. Siapa pun yang memegang perangkat ini bisa membuka catatanmu.',btn:pin?'':'Atur PIN',id:'hlPin'},
+    {ok:cp,ic:'☁️',t:'Salinan di akun',d:!SB_ON?'Sinkron belum diaktifkan di aplikasi ini.':(!cloud.user?'Belum masuk akun, jadi data hanya ada di perangkat ini.':(cp?'Tersinkron, aman kalau perangkat hilang.':'Belum tersinkron: '+acctStatText().toLowerCase())),btn:(SB_ON&&!cloud.user)?'Masuk':'',id:'hlAcct'},
+    {ok:lb&&Date.now()-lb<14*86400000,ic:'💾',t:'Cadangan file',d:'Terakhir: '+daysAgoTxt(lb)+'. Disarankan tiap 2 minggu kalau belum memakai akun.',btn:'Cadangkan',id:'hlFile'},
+    {ok:bak.length>0,ic:'🗂️',t:'Cadangan otomatis di perangkat',d:bak.length?bak.length+' salinan, terakhir '+bakDateTxt(bak[0].at)+'.':'Belum ada salinan.',btn:'Lihat',id:'hlAuto'},
+    {ok:persisted===true,ic:'📌',t:'Penyimpanan permanen',d:persisted===true?'Aktif. Browser tidak akan menghapus data Kantong saat ruang penuh.':(persisted===false?'Belum. Browser boleh menghapus data saat ruang penuh. Memasang Kantong ke Layar Utama membantu.':'Tidak didukung di browser ini.'),btn:persisted===false?'Minta':'',id:'hlPersist'}
+  ];
+  const good=rows.filter((r,i)=>i<3?r.ok:true).length; /* PIN, akun/file dihitung untuk penilaian */
+  const protectedCopy=cp||(lb&&Date.now()-lb<14*86400000);
+  const sum=protectedCopy?(pin?'Datamu terlindungi dengan baik.':'Datamu punya salinan, tapi belum dikunci PIN.'):'Datamu belum punya salinan di luar perangkat ini. Aktifkan akun atau unduh cadangan.';
+  box.innerHTML='<p class="hl-sum '+(protectedCopy&&pin?'ok':'no')+'">'+(protectedCopy&&pin?'✓ ':'⚠ ')+esc(sum)+'</p>'+
+    rows.map(r=>'<div class="hl"><span class="ic '+(r.ok?'ok':'no')+'">'+r.ic+'</span><div class="mid"><b>'+esc(r.t)+'</b><span>'+esc(r.d)+'</span></div>'+(r.btn?'<button type="button" class="btn ghost sm" id="'+r.id+'">'+r.btn+'</button>':'')+'</div>').join('');
+  const on=(id,fn)=>{const b=$('#'+id);if(b)b.addEventListener('click',fn);};
+  on('hlPin',()=>{closeSheet();setTimeout(lkStartEnable,300);});
+  on('hlAcct',()=>openAccount());
+  on('hlFile',()=>{doBackupFile();setTimeout(()=>{if($('#hlBox'))wireHealth();},300);});
+  on('hlAuto',openAutoBackups);
+  on('hlPersist',async()=>{
+    let ok=false;try{ok=await navigator.storage.persist();}catch(e){}
+    toast(ok?'Penyimpanan permanen aktif':'Browser belum mengizinkan. Coba pasang Kantong ke Layar Utama.',ok?null:ICO_ALERT);
+    if($('#hlBox'))wireHealth();
+  });
+}
+/* ajakan di beranda: hanya kalau datamu belum punya salinan di luar perangkat dan sudah lumayan banyak */
+let dataNudgeKey='';
+function renderDataNudge(){
+  const box=$('#dataNudge');if(!box)return;
+  let off=false;try{off=Date.now()<(+localStorage.getItem(DNUDGE)||0);}catch(e){}
+  const lb=lastBackupAt();
+  const lk=$('#lkNudge');
+  const need=!off&&state.tx.length>=10&&!cloudProtected()&&(!lb||Date.now()-lb>14*86400000)&&!(lk&&!lk.hidden);
+  const key=need?('1|'+daysAgoTxt(lb)):'0';
+  if(key===dataNudgeKey)return;
+  dataNudgeKey=key;
+  if(!need){box.hidden=true;box.innerHTML='';return;}
+  box.innerHTML='<div class="sdk-mini nudge"><span>💾</span><span class="t">Catatanmu belum dicadangkan ('+esc(daysAgoTxt(lb))+'). Kalau perangkat hilang atau rusak, datanya ikut hilang.</span><b data-dn="go" role="button" tabindex="0">Cadangkan</b>'+
+    '<button type="button" class="sdk-x" data-dn="off" aria-label="Ingatkan lagi nanti">✕</button></div>';
+  box.hidden=false;
+  $('[data-dn="go"]',box).addEventListener('click',()=>{doBackupFile();});
+  $('[data-dn="off"]',box).addEventListener('click',()=>{try{localStorage.setItem(DNUDGE,String(Date.now()+3*86400000));}catch(e){}dataNudgeKey='';renderDataNudge();toast('Diingatkan lagi 3 hari lagi');});
+}
+
+/* ================= pengingat saat aplikasi tertutup (Web Push) =================
+   Butuh: sw-push.js di samping index.html, tabel kantong_push + fungsi sdk-remind di Supabase, dan vapidPublicKey di config.js (lihat PANDUAN-PUSH.md).
+   sw-push.js didaftarkan di scope tersendiri ('_push/') supaya tidak mengganggu sw.js milik aplikasi. */
+const PUSH_SCOPE='./_push/';
+function pushSupported(){return 'serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window&&/^https?:$/.test(location.protocol);}
+function b64uToBytes(b){const p='='.repeat((4-b.length%4)%4),raw=atob((b+p).replace(/-/g,'+').replace(/_/g,'/')),a=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)a[i]=raw.charCodeAt(i);return a;}
+function waitActive(reg){
+  return new Promise((res,rej)=>{
+    const w=reg.installing||reg.waiting||reg.active;
+    if(!w){rej(new Error('no worker'));return;}
+    if(w.state==='activated'){res(reg);return;}
+    const t=setTimeout(()=>rej(new Error('timeout')),10000);
+    w.addEventListener('statechange',()=>{if(w.state==='activated'){clearTimeout(t);res(reg);}});
+  });
+}
+async function pushGetSub(){
+  try{const reg=await navigator.serviceWorker.getRegistration(PUSH_SCOPE);return reg?await reg.pushManager.getSubscription():null;}catch(e){return null;}
+}
+async function pushEnable(){
+  if(!pushSupported())throw new Error('unsupported');
+  if(!CFG.vapidPublicKey)throw new Error('novapid');
+  if(!(cloud.user&&cloud.sb))throw new Error('nologin');
+  const perm=await Notification.requestPermission();
+  if(perm!=='granted')throw new Error('denied');
+  let reg=await navigator.serviceWorker.register('sw-push.js',{scope:PUSH_SCOPE});
+  reg=await waitActive(reg);
+  let sub=await reg.pushManager.getSubscription();
+  if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64uToBytes(CFG.vapidPublicKey)});
+  const j=sub.toJSON();
+  const r=await cloud.sb.from('kantong_push').upsert({user_id:cloud.user.id,endpoint:j.endpoint,p256dh:j.keys.p256dh,auth:j.keys.auth,tz:-new Date().getTimezoneOffset(),ua:navigator.userAgent.slice(0,120)},{onConflict:'endpoint'});
+  if(r.error)throw r.error;
+}
+async function pushDisable(){
+  const sub=await pushGetSub();if(!sub)return;
+  try{if(cloud.sb)await cloud.sb.from('kantong_push').delete().eq('endpoint',sub.endpoint);}catch(e){}
+  await sub.unsubscribe();
+}
+function pushSettingsHtml(){
+  return '<div class="field" style="margin-top:16px"><label>Pengingat saat aplikasi tertutup</label>'+
+    '<p class="qhint" id="pushInfo" style="margin:0 0 8px">Memeriksa…</p>'+
+    '<div class="row"><button type="button" class="btn ghost sm" id="pushBtn" style="display:none"></button><button type="button" class="btn ghost sm" id="pushTest" style="display:none">Tes notifikasi</button></div></div>';
+}
+async function wirePushSettings(){
+  const info=$('#pushInfo'),btn=$('#pushBtn'),tst=$('#pushTest');if(!info)return;
+  if(!pushSupported()){info.textContent='Browser ini belum mendukung notifikasi latar belakang. Di iPhone/iPad, pasang Kantong ke Layar Utama dulu (iOS 16.4 ke atas).';return;}
+  if(!SB_ON){info.textContent='Butuh sinkronisasi akun yang aktif, karena pengingat dikirim dari server.';return;}
+  if(!CFG.vapidPublicKey){info.textContent='Belum disiapkan di sisi server. Ikuti PANDUAN-PUSH.md, lalu isi vapidPublicKey di config.js.';return;}
+  if(!cloud.user){info.textContent='Masuk ke akunmu dulu supaya pengingat bisa dikirim ke perangkat ini.';return;}
+  let sub=await pushGetSub();
+  if(!$('#pushInfo'))return;
+  const paint=()=>{
+    const on=!!sub&&Notification.permission==='granted';
+    info.textContent=on?'Aktif di perangkat ini. Dana sedekah yang belum dikembalikan dan pengingat sedekah harian dikirim walau Kantong tertutup.':(Notification.permission==='denied'?'Notifikasi diblokir di pengaturan browser. Izinkan dulu lewat pengaturan situs.':'Belum aktif di perangkat ini.');
+    btn.style.display=Notification.permission==='denied'?'none':'';btn.textContent=on?'Matikan':'Aktifkan';
+    tst.style.display=on?'':'none';
+  };
+  paint();
+  btn.addEventListener('click',async()=>{
+    btn.disabled=true;
+    try{
+      if(sub&&Notification.permission==='granted'){await pushDisable();sub=null;toast('Pengingat latar belakang dimatikan');}
+      else{await pushEnable();sub=await pushGetSub();toast('Pengingat latar belakang aktif');}
+    }catch(e){
+      const m={unsupported:'Browser belum mendukung',novapid:'Kunci VAPID belum diisi di config.js',nologin:'Masuk akun dulu',denied:'Izin notifikasi ditolak'}[e&&e.message];
+      toast(m||'Gagal mengaktifkan. Pastikan tabel kantong_push sudah dibuat di Supabase.',ICO_ALERT,4200);
+    }
+    btn.disabled=false;if($('#pushInfo'))paint();
+  });
+  tst.addEventListener('click',async()=>{
+    try{const reg=await navigator.serviceWorker.getRegistration(PUSH_SCOPE);await reg.showNotification('Kantong · Tes',{body:'Notifikasi berfungsi di perangkat ini.',tag:'kantong-test'});}
+    catch(e){toast('Tes gagal',ICO_ALERT);}
+  });
+}
+if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('message',ev=>{const d=ev.data;if(d&&d.kt==='go'&&SDK_GO[d.a])SDK_GO[d.a]();});
 
 /* ================= theme ================= */
 function applyTheme(t){
@@ -2357,7 +2742,7 @@ let deepDone=false;
 function runDeepLink(){
   if(deepDone||!DEEP)return;deepDone=true;
   try{history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
-  const acts={expense:()=>openNewType('expense'),income:()=>openNewType('income'),svc:()=>openSvcForm(null,null),quick:()=>openQuick(),debt:()=>openDebtManager(),recur:()=>openRecManager()};
+  const acts=Object.assign({expense:()=>openNewType('expense'),income:()=>openNewType('income'),svc:()=>openSvcForm(null,null),quick:()=>openQuick(),debt:()=>openDebtManager(),recur:()=>openRecManager()},SDK_GO);
   setTimeout(()=>{if(acts[DEEP])acts[DEEP]();},350);
 }
 
@@ -2810,6 +3195,9 @@ function openNewType(type){
   openSheet(type==='income'?'Catat pemasukan':'Catat pengeluaran',entryForm(null,type),()=>wireEntry(null,null,type));
 }
 function renderQuickActions(){
+  const hasSdk=sedekahWallets().length>0,qa=$('#quickActions');
+  if(qa.dataset.k===String(hasSdk)&&qa.children.length)return;
+  qa.dataset.k=String(hasSdk);
   const ICO={
     down:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="m22 17-8.5-8.5-5 5L2 7"/><path d="M16 17h6v-6"/></svg>',
     up:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="m22 7-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/></svg>',
@@ -2828,6 +3216,10 @@ function renderQuickActions(){
     {ic:SVC_ICO,title:'Jasa transfer',desc:'Transfer untuk orang lain, biaya jasanya jadi pemasukan.',act:()=>openSvcForm(null,null)},
     {ic:DEBT_ICO,title:'Utang & piutang',desc:'Pantau pinjaman, cicilan, dan tenggatnya.',act:()=>openDebtManager()}
   ];
+  if(hasSdk){
+    items.push({ic:'<span style="font-size:18px">🤲</span>',title:'Salurkan sedekah',desc:'Catat sedekah yang kamu berikan hari ini.',act:()=>openSdkGive()});
+    items.push({ic:'<span style="font-size:18px">⚡</span>',title:'Pakai dana sedekah',desc:'Dipakai sementara, akan diingatkan untuk dikembalikan.',act:()=>openSdkUse()});
+  }
   $('#quickActions').innerHTML=items.map((it,i)=>
     '<button class="qa-card" type="button" data-qa="'+i+'"><span class="qa-ic">'+it.ic+'</span><b>'+esc(it.title)+'</b><span>'+esc(it.desc)+'</span></button>'
   ).join('');
@@ -3286,8 +3678,8 @@ function sdkRecapHtml(){
   const sw=sedekahWallets();if(!sw.length)return '';
   const ids=sw.map(w=>w.id),mine=state.tx.filter(e=>ids.indexOf(e.walletId)>=0);
   const mo=inMonth(view.y,view.m).filter(e=>ids.indexOf(e.walletId)>=0);
-  const give=list=>list.filter(e=>e.type==='expense'&&isSdkCat(e.catId));
-  const gM=give(mo),gA=give(mine);
+  const give=list=>list.filter(e=>e.type==='expense'&&isSdkCat(e.catId)&&!e.transferId);
+  const gM=give(inMonth(view.y,view.m)),gA=give(state.tx); /* penyaluran dari dompet mana pun (mis. Tunai) tetap dihitung */
   const borrowM=mo.filter(e=>e.type==='expense'&&!isSdkCat(e.catId)&&e.sdk!=='free');
   const retM=mo.filter(e=>e.type==='income'&&e.sdk==='ret');
   const saveM=mo.filter(e=>e.type==='income'&&e.sdk!=='ret');
@@ -3402,7 +3794,7 @@ async function exportCSV(list,filename){
     isMotorCat(e.catId)?safe(motorOf(motorIdOf(e)).name):'',e.odo!=null?String(e.odo):'',
     isMeterCat(e.catId)?safe(meterOf(meterIdOf(e)).name):'',e.meter!=null?String(e.meter):'',e.topup!=null?String(e.topup):'',
     safe(e.note||''),String(Math.round(e.amount)),e.approx?'Ya':'',
-    (e.transferId||e.debtId||e.pass||e.catId==='ic-saldo')?'Tidak':'Ya',safe(e.client||''),
+    (e.transferId||e.debtId||e.pass||e.sdk==='ret'||e.catId==='ic-saldo')?'Tidak':'Ya',safe(e.client||''),
     e.sdk==='ret'?'Pengembalian':(e.type==='expense'&&isSdkWal(e.walletId)?(isSdkCat(e.catId)?'Penyaluran':(e.sdk==='free'?'Keluar (bukan pinjaman)':'Pinjaman')):''),safe(e.sdkTo||'')]));
   const csv='\uFEFF'+rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(';')).join('\r\n');
   await deliver(filename,csv,'text/csv');
@@ -3603,8 +3995,8 @@ function sdkCardHtml(){
   const month=inMonth(view.y,view.m);
   return sw.map(w=>{
     const bal=walletBalance(w),ch=sdkChunks(w.id),owed=ch.reduce((t,c)=>t+c.left,0);
-    const gm=sum(month.filter(e=>e.walletId===w.id&&e.type==='expense'&&isSdkCat(e.catId)));
-    const ga=sum(state.tx.filter(e=>e.walletId===w.id&&e.type==='expense'&&isSdkCat(e.catId)));
+    const gm=sum(month.filter(e=>e.type==='expense'&&isSdkCat(e.catId)&&!e.transferId));
+    const ga=sum(state.tx.filter(e=>e.type==='expense'&&isSdkCat(e.catId)&&!e.transferId));
     const ws=esc(w.id);
     return '<div class="card"><h3>'+w.emoji+' '+esc(w.name)+'</h3>'+
       '<p class="sub">'+(owed>0?'Ada dana sedekah yang terpakai dan perlu dikembalikan.':'Dana sedekah utuh. Kalau terpakai untuk hal lain, harus dikembalikan.')+'</p>'+
@@ -3615,10 +4007,11 @@ function sdkCardHtml(){
       ch.slice(0,3).map(sdkChunkRowHtml).join('')+
       (ch.length>3?'<button type="button" class="rec-more" data-sdk="detail" data-w="'+ws+'">+'+(ch.length-3)+' lainnya…</button>':'')+
       '<div class="sdk-acts"><button class="btn sm" data-sdk="give" data-w="'+ws+'">🤲 Salurkan</button>'+
+      '<button class="btn ghost sm" data-sdk="use" data-w="'+ws+'">⚡ Pakai dana</button>'+
       '<button class="btn ghost sm" data-sdk="save" data-w="'+ws+'">＋ Sisihkan</button>'+
       (owed>0?'<button class="btn sm" data-sdk="ret" data-w="'+ws+'">↩ Kembalikan</button>':'')+
       '<button class="btn ghost sm" data-sdk="detail" data-w="'+ws+'">Rincian</button></div></div>';
-  }).join('');
+  }).join('')+sdkGoalCardHtml();
 }
 function wireSdkCard(){
   const cr=$('#sdkCreate');if(cr)cr.addEventListener('click',()=>openWalletSheet(null,{sedekah:true}));
@@ -3626,6 +4019,8 @@ function wireSdkCard(){
 }
 function sdkAct(a,wid){
   if(a==='give')openSdkGive(wid);
+  else if(a==='use')openSdkUse(wid);
+  else if(a==='goal')openSdkGoal();
   else if(a==='save')openSdkDeposit(wid);
   else if(a==='ret')openSdkReturn(wid);
   else if(a==='detail')openSdkDetail(wid);
@@ -3673,6 +4068,17 @@ function sdkNotify(){
     const n=new Notification('Kantong · Dana sedekah',{body:rp(total)+' dana sedekah belum dikembalikan'+(late?' (ada yang terlambat)':', batasnya hari ini'),tag:'kantong-sdk'});
     n.onclick=()=>{try{window.focus();}catch(e){}n.close();};
     rs.sdkAt=now;saveRs();
+  }catch(e){}
+}
+function sdkNotifyNudge(){
+  const rm=state.prefs.remind||{};
+  if(!(rm.notify&&document.hidden&&('Notification' in window)&&Notification.permission==='granted'))return;
+  if(!activeNow(rm)||rs.sdkNudgeDay===todayKey())return;
+  const g=sdkNudgeState();if(!g)return;
+  try{
+    const n=new Notification('Kantong · Sedekah',{body:'Hari ini belum bersedekah'+(g.goal>0?' (target '+rp(g.goal)+')':''),tag:'kantong-sdk-nudge'});
+    n.onclick=()=>{try{window.focus();}catch(e){}n.close();};
+    rs.sdkNudgeDay=todayKey();saveRs();
   }catch(e){}
 }
 function sdkBootNotice(){ /* sekali saat Kantong dibuka: ingatkan kalau ada yang jatuh tempo hari ini atau terlambat */
@@ -3772,7 +4178,7 @@ function openSdkDetail(wid){
       return '<div class="sdk-chunk"><span class="ic">'+c.icon+'</span><div class="mid"><b>'+esc(c.txt)+'</b><span>'+sdkDayLbl(c.tx.date)+' · <span class="dv-st '+st.c+'">'+st.t+'</span></span></div>'+
         '<span class="amt num exp">'+rp(c.left)+'</span><button type="button" class="rb main go" data-ci="'+i+'">Kembalikan</button></div>';
     }).join(''):'')+
-    '<div class="sdk-acts"><button class="btn sm" data-sdk="give">🤲 Salurkan</button><button class="btn ghost sm" data-sdk="save">＋ Sisihkan</button>'+
+    '<div class="sdk-acts"><button class="btn sm" data-sdk="give">🤲 Salurkan</button><button class="btn ghost sm" data-sdk="use">⚡ Pakai dana</button><button class="btn ghost sm" data-sdk="save">＋ Sisihkan</button>'+
     (owed>0?'<button class="btn sm" data-sdk="ret">↩ Kembalikan semua</button>':'')+'</div>'+
     (hist?'<h3 class="sdk-h">Aktivitas terakhir</h3>'+hist:''),
     ()=>{
@@ -4478,6 +4884,8 @@ function wireEntry(existing,draft,forceType){
   let sdkDays=(existing&&existing.sdkDue)?Math.max(0,Math.min(30,daysBetween(existing.date,existing.sdkDue))):sdkPrefDays();
   let sdkToVal=existing?(existing.sdkTo||''):(draft.sdkTo||'');
   let walTouched=!!existing;
+  let sdkRetIn=existing?existing.sdk==='ret':null; /* null = otomatis: dicentang kalau masih ada dana sedekah yang harus dikembalikan */
+  let sdkRetInNow=false;
   function sdkAutoWallet(){ /* memilih kategori sedekah pada catatan baru: bayar pakai dompet sedekah, kecuali dompet sudah dipilih sendiri */
     if(walTouched||existing||curType!=='expense'||!isSdkCat(cat))return;
     const sw=sedekahWallets()[0];if(!sw||wal===sw.id)return;
@@ -4485,8 +4893,16 @@ function wireEntry(existing,draft,forceType){
   }
   function paintSdkEntry(){
     const box=$('#sdkEntryBox');if(!box)return;
-    let h='';
-    if(curType==='expense'&&isSdkCat(cat)){
+    let h='';sdkRetInNow=false;
+    if(curType==='income'&&isSdkWal(wal)){
+      let owed=sdkOwed(wal);
+      const exRet=!!(existing&&existing.sdk==='ret'&&existing.walletId===wal);
+      if(exRet)owed+=(+existing.amount||0);
+      if(owed>0||exRet){
+        sdkRetInNow=sdkRetIn==null?true:sdkRetIn;
+        h='<div class="sdk-box ok"><label class="chk"><input type="checkbox" id="sdkRetIn"'+(sdkRetInNow?' checked':'')+'><span><b>Ini pengembalian dana sedekah</b>Masih ada '+rp(owed)+' yang harus dikembalikan ke '+esc(walOf(wal).name)+'. Dicatat sebagai pengembalian, bukan pemasukan baru, jadi tidak menambah total pemasukan.</span></label></div>';
+      }
+    }else if(curType==='expense'&&isSdkCat(cat)){
       const rec=sdkRecipients();
       h='<div class="field"><label for="sdkTo">Disalurkan kepada <span style="color:var(--ink-3);font-weight:500">(opsional)</span></label>'+
         '<input class="inp" id="sdkTo" list="sdkToList" autocomplete="off" placeholder="Contoh: Masjid Al-Ikhlas, Pak Budi" maxlength="40" value="'+esc(sdkToVal)+'">'+
@@ -4497,6 +4913,7 @@ function wireEntry(existing,draft,forceType){
         '<div id="sdkDueWrap"'+(sdkFree?' hidden':'')+'><span class="sdk-l">Kembalikan paling lambat</span>'+sdkDaysChips(sdkDays)+'</div></div>';
     }
     box.innerHTML=h;
+    const ri=$('#sdkRetIn');if(ri)ri.addEventListener('change',()=>{sdkRetIn=ri.checked;sdkRetInNow=ri.checked;});
     const inp=$('#sdkTo');if(inp)inp.addEventListener('input',()=>{sdkToVal=inp.value;});
     $$('#sdkRec .tchip').forEach(b=>b.addEventListener('click',()=>{sdkToVal=b.dataset.n;if(inp)inp.value=sdkToVal;}));
     const bo=$('#sdkBorrow');
@@ -4505,6 +4922,7 @@ function wireEntry(existing,draft,forceType){
   }
   function sdkEntryFields(date){
     const none={sdk:undefined,sdkDue:undefined,sdkTo:undefined};
+    if(curType==='income')return (isSdkWal(wal)&&sdkRetInNow)?{sdk:'ret',sdkDue:undefined,sdkTo:undefined}:none;
     if(curType!=='expense')return none;
     if(isSdkCat(cat))return{sdk:undefined,sdkDue:undefined,sdkTo:(sdkToVal||'').trim().slice(0,40)||undefined};
     if(isSdkWal(wal))return sdkFree?{sdk:'free',sdkDue:undefined,sdkTo:undefined}:{sdk:undefined,sdkDue:recShift(date,sdkDays),sdkTo:undefined};
@@ -4692,6 +5110,7 @@ function wireEntry(existing,draft,forceType){
     closeSheet();renderAll();
     if(phErr)setTimeout(()=>toast('Foto gagal disimpan, catatan tetap tersimpan',ICO_ALERT),1500);
     if(!existing&&sx.sdkDue)setTimeout(()=>sdkNotice('borrow',wal,v,sx.sdkDue),350);
+    else if(sx.sdk==='ret')setTimeout(()=>sdkNotice('ret',wal,v),350);
     if(curType==='expense'){
       const after=analyze();
       if(!existing&&after.level>=4)setTimeout(()=>toast(LEVELS[after.level].emoji+' '+LEVELS[after.level].name+', cek peringatan di atas','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>'),1100);
@@ -4893,6 +5312,8 @@ $('#setBtn').addEventListener('click',async()=>{
       '<p class="qhint" id="pwaIosHint" style="display:none">Di iPhone/iPad: tap ikon Bagikan di Safari, lalu pilih "Tambah ke Layar Utama" — supaya Kantong punya ikon sendiri dan bisa dibuka layar penuh tanpa address bar.</p></div>'+
     remindSettingsHtml()+
     sdkSettingsHtml()+
+    pushSettingsHtml()+
+    healthHtml()+
     '<div class="field" style="margin-top:16px"><label>Salinan data</label>'+
       '<div class="row"><button class="btn ghost sm" id="sExp">Unduh CSV</button>'+
       '<button class="btn ghost sm" id="sJson">Cadangan JSON</button></div></div>'+
@@ -4908,10 +5329,10 @@ $('#setBtn').addEventListener('click',async()=>{
       $('#chkUpd').addEventListener('click',()=>checkUpdate(true));
       $('#stAcct').addEventListener('click',openAccount);
       lkWireSettings();
-      wireRemindSettings();wireSdkSettings();
+      wireRemindSettings();wireSdkSettings();wirePushSettings();wireHealth();
       wirePwaInstall();
       $('#sExp').addEventListener('click',()=>exportCSV(state.tx.slice(),'kantong-semua.csv'));
-      $('#sJson').addEventListener('click',()=>deliver('kantong-backup.json',JSON.stringify(state,null,2),'application/json'));
+      $('#sJson').addEventListener('click',doBackupFile);
       function doRestore(raw){
         if(!raw)return;
         let nrm;
@@ -4924,7 +5345,7 @@ $('#setBtn').addEventListener('click',async()=>{
           [{v:'merge',label:'Tambahkan ke data sekarang (disarankan)'},{v:'replace',label:'Ganti seluruh data dengan cadangan',cls:'danger'},{v:null,label:'Batal',cls:'ghost'}],
           {label:'Unduh cadangan data sekarang dulu',run:backupNow}).then(c=>{
           if(!c)return;
-          if(c==='replace'){state=nrm;save();closeSheet();renderAll();toast('Data dipulihkan');return;}
+          if(c==='replace'){bakSnapshot('p','sebelum dipulihkan');state=nrm;save();closeSheet();renderAll();toast('Data dipulihkan');return;}
           const r=KS.mergeBackup(docOf(state),docOf(nrm));
           if(!r.added.tx&&!r.added.other){toast('Tidak ada yang baru: semuanya sudah ada');return;}
           r.doc.updatedAt=Date.now();
@@ -4946,6 +5367,7 @@ $('#setBtn').addEventListener('click',async()=>{
       });
       $('#wipe').addEventListener('click',()=>{
         if(!confirm('Hapus SEMUA transaksi beserta foto struknya dan kembalikan kategori serta dompet ke bawaan?'+(cloud.user?' Karena kamu masuk akun, ini juga menghapusnya dari akun dan perangkat lain.':'')))return;
+        bakSnapshot('p','sebelum reset');
         const snap=JSON.parse(JSON.stringify({tx:state.tx,cats:state.cats,incomeCats:state.incomeCats,wallets:state.wallets,motors:state.motors,meters:state.meters,budgets:state.budgets,recurring:state.recurring,debts:state.debts,svcs:state.svcs}));
         closeSheet();
         deleteWithUndo('Semua data direset ke bawaan',
@@ -4995,7 +5417,7 @@ function renderAll(){
   if(view.tab==='cats')renderCats();
   moveGlider();
   moveSegGlider($('#listSeg'));
-  renderSvcEntry();renderRecEntry();renderSdkDue();renderDebtDue();renderRecDue();
+  renderQuickActions();renderSvcEntry();renderRecEntry();renderSdkDue();renderSdkNudge();renderDataNudge();renderDebtDue();renderRecDue();
   checkRemind();
 }
 
@@ -5429,7 +5851,7 @@ function goPending(){
 let remindKey='';
 function checkRemind(){
   const bar=$('#remindBar');if(!bar||!state.prefs)return;
-  try{sdkNotify();renderSdkDue();}catch(e){}
+  try{sdkNotify();sdkNotifyNudge();renderSdkDue();renderSdkNudge();renderDataNudge();bakMaybe();}catch(e){}
   const p=state.prefs.remind,now=Date.now(),last=lastRecordAt();
   const pend=state.tx.filter(e=>e.incomplete);
   const since=Math.max(last,rs.ack,rs.first);
@@ -5480,13 +5902,15 @@ function sdkSettingsHtml(){
   return '<div class="field" style="margin-top:16px"><label>Dana sedekah</label>'+
     '<label class="chk"><input type="checkbox" id="sdOn"'+(p.on?' checked':'')+'><span><b>Ingatkan mengembalikan dana sedekah</b>Muncul di beranda selama masih ada dana sedekah yang dipakai untuk keperluan lain.</span></label>'+
     '<div id="sdMore"><span class="sdk-l">Batas pengembalian bawaan</span><div class="tchips" id="sdkDays">'+SDK_OPTS.map(o=>'<button type="button" class="tchip" data-d="'+o[0]+'" aria-pressed="'+(o[0]===p.days)+'">'+o[1]+'</button>').join('')+'</div>'+
-    '<p class="qhint" style="margin-top:6px">Bisa diubah per transaksi saat memindahkan dana dari dompet sedekah.</p></div></div>';
+    '<p class="qhint" style="margin-top:6px">Bisa diubah per transaksi saat memindahkan dana dari dompet sedekah.</p>'+
+    (sedekahWallets().length?'<button type="button" class="btn ghost sm" id="sdGoalBtn" style="margin-top:8px">🎯 Atur target & pengingat harian</button>':'')+'</div></div>';
 }
 function wireSdkSettings(){
   const p=state.prefs.sdk,on=$('#sdOn'),more=$('#sdMore');if(!on)return;
   const sync=()=>{more.style.opacity=p.on?'1':'.45';more.style.pointerEvents=p.on?'':'none';};
   sync();
   on.addEventListener('change',()=>{p.on=on.checked;sync();save();sdkKey='';renderSdkDue();});
+  const gb=$('#sdGoalBtn');if(gb)gb.addEventListener('click',openSdkGoal);
   $$('#sdMore .tchip').forEach(b=>b.addEventListener('click',()=>{
     p.days=+b.dataset.d;$$('#sdMore .tchip').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));save();
   }));
@@ -6922,7 +7346,7 @@ function lkRefresh(){
   const on=lkEnabled();
   $('#lockBtn').hidden=!on;
   let seen=false;try{seen=localStorage.getItem(LNUDGE)==='1';}catch(e){}
-  $('#lkNudge').hidden=on||seen;
+  $('#lkNudge').hidden=on||seen;try{renderDataNudge();}catch(e){}
   const s=$('#lkSet');if(s){s.innerHTML=lkSettingsInner();lkWireSettings();}
 }
 
@@ -7131,6 +7555,8 @@ initCloud(); /* memuat sinkron di latar belakang; recRun(true) jalan setelah sin
 updateInstallUi();
 if(!lkIsOn())runDeepLink();
 setTimeout(sdkBootNotice,1600);
+setTimeout(()=>{try{bakMaybe();}catch(e){}},6000);
+document.addEventListener('visibilitychange',()=>{if(document.hidden){try{bakMaybe();}catch(e){}}});
 
 })();
 </script>
