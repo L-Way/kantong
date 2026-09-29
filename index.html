@@ -967,6 +967,55 @@ body{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-ri
 /* PWA di HP: matikan tarik-untuk-muat-ulang. HANYA untuk layar sentuh: di desktop (>=900px) <body> jadi wadah gulir sendiri
    (overflow-x:hidden), dan overscroll-behavior:none di sana memutus gulir roda mouse ke halaman sehingga isi tidak bisa digulir. */
 @media (display-mode:standalone) and (pointer:coarse){html,body{overscroll-behavior-y:none}}
+
+/* --- perbaikan responsif: kolom tanggal/jam & isian tidak boleh melebihi lebar layar kecil --- */
+.row>*{min-width:0}
+.inp{min-width:0;max-width:100%}
+
+/* --- dompet sedekah --- */
+.sdk-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0 4px}
+.sdk-stats>div{min-width:0;padding:10px 11px;border-radius:14px;background:var(--surface-2);border:1px solid var(--line)}
+.sdk-stats small{display:block;font-size:10.5px;font-weight:700;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sdk-stats b{display:block;margin-top:2px;font-size:clamp(12px,3.5vw,14.5px);font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+.sdk-stats b.bad{color:var(--rose)}
+.sdk-stats b.ok{color:var(--mint)}
+@media (max-width:359px){.sdk-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.sdk-stats>div:last-child{grid-column:1/-1}}
+.sdk-chunk{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px dashed var(--line);min-width:0}
+.sdk-chunk .ic{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;font-size:17px;flex:none;background:var(--accent-soft)}
+.sdk-chunk .mid{flex:1;min-width:0}
+.sdk-chunk .mid b{display:block;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sdk-chunk .mid>span{display:block;font-size:11.5px;color:var(--ink-3);font-weight:500;line-height:1.4}
+.sdk-chunk .mid .dv-st{font-weight:700}
+.sdk-chunk .mid .dv-st.bad{color:var(--rose)}
+.sdk-chunk .mid .dv-st.warn{color:var(--amber)}
+.sdk-chunk .mid .dv-st.ok{color:var(--mint)}
+.sdk-chunk .amt{font-weight:800;font-size:13.5px;white-space:nowrap;flex:none;font-variant-numeric:tabular-nums}
+.sdk-chunk .amt.exp{color:var(--rose)}
+.sdk-chunk .amt.inc{color:var(--mint)}
+.sdk-chunk .go{flex:none;padding:7px 11px;font-size:12px}
+.sdk-acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.sdk-acts .btn{flex:1 1 128px;min-width:0}
+.sdk-sec{border-color:color-mix(in srgb,var(--amber) 55%,var(--line))}
+.sdk-sec.late{border-color:color-mix(in srgb,var(--rose) 60%,var(--line))}
+.sdk-sec .rec-ic{background:color-mix(in srgb,var(--amber) 18%,transparent)}
+.sdk-sec.late .rec-ic{background:color-mix(in srgb,var(--rose) 16%,transparent)}
+.sdk-sec .sdk-chunk:first-of-type{margin-top:10px}
+.sdk-mini{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:11px 14px;margin-bottom:12px;border-radius:var(--r-m);
+  background:var(--surface);border:1px solid color-mix(in srgb,var(--amber) 50%,var(--line));box-shadow:var(--shadow-s);min-width:0}
+.sdk-mini.late{border-color:color-mix(in srgb,var(--rose) 55%,var(--line))}
+.sdk-mini .t{flex:1;min-width:0;font-size:12.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sdk-mini b{color:var(--accent);font-size:12px;font-weight:800;flex:none}
+.sdk-box{margin:0 0 16px;padding:12px 13px;border-radius:14px;border:1px solid var(--line);background:var(--surface-2)}
+.sdk-box.warn{border-color:color-mix(in srgb,var(--amber) 55%,var(--line));background:color-mix(in srgb,var(--amber) 9%,var(--surface-2))}
+.sdk-box.ok{border-color:color-mix(in srgb,var(--mint) 50%,var(--line));background:color-mix(in srgb,var(--mint) 8%,var(--surface-2))}
+.sdk-box .chk,.sdk-box .chk:has(input:checked){margin:0;padding:0;background:transparent;border-color:transparent}
+.sdk-box .tchips{margin-bottom:0}
+.sdk-box[hidden],.sdk-box [hidden]{display:none}
+.sdk-l{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin:12px 0 6px}
+.sdk-t{display:block;font-size:12.5px;font-weight:600;color:var(--ink-2);line-height:1.5}
+.pill-sdk{display:inline-flex;align-items:center;padding:1px 7px;margin-left:6px;border-radius:99px;font-size:10px;font-weight:800;font-style:normal;
+  background:color-mix(in srgb,var(--mint) 16%,transparent);color:var(--mint);vertical-align:middle}
+.sdk-h{font-size:13px;margin:16px 0 4px}
 </style>
 <script>/* kunci aplikasi: tutup tampilan sebelum apa pun sempat tergambar */
 try{var c=JSON.parse(localStorage.getItem('kantong.lock')||'null');if(c&&c.on&&c.hash)document.documentElement.classList.add('lk-on');}catch(e){}
@@ -1075,6 +1124,7 @@ try{if(localStorage.getItem('kantong.gate')==='show')document.documentElement.cl
     </div>
     <div class="hint-act"><button type="button" id="lkNudgeGo">Atur PIN sekarang</button><button type="button" id="lkNudgeNo">Nanti saja</button></div>
   </section>
+  <div id="sdkDue" class="rec-due" hidden></div>
   <div id="debtDue" class="rec-due" hidden></div>
   <div id="recDue" class="rec-due" hidden></div>
   <div class="hero-grid">
@@ -1283,7 +1333,7 @@ function pct(a,b){return b>0?Math.round(a/b*100):0;}
 const PALETTE=['#5B3DF5','#F2506E','#0FA88E','#DD8B1E','#3B82F6','#EC4899','#14B8A6','#8B5CF6','#F97316','#64748B','#22C55E','#06B6D4'];
 const EMOJIS=['🍜','🛵','🛍️','💡','💊','🎬','📚','🏠','☕','🍱','⛽','🚕','👕','🎁','✈️','🐱','🏋️','💻','📱','🧴','🧃','🍰','🎮','💇','🧾','💳','🪙','🌿','🎧','🍼','🚌','🧹','🩺','📦','✨'];
 const IEMOJIS=['💰','💼','🎉','🧾','📈','🎁','🏦','🪙','📦','🛠️','🎓','🏆','💹','🧧','✨','💵'];
-const WEMOJIS=['💵','🏦','📱','💳','🐷','👛','🪙','💰','🏧','🎫','🧧','📒'];
+const WEMOJIS=['💵','🏦','📱','💳','🐷','👛','🪙','💰','🏧','🎫','🧧','📒','🤲','🕌'];
 const SEMOJIS=['🐷','🎯','🏖️','🎓','🏠','💍','🚗','📱','🎁','🩺','🛡️','🌴','👶','🧧','⛑️','✈️'];
 /* kategori khusus motor: field "motor" menandai subtipe (dipakai untuk fitur odometer/km) */
 const MOTOR_CATS=[
@@ -1294,6 +1344,11 @@ const MOTOR_CATS=[
 /* kategori listrik: field "meter" menandai kategori ini dipantau lewat angka meteran (dipakai fitur kWh per meteran) */
 const ELEC_CATS=[
   {id:'c-listrik',name:'Listrik',emoji:'⚡',color:'#FBBF24',meter:true}
+];
+/* kategori sedekah: dipakai untuk PENYALURAN dari dompet sedekah ke penerima. Pengeluaran dari dompet sedekah dengan kategori lain dianggap meminjam dana sedekah */
+const SDK_CAT='c-sedekah';
+const SDK_CATS=[
+  {id:SDK_CAT,name:'Sedekah & Infak',emoji:'🤲',color:'#0FA88E',sedekah:true}
 ];
 /* kategori usaha foto: 5 pertama biaya langsung per klien/acara (berproyek), 4 terakhir biaya operasional bulanan */
 const PHOTO_EXP_CATS=[
@@ -1321,7 +1376,7 @@ const DEFAULT_CATS=[
   {id:'c-hiburan',name:'Hiburan',emoji:'🎬',color:'#8B5CF6'},
   {id:'c-rumah',name:'Rumah',emoji:'🏠',color:'#14B8A6'},
   {id:'c-lain',name:'Lainnya',emoji:'✨',color:'#64748B'}
-].concat(PHOTO_EXP_CATS).concat(MOTOR_CATS).concat(ELEC_CATS);
+].concat(PHOTO_EXP_CATS).concat(MOTOR_CATS).concat(ELEC_CATS).concat(SDK_CATS);
 function ensureMotorCats(cats){
   const have={};cats.forEach(c=>{have[c.id]=1;});
   const extra=MOTOR_CATS.filter(c=>!have[c.id]);
@@ -1330,6 +1385,11 @@ function ensureMotorCats(cats){
 function ensureElecCats(cats){
   const have={};cats.forEach(c=>{have[c.id]=1;});
   const extra=ELEC_CATS.filter(c=>!have[c.id]);
+  return extra.length?cats.concat(extra):cats;
+}
+function ensureSdkCats(cats){
+  const have={};cats.forEach(c=>{have[c.id]=1;});
+  const extra=SDK_CATS.filter(c=>!have[c.id]);
   return extra.length?cats.concat(extra):cats;
 }
 const DEFAULT_INCOME_CATS=[
@@ -1367,12 +1427,14 @@ const METER_EMOJIS=['⚡','🔌','💡','🏠','🏢','🏭','🔋','🧯'];
 const DEFAULT_METERS=[{id:'lm-1',name:'Meteran 1',emoji:'⚡',color:'#FBBF24',type:'prabayar'}];
 
 /* pengaturan pengingat catat (ikut tersimpan & tersinkron bersama data lain) */
-const DEFAULT_PREFS={remind:{on:true,every:3,from:'08:00',to:'21:00',notify:false}};
+const DEFAULT_PREFS={remind:{on:true,every:3,from:'08:00',to:'21:00',notify:false},sdk:{on:true,days:1}};
 function normPrefs(p){
   const r=(p&&p.remind)||{},ev=+r.every,hm=/^\d{2}:\d{2}$/;
-  return{remind:{on:r.on!==false,every:[1,2,3,4,6].indexOf(ev)>=0?ev:3,from:hm.test(r.from||'')?r.from:'08:00',to:hm.test(r.to||'')?r.to:'21:00',notify:!!r.notify}};
+  const sk=(p&&p.sdk)||{},sd=+sk.days; /* dompet sedekah: pengingat mengembalikan dana + batas hari bawaan (0 = hari itu juga) */
+  return{remind:{on:r.on!==false,every:[1,2,3,4,6].indexOf(ev)>=0?ev:3,from:hm.test(r.from||'')?r.from:'08:00',to:hm.test(r.to||'')?r.to:'21:00',notify:!!r.notify},
+    sdk:{on:sk.on!==false,days:[0,1,2,3,7].indexOf(sd)>=0?sd:1}};
 }
-let state={v:8,tx:[],cats:DEFAULT_CATS.slice(),incomeCats:DEFAULT_INCOME_CATS.slice(),wallets:DEFAULT_WALLETS.slice(),motors:DEFAULT_MOTORS.slice(),meters:DEFAULT_METERS.slice(),budgets:{},recurring:[],debts:[],svcs:[],prefs:normPrefs(),updatedAt:0};
+let state={v:9,tx:[],cats:DEFAULT_CATS.slice(),incomeCats:DEFAULT_INCOME_CATS.slice(),wallets:DEFAULT_WALLETS.slice(),motors:DEFAULT_MOTORS.slice(),meters:DEFAULT_METERS.slice(),budgets:{},recurring:[],debts:[],svcs:[],prefs:normPrefs(),updatedAt:0};
 let view={y:new Date().getFullYear(),m:new Date().getMonth(),tab:'list',listType:'expense',filter:'all',wfilter:'all',q:''};
 let lastUsed={type:'expense',cat:null,icat:null,wal:null,motor:null,meter:null};
 
@@ -1389,6 +1451,7 @@ function normalize(d){
   if(!d.v||d.v<4)cats=ensureMotorCats(cats); /* migrasi sekali: tambahkan kategori Bensin/Oli/Servis kalau belum ada */
   if(!d.v||d.v<6)cats=ensureElecCats(cats); /* migrasi sekali: tambahkan kategori Listrik kalau belum ada */
   if(!d.v||d.v<8)cats=ensurePhotoExpCats(cats); /* migrasi sekali: tambahkan kategori biaya usaha foto kalau belum ada */
+  if(!d.v||d.v<9)cats=ensureSdkCats(cats); /* migrasi sekali: tambahkan kategori Sedekah & Infak kalau belum ada */
   let incCatsIn=(d.incomeCats&&d.incomeCats.length)?d.incomeCats:DEFAULT_INCOME_CATS.slice();
   if(!d.v||d.v<8)incCatsIn=ensurePhotoIncCats(incCatsIn);
   const motorCatIds={},meterCatIds={};cats.forEach(c=>{if(c.motor)motorCatIds[c.id]=1;if(c.meter)meterCatIds[c.id]=1;});
@@ -1428,15 +1491,21 @@ function normalize(d){
       recId:e.recId?String(e.recId):undefined,
       debtId:e.debtId?String(e.debtId):undefined,
       svcId:e.svcId?String(e.svcId):undefined,
-      pass:e.pass?true:undefined
+      pass:e.pass?true:undefined,
+      /* dompet sedekah: 'ret' = pengembalian dana sedekah, 'free' = keluar dari dompet sedekah tapi bukan pinjaman; sdkTo = penerima; sdkDue = batas pengembalian */
+      sdk:(e.sdk==='ret'||e.sdk==='free')?e.sdk:undefined,
+      sdkTo:e.sdkTo?(String(e.sdkTo).trim().slice(0,40)||undefined):undefined,
+      sdkDue:(typeof e.sdkDue==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(e.sdkDue))?e.sdkDue:undefined
     };
   });
   return{
-    v:8,tx,
+    v:9,tx,
     cats,
     incomeCats:incCatsIn,
     wallets:wallets.map(w=>w.isSavings?
       {id:w.id,name:w.name,emoji:w.emoji,color:w.color,balance:+w.balance||0,isSavings:true,target:+w.target||0}:
+      w.isSedekah?
+      {id:w.id,name:w.name,emoji:w.emoji,color:w.color,balance:+w.balance||0,isSedekah:true}:
       {id:w.id,name:w.name,emoji:w.emoji,color:w.color,balance:+w.balance||0}),
     motors:motors,
     meters:meters,
@@ -1469,7 +1538,7 @@ function bootRec(){if(bootedRec)return;bootedRec=true;recRun(true);renderAll();}
 
 function docOf(s){return{v:s.v,tx:s.tx,cats:s.cats,incomeCats:s.incomeCats,wallets:s.wallets,motors:s.motors,meters:s.meters,budgets:s.budgets,recurring:s.recurring,debts:s.debts,svcs:s.svcs,prefs:s.prefs,updatedAt:s.updatedAt};}
 function capture(){return{doc:JSON.parse(JSON.stringify(docOf(state))),seq:cloud.seq};}
-function freshState(){return normalize({v:8,tx:[],cats:JSON.parse(JSON.stringify(DEFAULT_CATS)),incomeCats:JSON.parse(JSON.stringify(DEFAULT_INCOME_CATS)),wallets:JSON.parse(JSON.stringify(DEFAULT_WALLETS)),motors:JSON.parse(JSON.stringify(DEFAULT_MOTORS)),meters:JSON.parse(JSON.stringify(DEFAULT_METERS)),budgets:{},recurring:[],debts:[],svcs:[],prefs:normPrefs(),updatedAt:0});}
+function freshState(){return normalize({v:9,tx:[],cats:JSON.parse(JSON.stringify(DEFAULT_CATS)),incomeCats:JSON.parse(JSON.stringify(DEFAULT_INCOME_CATS)),wallets:JSON.parse(JSON.stringify(DEFAULT_WALLETS)),motors:JSON.parse(JSON.stringify(DEFAULT_MOTORS)),meters:JSON.parse(JSON.stringify(DEFAULT_METERS)),budgets:{},recurring:[],debts:[],svcs:[],prefs:normPrefs(),updatedAt:0});}
 function wipeLocal(){state=freshState();saveLocal();phClear();meta={};saveMeta();renderAll();}
 function applyDoc(doc){state=normalize(doc);saveLocal();renderAll();}
 
@@ -2050,6 +2119,95 @@ function walletBalance(w){
   return (+w.balance||0)+inc-exp;
 }
 
+
+/* ================= dompet sedekah =================
+   Dompet bertanda isSedekah menyimpan uang sedekah harian. Kalau uang dari dompet ini dipakai untuk hal lain (dipindah ke dompet lain
+   termasuk Tunai, atau dibelanjakan langsung), itu dianggap PINJAMAN yang harus dikembalikan.
+   Semuanya dihitung dari catatan (tidak disimpan terpisah), jadi mengubah/menghapus catatan otomatis membetulkan sisa yang harus dikembalikan.
+   - pinjaman     = pengeluaran dari dompet sedekah yang BUKAN kategori sedekah dan tidak bertanda sdk:'free'
+   - pengembalian = pemasukan ke dompet sedekah bertanda sdk:'ret'
+   - pengembalian melunasi pinjaman tertua lebih dulu (FIFO) */
+const SDK_SNZ='kantong.sdkSnooze';
+const SDK_OPTS=[[0,'Hari ini'],[1,'Besok'],[2,'2 hari'],[3,'3 hari'],[7,'1 minggu']];
+function isSdkWal(id){const w=state.wallets.find(x=>x.id===id);return !!(w&&w.isSedekah);}
+function sedekahWallets(){return state.wallets.filter(w=>w.isSedekah);}
+function spendWallets(){return state.wallets.filter(w=>!w.isSavings&&!w.isSedekah);}
+function isSdkCat(id){if(id===SDK_CAT)return true;const c=state.cats.find(x=>x.id===id);return !!(c&&c.sedekah);}
+/* dompet bawaan untuk catatan baru: hindari dompet sedekah supaya tidak terpakai tanpa sengaja */
+function defWal(){
+  const lu=state.wallets.find(w=>w.id===lastUsed.wal&&!w.isSedekah);
+  return (lu||spendWallets()[0]||state.wallets.find(w=>!w.isSedekah)||state.wallets[0]||{}).id;
+}
+function defToWal(fromId){
+  return (state.wallets.find(w=>w.id!==fromId&&!w.isSedekah)||state.wallets.find(w=>w.id!==fromId)||state.wallets[0]||{}).id;
+}
+const dtAsc=(a,b)=>dtVal(a)<dtVal(b)?-1:(dtVal(a)>dtVal(b)?1:(a.createdAt||0)-(b.createdAt||0));
+function daysBetween(a,b){return Math.round((parseKey(b)-parseKey(a))/86400000);}
+function sdkPrefDays(){const d=(state.prefs.sdk||{}).days;return d==null?1:d;}
+function sdkBorrowTx(wid){return state.tx.filter(e=>e.walletId===wid&&e.type==='expense'&&!isSdkCat(e.catId)&&e.sdk!=='free').sort(dtAsc);}
+function sdkReturnTx(wid){return state.tx.filter(e=>e.walletId===wid&&e.type==='income'&&e.sdk==='ret');}
+function sdkDueOf(e){return e.sdkDue||recShift(e.date,sdkPrefDays());}
+function sdkDest(e){ /* ke mana uang sedekah itu pergi */
+  if(e.transferId){const p=findTransferPeer(e);if(p){const w=walOf(p.walletId);return{emoji:w.emoji,name:w.name,txt:'Dipindah ke '+w.name};}}
+  const c=catOf(e.catId),w=walOf(e.walletId);
+  return{emoji:c.emoji,name:c.name,txt:'Dipakai: '+(e.note||c.name)};
+}
+function sdkChunks(wid){ /* pinjaman yang belum dikembalikan, tertua dulu */
+  let pool=sum(sdkReturnTx(wid));
+  const out=[];
+  sdkBorrowTx(wid).forEach(o=>{
+    const amt=+o.amount||0,paid=Math.min(pool,amt);pool-=paid;
+    const left=amt-paid;
+    if(left>0.5){
+      const due=sdkDueOf(o),d=sdkDest(o);
+      out.push({wid,tx:o,amount:amt,paid,left,due,days:debtDaysTo(due),age:Math.max(0,-debtDaysTo(o.date)),icon:d.emoji,dest:d.name,txt:d.txt});
+    }
+  });
+  return out;
+}
+function sdkAllChunks(){
+  const out=[];
+  sedekahWallets().forEach(w=>{sdkChunks(w.id).forEach(c=>out.push(c));});
+  return out.sort((a,b)=>a.due<b.due?-1:(a.due>b.due?1:dtAsc(a.tx,b.tx)));
+}
+function sdkOwed(wid){return sedekahWallets().filter(w=>!wid||w.id===wid).reduce((t,w)=>t+sdkChunks(w.id).reduce((a,c)=>a+c.left,0),0);}
+function sdkStatus(c){
+  const n=c.days;
+  if(n<0)return{t:'Terlambat '+(-n)+' hari',c:'bad'};
+  if(n===0)return{t:'Kembalikan hari ini',c:'warn'};
+  if(n===1)return{t:'Batas besok',c:'warn'};
+  return{t:'Batas '+n+' hari lagi',c:'ok'};
+}
+function sdkDueLbl(k){const n=debtDaysTo(k);if(n<=0)return 'hari ini';if(n===1)return 'besok';const d=parseKey(k);return d.getDate()+' '+MON3[d.getMonth()];}
+function sdkDayLbl(k){const d=parseKey(k);return d.getDate()+' '+MON3[d.getMonth()];}
+function sdkDaysChips(sel){
+  return '<div class="tchips" id="sdkDays">'+SDK_OPTS.map(o=>'<button type="button" class="tchip" data-d="'+o[0]+'" aria-pressed="'+(o[0]===sel)+'">'+o[1]+'</button>').join('')+'</div>';
+}
+function sdkSnoozed(){try{return Date.now()<(+localStorage.getItem(SDK_SNZ)||0);}catch(e){return false;}}
+function sdkSnooze(ms){try{localStorage.setItem(SDK_SNZ,String(Date.now()+ms));}catch(e){}}
+/* dompet asal pengembalian: dompet tempat uang sedekah itu terakhir "mendarat" kalau masih ada, kalau tidak dompet biasa pertama */
+function sdkReturnFrom(wid){
+  const ch=sdkChunks(wid).slice().sort((a,b)=>b.left-a.left);
+  for(let i=0;i<ch.length;i++){
+    const p=ch[i].tx.transferId?findTransferPeer(ch[i].tx):null;
+    if(p&&state.wallets.some(w=>w.id===p.walletId&&!w.isSedekah))return p.walletId;
+  }
+  const lu=state.wallets.find(w=>w.id===lastUsed.wal&&!w.isSedekah&&!w.isSavings);
+  return (lu||spendWallets()[0]||{}).id;
+}
+function sdkRecipients(){
+  const seen={},out=[];
+  state.tx.filter(e=>e.sdkTo).sort((a,b)=>dtVal(a)<dtVal(b)?1:-1).forEach(e=>{const k=e.sdkTo.toLowerCase();if(!seen[k]){seen[k]=1;out.push(e.sdkTo);}});
+  return out.slice(0,8);
+}
+function sdkNotice(kind,wid,amount,due){
+  if(kind==='borrow')toast('Dana sedekah dipakai '+rp(amount)+'. Kembalikan paling lambat '+sdkDueLbl(due)+'.',ICO_ALERT,4600);
+  else if(kind==='ret'){
+    const left=sdkOwed(wid);
+    toast(left>0?'Dikembalikan. Sisa yang perlu dikembalikan '+rp(left):'Lunas, dana sedekah utuh kembali 🤲',null,3400);
+  }
+}
+
 /* ================= theme ================= */
 function applyTheme(t){
   document.documentElement.setAttribute('data-theme',t);pwaThemeColor(t);
@@ -2219,10 +2377,10 @@ $('#balEye').addEventListener('click',()=>{setBalHidden(!isBalHidden());updateBa
 
 /* ================= toast ================= */
 let toastT;
-function toast(msg,icon){
+function toast(msg,icon,ms){
   const el=$('#toast');
   el.innerHTML=(icon||'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m5 13 4 4L19 7"/></svg>')+'<span>'+esc(msg)+'</span>';
-  el.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('on'),2300);
+  el.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('on'),ms||2300);
 }
 /* ================= undo generik utk aksi hapus ================= */
 let pendingUndo=null; /* {restore,commit,timer} */
@@ -2590,6 +2748,8 @@ function renderHint(){
     if(a.totalIncome>0&&a.net>=0&&tips.length<4)tips.push(['🏦','Sisa dari pemasukan bulan ini <b>'+rp(a.net)+'</b> ('+pct(a.net,a.totalIncome)+'% dari pemasukan), bisa dialokasikan ke tabungan.']);
     tips=tips.slice(0,4);
   }
+  const owedS=sdkOwed();
+  if(owedS>0&&(state.prefs.sdk||{}).on!==false)tips.unshift(['🤲','Ada <b>'+rp(owedS)+'</b> dana sedekah yang terpakai. Kembalikan lebih dulu sebelum menyalurkan.']);
 
   w.innerHTML='<div class="hint" style="--h:'+L.color+'">'+
     '<div class="hint-head"><div class="hint-badge">'+L.emoji+'</div>'+
@@ -2746,7 +2906,7 @@ function renderList(){
       html+='<button class="tx" data-id="'+e.id+'" style="animation-delay:'+Math.min(n*22,300)+'ms">'+
         '<span class="ic" style="--cat:'+c.color+'22">'+c.emoji+'<em>'+w.emoji+'</em></span>'+
         '<span class="mid"><span class="t">'+esc(e.note||c.name)+'</span>'+
-        '<span class="s">'+timeTxt(e)+(e.photo?' 📷':'')+(e.recId?' 🔁':'')+(e.incomplete?' · <b class="pendtxt">lengkapi</b>':'')+' · '+esc(c.name)+' · '+esc(w.name)+(e.client?' · 👤 '+esc(e.client):'')+(motorTxt?' · '+motorTxt:'')+(odoTxt?' · '+odoTxt:'')+'</span></span>'+
+        '<span class="s">'+timeTxt(e)+(e.photo?' 📷':'')+(e.recId?' 🔁':'')+(e.incomplete?' · <b class="pendtxt">lengkapi</b>':'')+' · '+esc(c.name)+' · '+esc(w.name)+(e.client?' · 👤 '+esc(e.client):'')+(e.sdkTo?' · 🤲 '+esc(e.sdkTo):'')+(e.sdk==='ret'?' · ↩ dikembalikan':'')+((!e.transferId||e.type==='expense')&&e.type==='expense'&&isSdkWal(e.walletId)&&!isSdkCat(e.catId)&&e.sdk!=='free'?' · ⚠️ dana sedekah':'')+(motorTxt?' · '+motorTxt:'')+(odoTxt?' · '+odoTxt:'')+'</span></span>'+
         '<span class="amt num '+(e.pass?'':(isInc?'inc':'exp'))+'">'+(isInc?'+':'−')+rp(e.amount)+'</span></button>';
       n++;
     });
@@ -2876,7 +3036,8 @@ function renderRecap(){
   const el=$('#p-recap');
   if(!a.list.length&&!a.incList.length){
     el.innerHTML='<div class="card"><div class="empty"><span class="em">📊</span><b>Rekap masih kosong</b>'+
-      '<p>Begitu ada transaksi di '+MONTHS[view.m]+', semua ringkasan muncul di sini.</p></div></div>'+projectRecapHtml();
+      '<p>Begitu ada transaksi di '+MONTHS[view.m]+', semua ringkasan muncul di sini.</p></div></div>'+sdkRecapHtml()+trfRecapHtml()+projectRecapHtml();
+    requestAnimationFrame(()=>{$$('.bar i',el).forEach(i=>i.style.width=i.dataset.w+'%');});
     return;
   }
   const list=a.list,total=a.total,dim=a.dim,elp=a.el,totalIncome=a.totalIncome,net=a.net;
@@ -2898,6 +3059,7 @@ function renderRecap(){
     '</div>';
 
   html+=projectRecapHtml();
+  html+=sdkRecapHtml();
   if(!list.length){
     html+='<div class="card"><div class="empty"><span class="em">🧾</span><b>Belum ada pengeluaran</b>'+
       '<p>Rincian kategori, kalender, dan pola belanja akan muncul begitu ada pengeluaran tercatat.</p></div></div>';
@@ -3028,6 +3190,8 @@ function renderRecap(){
         '<div class="bar-sub"><span>'+pct(w.s,total)+'% dari total keluar</span><span>saldo saat ini '+rp(bal)+'</span></div></div>';
     }).join('')+'</div>';
 
+  html+=trfRecapHtml();
+
   /* 7. mingguan */
   html+='<div class="card"><h3>Sebaran mingguan</h3><p class="sub">Total pengeluaran tiap pekan di '+MONTHS[view.m]+'</p>'+
     weeks.map(w=>'<div class="wk"><span class="lb">'+w.from+'–'+w.to+' '+MON3[view.m]+'</span>'+
@@ -3118,6 +3282,36 @@ function renderRecap(){
   const gi=$('#goIncome');
   if(gi)gi.addEventListener('click',()=>{view.listType='income';openNew();});
 }
+function sdkRecapHtml(){
+  const sw=sedekahWallets();if(!sw.length)return '';
+  const ids=sw.map(w=>w.id),mine=state.tx.filter(e=>ids.indexOf(e.walletId)>=0);
+  const mo=inMonth(view.y,view.m).filter(e=>ids.indexOf(e.walletId)>=0);
+  const give=list=>list.filter(e=>e.type==='expense'&&isSdkCat(e.catId));
+  const gM=give(mo),gA=give(mine);
+  const borrowM=mo.filter(e=>e.type==='expense'&&!isSdkCat(e.catId)&&e.sdk!=='free');
+  const retM=mo.filter(e=>e.type==='income'&&e.sdk==='ret');
+  const saveM=mo.filter(e=>e.type==='income'&&e.sdk!=='ret');
+  const owed=sdkOwed(),ch=sdkAllChunks(),late=ch.filter(c=>c.days<0);
+  const by={};gM.forEach(e=>{const k=(e.sdkTo||'Tanpa keterangan');by[k]=(by[k]||0)+(+e.amount||0);});
+  const rank=Object.keys(by).map(k=>({k,v:by[k]})).sort((a,b)=>b.v-a.v);
+  const days=Object.keys(gM.reduce((o,e)=>{o[e.date]=1;return o;},{})).length;
+  return '<div class="card"><h3>🤲 Sedekah bulan ini</h3><p class="sub">Penyaluran, pemakaian dana sedekah, dan pengembaliannya di '+MONTHS[view.m]+'</p>'+
+    '<div class="sdk-stats"><div><small>Disalurkan</small><b class="ok">'+rp(sum(gM))+'</b></div><div><small>Kali bersedekah</small><b>'+gM.length+'× · '+days+' hari</b></div><div><small>Total sepanjang waktu</small><b>'+rp(sum(gA))+'</b></div></div>'+
+    '<div class="sdk-stats"><div><small>Disisihkan</small><b>'+rp(sum(saveM))+'</b></div><div><small>Dana terpakai</small><b class="'+(sum(borrowM)?'bad':'')+'">'+rp(sum(borrowM))+'</b></div><div><small>Dikembalikan</small><b class="ok">'+rp(sum(retM))+'</b></div></div>'+
+    '<div class="bar-sub" style="margin-top:8px"><span>belum dikembalikan sekarang</span><span class="num" style="font-weight:800;color:'+(owed>0?'var(--rose)':'var(--mint)')+'">'+(owed>0?rp(owed)+(late.length?' · '+late.length+' terlambat':''):'Utuh 🤲')+'</span></div>'+
+    (rank.length?'<h3 class="sdk-h">Penerima terbesar</h3>'+rank.slice(0,5).map(r=>
+      '<div class="bar-row"><div class="bar-top"><span class="e">🤲</span><span class="nm">'+esc(r.k)+'</span><span class="v">'+rp(r.v)+'</span></div>'+
+      '<div class="bar"><i data-w="'+(r.v/rank[0].v*100)+'" style="background:linear-gradient(90deg,var(--mint),color-mix(in srgb,var(--mint) 60%,transparent))"></i></div></div>').join(''):'')+
+    '</div>';
+}
+function trfRecapHtml(){ /* perpindahan antar dompet: tidak dihitung sebagai pemasukan/pengeluaran, tapi tetap perlu terlihat */
+  const t=inMonth(view.y,view.m).filter(e=>e.transferId&&e.type==='expense');
+  if(!t.length)return '';
+  const by={};t.forEach(e=>{const p=findTransferPeer(e),k=walOf(e.walletId).name+' → '+(p?walOf(p.walletId).name:'?');by[k]=(by[k]||0)+(+e.amount||0);});
+  const rank=Object.keys(by).map(k=>({k,v:by[k]})).sort((a,b)=>b.v-a.v);
+  return '<div class="card"><h3>🔁 Perpindahan dana</h3><p class="sub">'+t.length+' perpindahan senilai '+rp(sum(t))+' bulan ini, tidak dihitung sebagai pemasukan atau pengeluaran</p>'+
+    rank.slice(0,5).map(r=>'<div class="bar-sub" style="margin:6px 0"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(r.k)+'</span><span class="num" style="font-weight:800;flex:none">'+rp(r.v)+'</span></div>').join('')+'</div>';
+}
 function wireRecapExport(){
   const a=$('#expMonth'),b=$('#expAll');
   if(a)a.addEventListener('click',()=>exportCSV(inMonth(view.y,view.m),'kantong-'+bKey(view.y,view.m)+'.csv'));
@@ -3203,12 +3397,13 @@ async function exportCSV(list,filename){
   if(!list.length){toast('Tidak ada data untuk diunduh');return;}
   list=list.slice().sort((a,b)=>dtVal(a)<dtVal(b)?-1:1);
   const safe=t=>{t=String(t==null?'':t);return /^[=+\-@\t\r]/.test(t)?"'"+t:t;}; /* cegah teks dibaca sebagai rumus di Excel */
-  const rows=[['Tanggal','Waktu','Tipe','Kategori','Dompet','Motor','Odometer (km)','Meteran Listrik','Angka Meteran (kWh)','Token Diisi (kWh)','Catatan','Nominal','Waktu Perkiraan','Dihitung di ringkasan','Klien/Proyek']];
+  const rows=[['Tanggal','Waktu','Tipe','Kategori','Dompet','Motor','Odometer (km)','Meteran Listrik','Angka Meteran (kWh)','Token Diisi (kWh)','Catatan','Nominal','Waktu Perkiraan','Dihitung di ringkasan','Klien/Proyek','Status Sedekah','Penerima Sedekah']];
   list.forEach(e=>rows.push([e.date,timeOf(e),e.type==='income'?'Pemasukan':'Pengeluaran',safe(catOf(e.catId).name),safe(walOf(e.walletId).name),
     isMotorCat(e.catId)?safe(motorOf(motorIdOf(e)).name):'',e.odo!=null?String(e.odo):'',
     isMeterCat(e.catId)?safe(meterOf(meterIdOf(e)).name):'',e.meter!=null?String(e.meter):'',e.topup!=null?String(e.topup):'',
     safe(e.note||''),String(Math.round(e.amount)),e.approx?'Ya':'',
-    (e.transferId||e.debtId||e.pass||e.catId==='ic-saldo')?'Tidak':'Ya',safe(e.client||'')]));
+    (e.transferId||e.debtId||e.pass||e.catId==='ic-saldo')?'Tidak':'Ya',safe(e.client||''),
+    e.sdk==='ret'?'Pengembalian':(e.type==='expense'&&isSdkWal(e.walletId)?(isSdkCat(e.catId)?'Penyaluran':(e.sdk==='free'?'Keluar (bukan pinjaman)':'Pinjaman')):''),safe(e.sdkTo||'')]));
   const csv='\uFEFF'+rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(';')).join('\r\n');
   await deliver(filename,csv,'text/csv');
 }
@@ -3329,13 +3524,16 @@ function renderWallets(){
   const wallets=regularWallets(),goals=savingsWallets();
   const totalBal=state.wallets.reduce((s,w)=>s+walletBalance(w),0);
   const totalSavings=goals.reduce((s,w)=>s+walletBalance(w),0);
+  const sdkW=sedekahWallets(),totalSdk=sdkW.reduce((s,w)=>s+walletBalance(w),0),sdkOwe=sdkOwed();
   const totalIncAll=sum(incOf(state.tx)),totalExpAll=sum(expOf(state.tx));
   const list=inMonth(view.y,view.m);
   const h='<div class="card"><h3>Total saldo</h3><p class="sub">Pemasukan dikurangi pengeluaran, sepanjang waktu'+(goals.length?', termasuk tabungan':'')+'</p>'+
     '<div class="total-amt money" style="font-size:28px;margin-bottom:10px"><span class="rp" style="font-size:.5em">Rp</span>'+fmt(totalBal)+'</div>'+
     '<div class="bar-sub"><span title="Termasuk perpindahan dompet, utang/piutang, dan dana titipan">arus masuk total '+rp(totalIncAll)+'</span><span title="Termasuk perpindahan dompet, utang/piutang, dan dana titipan">arus keluar total '+rp(totalExpAll)+'</span></div>'+
-    (goals.length?'<div class="bar-sub" style="margin-top:4px"><span>dompet bisa dipakai '+rp(totalBal-totalSavings)+'</span><span>tabungan '+rp(totalSavings)+'</span></div>':'')+
+    ((goals.length||sdkW.length)?'<div class="bar-sub" style="margin-top:4px"><span>dompet bisa dipakai '+rp(totalBal-totalSavings-totalSdk-sdkOwe)+'</span>'+(goals.length?'<span>tabungan '+rp(totalSavings)+'</span>':'')+'</div>':'')+
+    (sdkW.length?'<div class="bar-sub" style="margin-top:4px"><span>dana sedekah tersimpan '+rp(totalSdk)+'</span><span>'+(sdkOwe>0?'perlu dikembalikan '+rp(sdkOwe):'utuh 🤲')+'</span></div>':'')+
     '</div>'+
+  sdkCardHtml()+
   debtCardHtml()+
   '<div class="card"><h3>Dompet & sumber dana</h3>'+
     '<p class="sub">Saldo dihitung otomatis dari transaksi tiap dompet.</p>'+    '<div class="li-list" id="walList">'+
@@ -3346,8 +3544,8 @@ function renderWallets(){
       return '<div class="li-item" data-id="'+esc(w.id)+'" style="animation-delay:'+Math.min(i*28,260)+'ms">'+
         (wallets.length>1?'<button class="drag-handle" type="button" aria-label="Geser urutan '+esc(w.name)+'">'+GRIP_SVG+'</button>':'')+
         '<span class="ic" style="background:'+w.color+'22">'+w.emoji+'</span>'+
-        '<span class="mid"><span class="t">'+esc(w.name)+'</span><span class="s">'+
-        'Saldo '+rp(bal)+(mine.length?' · bulan ini +'+shortRp(incM)+' / −'+shortRp(expM):'')+
+        '<span class="mid"><span class="t">'+esc(w.name)+(w.isSedekah?'<em class="pill-sdk">Sedekah</em>':'')+'</span><span class="s">'+
+        'Saldo '+rp(bal)+(mine.length?' · bulan ini +'+shortRp(incM)+' / −'+shortRp(expM):'')+(w.isSedekah&&sdkOwed(w.id)>0?' · terpakai '+shortRp(sdkOwed(w.id)):'')+
         '</span></span>'+
         '<span class="li-act">'+
           '<button class="mini" data-edw="'+esc(w.id)+'" aria-label="Ubah '+esc(w.name)+'">'+
@@ -3366,7 +3564,7 @@ function renderWallets(){
       '<p class="sub">Sisihkan dana ke tujuan tertentu, tetap tersambung lewat perpindahan dana antar dompet.</p>')+
     '<button class="btn ghost sm" id="goSavings">'+(goals.length?'Kelola tabungan →':'＋ Buat tabungan →')+'</button></div>';
   $('#p-wallets').innerHTML=h;
-  wireDebtCard();
+  wireDebtCard();wireSdkCard();
   $('#addWal').addEventListener('click',()=>openWalletSheet(null));
   $('#goSavings').addEventListener('click',()=>{const t=$('.tab[data-p="savings"]');if(t)t.click();});
   const dt=$('#doTransfer');if(dt)dt.addEventListener('click',openTransferNew);
@@ -3376,7 +3574,7 @@ function renderWallets(){
     const used=state.tx.filter(e=>e.walletId===w.id).length;
     const fallback=regularWallets().find(x=>x.id!==w.id)||state.wallets.find(x=>x.id!==w.id);
     const carry=+w.balance||0; /* saldo awal dompet ikut dipindahkan, supaya total saldo tidak berubah diam-diam */
-    if(!confirm('Hapus dompet "'+w.name+'"?'+(used?'\n'+used+' transaksi akan dipindahkan ke "'+fallback.name+'".':'')+(carry?'\nSaldo awal '+rp(carry)+' ikut dipindahkan ke "'+fallback.name+'".':'')))return;
+    if(!confirm('Hapus dompet "'+w.name+'"?'+(used?'\n'+used+' transaksi akan dipindahkan ke "'+fallback.name+'".':'')+(carry?'\nSaldo awal '+rp(carry)+' ikut dipindahkan ke "'+fallback.name+'".':'')+(w.isSedekah&&sdkOwed(w.id)>0?'\nPantauan dana sedekah yang belum dikembalikan ('+rp(sdkOwed(w.id))+') ikut hilang.':'')))return;
     const idx=state.wallets.indexOf(w);
     const affected=state.tx.filter(e=>e.walletId===w.id);
     deleteWithUndo('Dompet "'+w.name+'" dihapus',
@@ -3391,16 +3589,212 @@ function renderWallets(){
     save();renderAll();toast('Urutan dompet diperbarui');
   });
 }
-function openWalletSheet(existing){
-  let emoji=existing?existing.emoji:WEMOJIS[0];
+/* ================= sedekah: kartu, banner pengingat, dan sheet ================= */
+function sdkChunkRowHtml(c){
+  const st=sdkStatus(c);
+  return '<div class="sdk-chunk"><span class="ic">'+c.icon+'</span><div class="mid"><b>'+esc(c.txt)+'</b><span>'+sdkDayLbl(c.tx.date)+' · <span class="dv-st '+st.c+'">'+st.t+'</span></span></div>'+
+    '<span class="amt num exp">'+rp(c.left)+'</span></div>';
+}
+function sdkCardHtml(){
+  const sw=sedekahWallets();
+  if(!sw.length)return '<div class="card"><h3>🤲 Dompet sedekah</h3>'+
+    '<p class="sub">Simpan uang sedekah harian di satu tempat. Kalau dananya terpakai untuk keperluan lain, Kantong mencatatnya sebagai pinjaman dan mengingatkan untuk mengembalikannya.</p>'+
+    '<button class="btn sm" id="sdkCreate">＋ Buat dompet sedekah</button></div>';
+  const month=inMonth(view.y,view.m);
+  return sw.map(w=>{
+    const bal=walletBalance(w),ch=sdkChunks(w.id),owed=ch.reduce((t,c)=>t+c.left,0);
+    const gm=sum(month.filter(e=>e.walletId===w.id&&e.type==='expense'&&isSdkCat(e.catId)));
+    const ga=sum(state.tx.filter(e=>e.walletId===w.id&&e.type==='expense'&&isSdkCat(e.catId)));
+    const ws=esc(w.id);
+    return '<div class="card"><h3>'+w.emoji+' '+esc(w.name)+'</h3>'+
+      '<p class="sub">'+(owed>0?'Ada dana sedekah yang terpakai dan perlu dikembalikan.':'Dana sedekah utuh. Kalau terpakai untuk hal lain, harus dikembalikan.')+'</p>'+
+      '<div class="total-amt money" style="font-size:28px"><span class="rp" style="font-size:.5em">Rp</span>'+fmt(bal)+'</div>'+
+      '<div class="sdk-stats"><div><small>Terpakai sementara</small><b class="'+(owed>0?'bad':'ok')+'">'+(owed>0?rp(owed):'Tidak ada')+'</b></div>'+
+      '<div><small>Disalurkan bulan ini</small><b>'+rp(gm)+'</b></div>'+
+      '<div><small>Total disalurkan</small><b>'+rp(ga)+'</b></div></div>'+
+      ch.slice(0,3).map(sdkChunkRowHtml).join('')+
+      (ch.length>3?'<button type="button" class="rec-more" data-sdk="detail" data-w="'+ws+'">+'+(ch.length-3)+' lainnya…</button>':'')+
+      '<div class="sdk-acts"><button class="btn sm" data-sdk="give" data-w="'+ws+'">🤲 Salurkan</button>'+
+      '<button class="btn ghost sm" data-sdk="save" data-w="'+ws+'">＋ Sisihkan</button>'+
+      (owed>0?'<button class="btn sm" data-sdk="ret" data-w="'+ws+'">↩ Kembalikan</button>':'')+
+      '<button class="btn ghost sm" data-sdk="detail" data-w="'+ws+'">Rincian</button></div></div>';
+  }).join('');
+}
+function wireSdkCard(){
+  const cr=$('#sdkCreate');if(cr)cr.addEventListener('click',()=>openWalletSheet(null,{sedekah:true}));
+  $$('#p-wallets [data-sdk]').forEach(b=>b.addEventListener('click',()=>sdkAct(b.dataset.sdk,b.dataset.w)));
+}
+function sdkAct(a,wid){
+  if(a==='give')openSdkGive(wid);
+  else if(a==='save')openSdkDeposit(wid);
+  else if(a==='ret')openSdkReturn(wid);
+  else if(a==='detail')openSdkDetail(wid);
+}
+
+/* banner di beranda: selalu terlihat selama ada dana sedekah yang belum dikembalikan ("Nanti" hanya meringkasnya sementara) */
+let sdkKey='';
+function renderSdkDue(){
+  const box=$('#sdkDue');if(!box)return;
+  const on=(state.prefs.sdk||{}).on!==false;
+  const ch=on?sdkAllChunks():[];
+  const snz=sdkSnoozed();
+  const key=ch.map(c=>c.tx.id+':'+c.left+':'+c.due).join('|')+'|'+snz+'|'+todayKey();
+  if(key===sdkKey)return;
+  sdkKey=key;
+  if(!ch.length){box.hidden=true;box.innerHTML='';return;}
+  const total=ch.reduce((t,c)=>t+c.left,0),isLate=ch.some(c=>c.days<0),oldest=ch.reduce((m,c)=>Math.max(m,c.age),0);
+  if(snz){
+    box.innerHTML='<button type="button" class="sdk-mini'+(isLate?' late':'')+'" data-sd="detail"><span>🤲</span><span class="t">'+rp(total)+' dana sedekah belum dikembalikan'+(isLate?' · terlambat':'')+'</span><b>Lihat</b></button>';
+  }else{
+    box.innerHTML='<div class="rec-sec sdk-sec'+(isLate?' late':'')+'"><div class="rec-h"><span class="rec-ic">🤲</span><div class="rec-t"><b>'+(isLate?'Dana sedekah terlambat dikembalikan':'Dana sedekah perlu dikembalikan')+'</b>'+
+      '<span>'+rp(total)+' terpakai sementara'+(oldest>0?' · terlama '+oldest+' hari':'')+'</span></div></div>'+
+      ch.slice(0,3).map(sdkChunkRowHtml).join('')+
+      (ch.length>3?'<button type="button" class="rec-more" data-sd="detail">+'+(ch.length-3)+' lainnya…</button>':'')+
+      '<div class="rec-act2"><button type="button" class="rb main" data-sd="ret">Kembalikan sekarang</button><button type="button" class="rb" data-sd="detail">Rincian</button><button type="button" class="rb" data-sd="later">Nanti</button></div></div>';
+  }
+  box.hidden=false;
+  $$('#sdkDue [data-sd]').forEach(b=>b.addEventListener('click',()=>{
+    const a=b.dataset.sd,first=ch[0];
+    if(a==='ret')openSdkReturn(first.wid);
+    else if(a==='detail')openSdkDetail(first.wid);
+    else if(a==='later'){sdkSnooze(3*3600000);sdkKey='';renderSdkDue();toast('Diingatkan lagi 3 jam lagi');}
+  }));
+}
+/* notifikasi sistem (hanya kalau tab tidak sedang dilihat dan izin notifikasi sudah diberikan di Pengaturan) */
+function sdkNotify(){
+  const p=state.prefs.sdk||{};if(p.on===false)return;
+  const rm=state.prefs.remind||{};
+  if(!(rm.notify&&document.hidden&&('Notification' in window)&&Notification.permission==='granted'))return;
+  const due=sdkAllChunks().filter(c=>c.days<=0);if(!due.length)return;
+  if(!activeNow(rm))return;
+  const now=Date.now();if(now-(rs.sdkAt||0)<6*3600000)return;
+  const total=sdkOwed(),late=due.some(c=>c.days<0);
+  try{
+    const n=new Notification('Kantong · Dana sedekah',{body:rp(total)+' dana sedekah belum dikembalikan'+(late?' (ada yang terlambat)':', batasnya hari ini'),tag:'kantong-sdk'});
+    n.onclick=()=>{try{window.focus();}catch(e){}n.close();};
+    rs.sdkAt=now;saveRs();
+  }catch(e){}
+}
+function sdkBootNotice(){ /* sekali saat Kantong dibuka: ingatkan kalau ada yang jatuh tempo hari ini atau terlambat */
+  if(lkIsOn()||sheetOpen||(state.prefs.sdk||{}).on===false||sdkSnoozed())return;
+  const due=sdkAllChunks().filter(c=>c.days<=0);if(!due.length)return;
+  const total=due.reduce((t,c)=>t+c.left,0),late=due.some(c=>c.days<0);
+  toast('Dana sedekah '+rp(total)+(late?' terlambat dikembalikan':' harus dikembalikan hari ini'),ICO_ALERT,4800);
+}
+
+function openSdkGive(wid){
+  const sw=sedekahWallets();
+  if(!sw.length){toast('Buat dompet sedekah dulu ya');return;}
+  let walId=(wid&&isSdkWal(wid))?wid:sw[0].id;
+  const rec=sdkRecipients();
+  openSheet('Salurkan sedekah',
+    '<div class="amount-box" id="amountBox" style="--ab:var(--mint)"><label for="amt">Nominal disalurkan</label>'+
+      '<div class="amount-in"><span class="rp">Rp</span><input id="amt" inputmode="numeric" autocomplete="off" placeholder="0"></div>'+
+      opRowHtml()+
+      '<div class="quick">'+[2000,5000,10000,20000,50000].map(v=>'<button class="q" data-add="'+v+'">+'+shortRp(v)+'</button>').join('')+
+      '<button class="q" data-clear="1">Hapus</button></div></div>'+
+    (sw.length>1?'<div class="field"><label>Dari dompet sedekah</label><div class="pick" id="sdkWalPick">'+
+      sw.map(w=>'<button class="cp" data-w="'+esc(w.id)+'" aria-pressed="'+(w.id===walId)+'"><span class="e">'+w.emoji+'</span><span class="n">'+esc(w.name)+'</span></button>').join('')+'</div></div>':'')+
+    '<p class="sdk-t" id="sdkBalHint" style="margin:-4px 0 14px"></p>'+
+    '<div class="field"><label for="sdkTo">Kepada <span style="color:var(--ink-3);font-weight:500">(opsional)</span></label>'+
+      '<input class="inp" id="sdkTo" list="sdkToList" autocomplete="off" placeholder="Contoh: Masjid Al-Ikhlas, Pak Budi" maxlength="40">'+
+      '<datalist id="sdkToList">'+rec.map(n=>'<option value="'+esc(n)+'"></option>').join('')+'</datalist>'+
+      (rec.length?'<div class="tchips" id="sdkRec" style="margin:8px 0 0">'+rec.slice(0,5).map(n=>'<button type="button" class="tchip" data-n="'+esc(n)+'" aria-pressed="false">'+esc(n)+'</button>').join('')+'</div>':'')+'</div>'+
+    '<div class="field"><label for="note">Catatan <span style="color:var(--ink-3);font-weight:500">(opsional)</span></label>'+
+      '<input class="inp" id="note" placeholder="Contoh: infak Jumat, untuk anak yatim" maxlength="80"></div>'+
+    timeBlockHtml(todayKey(),nowTime(),false)+
+    '<button class="btn" id="saveSdk" style="margin-top:8px">Catat penyaluran</button>',
+    ()=>{
+      const amt=$('#amt');moneyMask(amt);wireOpButtons(amt);
+      setTimeout(()=>amt.focus(),420);
+      $$('#sheetBody .q').forEach(b=>b.addEventListener('click',()=>{
+        if(b.dataset.clear)amt.value='';else amt.value=String(readMoney(amt)+(+b.dataset.add));
+        amt.dispatchEvent(new Event('input'));amt.focus();
+      }));
+      const tb=wireTimeBlock();
+      function hint(){
+        const h=$('#sdkBalHint');if(!h)return;
+        const w=walOf(walId),bal=walletBalance(w),v=readMoney(amt);
+        h.innerHTML='Saldo '+esc(w.name)+': <b>'+rp(bal)+'</b>'+(v>bal?' · <span style="color:var(--rose)">nominal melebihi saldo</span>':'');
+      }
+      amt.addEventListener('input',hint);hint();
+      $$('#sdkWalPick .cp').forEach(b=>b.addEventListener('click',()=>{walId=b.dataset.w;$$('#sdkWalPick .cp').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));hint();}));
+      $$('#sdkRec .tchip').forEach(b=>b.addEventListener('click',()=>{$('#sdkTo').value=b.dataset.n;}));
+      $('#saveSdk').addEventListener('click',()=>{
+        const v=readMoney(amt);
+        if(!v){amt.focus();toast('Isi nominalnya dulu ya',ICO_ALERT);return;}
+        const bal=walletBalance(walOf(walId));
+        if(v>bal&&!confirm('Saldo dompet sedekah hanya '+rp(bal)+'. Tetap catat penyaluran '+rp(v)+'?'))return;
+        const date=$('#date').value||todayKey(),time=$('#time').value||nowTime(),approx=tb.approx()||undefined;
+        const to=($('#sdkTo').value||'').trim().slice(0,40)||undefined,note=$('#note').value.trim();
+        state.tx.push({id:uid(),type:'expense',amount:v,catId:SDK_CAT,walletId:walId,date,time,approx,note,sdkTo:to,createdAt:Date.now()});
+        save();
+        const d=parseKey(date);view.y=d.getFullYear();view.m=d.getMonth();view.listType='expense';
+        closeSheet();renderAll();celebrate('var(--mint)');
+        setTimeout(()=>toast('Sedekah '+rp(v)+(to?' untuk '+to:'')+' tercatat 🤲'),300);
+      });
+    });
+}
+function openSdkDeposit(wid){
+  const lu=state.wallets.find(w=>w.id===lastUsed.wal&&!w.isSedekah&&!w.isSavings);
+  const from=(lu||spendWallets()[0]||{}).id;
+  if(!from){toast('Tambah dompet biasa dulu ya');return;}
+  const d={from,to:wid,ret:false};
+  openSheet('Sisihkan ke '+walOf(wid).name,transferForm(null,d),()=>wireTransfer(null,d));
+}
+function openSdkReturn(wid,amount){
+  if(!wid){const c=sdkAllChunks()[0];wid=c?c.wid:(sedekahWallets()[0]||{}).id;}
+  const from=sdkReturnFrom(wid);
+  if(!wid||!from){toast('Tambah dompet biasa dulu ya');return;}
+  const owed=sdkOwed(wid);
+  const d={from,to:wid,ret:true,amount:amount!=null?Math.min(amount,owed||amount):owed};
+  openSheet('Kembalikan dana sedekah',transferForm(null,d),()=>wireTransfer(null,d));
+}
+function openSdkDetail(wid){
+  const w=walOf(wid);if(!w.isSedekah)return;
+  const ch=sdkChunks(wid),owed=ch.reduce((t,c)=>t+c.left,0),bal=walletBalance(w);
+  const all=state.tx.filter(e=>e.walletId===wid).sort((a,b)=>dtAsc(b,a)).slice(0,8);
+  const hist=all.map(e=>{
+    const isInc=e.type==='income',give=!isInc&&isSdkCat(e.catId);
+    let ic,t;
+    if(give){ic='🤲';t='Disalurkan'+(e.sdkTo?' ke '+e.sdkTo:'');}
+    else if(!isInc){const d=sdkDest(e);ic=e.sdk==='free'?'↗️':'⚠️';t=(e.sdk==='free'?'Dipindah (bukan pinjaman): ':'Dipakai: ')+(e.transferId?d.name:(e.note||d.name));}
+    else if(e.sdk==='ret'){ic='↩️';t='Dikembalikan';}
+    else{ic='➕';t=e.note&&!isAutoTransferNote(e.note)?e.note:'Disisihkan';}
+    return '<div class="sdk-chunk"><span class="ic">'+ic+'</span><div class="mid"><b>'+esc(t)+'</b><span>'+sdkDayLbl(e.date)+' · '+timeTxt(e)+'</span></div>'+
+      '<span class="amt num '+(isInc?'inc':'exp')+'">'+(isInc?'+':'−')+rp(e.amount)+'</span></div>';
+  }).join('');
+  openSheet(w.emoji+' '+w.name,
+    '<div class="total-amt money" style="font-size:28px"><span class="rp" style="font-size:.5em">Rp</span>'+fmt(bal)+'</div>'+
+    '<p class="sub" style="margin:2px 0 0">'+(owed>0?rp(owed)+' terpakai sementara dan perlu dikembalikan.':'Dana sedekah utuh, tidak ada yang perlu dikembalikan.')+'</p>'+
+    (ch.length?'<h3 class="sdk-h">Perlu dikembalikan</h3>'+ch.map((c,i)=>{
+      const st=sdkStatus(c);
+      return '<div class="sdk-chunk"><span class="ic">'+c.icon+'</span><div class="mid"><b>'+esc(c.txt)+'</b><span>'+sdkDayLbl(c.tx.date)+' · <span class="dv-st '+st.c+'">'+st.t+'</span></span></div>'+
+        '<span class="amt num exp">'+rp(c.left)+'</span><button type="button" class="rb main go" data-ci="'+i+'">Kembalikan</button></div>';
+    }).join(''):'')+
+    '<div class="sdk-acts"><button class="btn sm" data-sdk="give">🤲 Salurkan</button><button class="btn ghost sm" data-sdk="save">＋ Sisihkan</button>'+
+    (owed>0?'<button class="btn sm" data-sdk="ret">↩ Kembalikan semua</button>':'')+'</div>'+
+    (hist?'<h3 class="sdk-h">Aktivitas terakhir</h3>'+hist:''),
+    ()=>{
+      $$('#sheetBody [data-sdk]').forEach(b=>b.addEventListener('click',()=>sdkAct(b.dataset.sdk,wid)));
+      $$('#sheetBody [data-ci]').forEach(b=>b.addEventListener('click',()=>{const c=ch[+b.dataset.ci];openSdkReturn(wid,c.left);}));
+    });
+}
+
+function openWalletSheet(existing,preset){
+  const wantSdk=!!(preset&&preset.sedekah);
+  const canSdk=!existing||existing.isSedekah||!state.tx.some(e=>e.walletId===existing.id);
+  let emoji=existing?existing.emoji:(wantSdk?'🤲':WEMOJIS[0]);
   let color=existing?existing.color:PALETTE[2];
   openSheet(existing?'Ubah dompet':'Dompet baru',
     '<div class="field"><label for="wname">Nama dompet</label>'+
-      '<input class="inp" id="wname" placeholder="Contoh: Dana, BCA, Uang tunai" maxlength="24" value="'+esc(existing?existing.name:'')+'"></div>'+
+      '<input class="inp" id="wname" placeholder="Contoh: Dana, BCA, Uang tunai" maxlength="24" value="'+esc(existing?existing.name:(wantSdk?'Sedekah':''))+'"></div>'+
     '<div class="field"><label for="wbal">Saldo awal <span style="color:var(--ink-3);font-weight:500">(opsional)</span></label>'+
       '<input class="inp num" id="wbal" inputmode="numeric" placeholder="0" value="'+(existing&&existing.balance?nf.format(Math.abs(existing.balance)):'')+'">'+
       opRowHtml()+
       '<label class="chk" style="margin-top:10px"><input type="checkbox" id="wneg"'+(existing&&existing.balance<0?' checked':'')+'><span><b>Saldo awal berupa utang (minus)</b>Untuk kartu kredit atau dompet yang dimulai dari posisi minus.</span></label></div>'+
+    (canSdk?'<div class="field"><label class="chk"><input type="checkbox" id="wsdk"'+(existing?(existing.isSedekah?' checked':''):(wantSdk?' checked':''))+'><span><b>Dompet sedekah</b>Untuk menyimpan uang sedekah. Kalau dananya dipakai untuk keperluan lain, Kantong mencatatnya sebagai pinjaman dan mengingatkan untuk mengembalikan.</span></label></div>':
+      '<p class="qhint" style="margin:0 0 14px">Dompet yang sudah punya transaksi tidak bisa dijadikan dompet sedekah. Buat dompet baru untuk sedekah.</p>')+
     '<div class="field"><label>Ikon</label><div class="emo-grid" id="emoGrid">'+
       WEMOJIS.map(e=>'<button class="emo" data-e="'+e+'" aria-pressed="'+(e===emoji)+'">'+e+'</button>').join('')+'</div></div>'+
     '<div class="field"><label>Warna</label><div class="swatches" id="swGrid">'+
@@ -3417,9 +3811,11 @@ function openWalletSheet(existing){
         const name=$('#wname').value.trim();
         if(!name){$('#wname').focus();toast('Nama dompet belum diisi');return;}
         const balance=readMoney($('#wbal'))*($('#wneg').checked?-1:1);
-        if(existing){Object.assign(existing,{name,emoji,color,balance});}
-        else{state.wallets.push({id:'w-'+uid(),name,emoji,color,balance});}
-        save();closeSheet();renderAll();toast(existing?'Dompet diperbarui':'Dompet "'+name+'" ditambahkan');
+        const sdkEl=$('#wsdk'),isSdk=sdkEl?sdkEl.checked:!!(existing&&existing.isSedekah);
+        if(existing&&existing.isSedekah&&!isSdk&&sdkOwed(existing.id)>0&&!confirm('Dompet ini bukan lagi dompet sedekah. Pantauan dana sedekah yang belum dikembalikan ('+rp(sdkOwed(existing.id))+') akan hilang. Lanjutkan?'))return;
+        if(existing){Object.assign(existing,{name,emoji,color,balance,isSedekah:isSdk?true:undefined});}
+        else{state.wallets.push(isSdk?{id:'w-'+uid(),name,emoji,color,balance,isSedekah:true}:{id:'w-'+uid(),name,emoji,color,balance});}
+        save();closeSheet();renderAll();toast(existing?'Dompet diperbarui':(isSdk?'Dompet sedekah "'+name+'" dibuat':'Dompet "'+name+'" ditambahkan'));
       });
     });
 }
@@ -3632,6 +4028,7 @@ function renderCats(){
   $$('[data-ede]').forEach(b=>b.addEventListener('click',()=>openMeterSheet(meterOf(b.dataset.ede))));
   $$('[data-delc]').forEach(b=>b.addEventListener('click',()=>{
     const c=catOf(b.dataset.delc);
+    if(isSdkCat(c.id)){toast('Kategori ini dipakai fitur dompet sedekah, jadi tidak bisa dihapus');return;}
     const used=state.tx.filter(e=>e.catId===c.id).length;
     if(!confirm('Hapus kategori "'+c.name+'"?'+(used?'\n'+used+' transaksi akan dipindahkan ke Lainnya.':'')))return;
     const idx=state.cats.indexOf(c);
@@ -3976,7 +4373,7 @@ function typeSegHtml(curType){
 function entryForm(e,forceType,draft){
   draft=draft||{};
   const type=e?e.type:(forceType||lastUsed.type||'expense');
-  const selW=e?e.walletId:(lastUsed.wal||(state.wallets[0]||{}).id);
+  const selW=e?e.walletId:defWal();
   const selC=e?e.catId:(type==='expense'?(lastUsed.cat||(state.cats[0]||{}).id):(lastUsed.icat||defIncCat()));
   const selM=e?motorIdOf(e):(draft.motor||lastUsed.motor||(state.motors[0]||{}).id);
   const selMe=e?meterIdOf(e):(draft.meter||lastUsed.meter||(state.meters[0]||{}).id);
@@ -4014,6 +4411,7 @@ function entryForm(e,forceType,draft){
     '<input class="inp" id="mtrTopup" type="number" inputmode="numeric" min="0" step="1" placeholder="Contoh: 100" value="'+(e&&e.topup!=null?e.topup:'')+'">'+
   '</div>'+
   '<div class="field"><label>'+(type==='income'?'Masuk ke dompet':'Bayar pakai dompet')+'</label><div class="pick" id="walPick">'+walPickHtml(selW)+'</div></div>'+
+  '<div id="sdkEntryBox"></div>'+
   '<div class="field"><label for="note">Catatan <span style="color:var(--ink-3);font-weight:500">(opsional)</span></label>'+
     '<input class="inp" id="note" placeholder="'+(type==='income'?'Contoh: gaji bulan ini':'Contoh: nasi padang + es teh')+'" value="'+esc(noteVal)+'" maxlength="80"></div>'+
   '<div class="field" id="clientField"'+((isProjectCat(selC)||(e&&e.client))?'':' style="display:none"')+'><label for="client">Klien / proyek <span style="color:var(--ink-3);font-weight:500">(opsional)</span></label>'+
@@ -4037,8 +4435,8 @@ function transferForm(existing,draft){
     toId=inTx?inTx.walletId:(state.wallets.find(w=>w.id!==fromId)||state.wallets[0]).id;
     amount=existing.amount;note=isAutoTransferNote(existing.note)?'':existing.note;date=existing.date;time=timeOf(existing);
   }else{
-    fromId=draft.from||lastUsed.wal||(state.wallets[0]||{}).id;
-    toId=draft.to||(state.wallets.find(w=>w.id!==fromId)||state.wallets[0]||{}).id;
+    fromId=draft.from||defWal();
+    toId=draft.to||defToWal(fromId);
     amount=draft.amount||0;note=draft.note!=null?draft.note:'';date=draft.date||todayKey();time=draft.time||nowTime();
   }
   return ''+
@@ -4051,6 +4449,7 @@ function transferForm(existing,draft){
     '<button class="q" data-clear="1">Hapus</button></div></div>'+
   '<div class="field"><label>Dari dompet</label><div class="pick" id="fromPick">'+walPickHtml(fromId)+'</div></div>'+
   '<div class="field"><label>Ke dompet</label><div class="pick" id="toPick">'+walPickHtml(toId)+'</div></div>'+
+  '<div id="sdkTrBox"></div>'+
   '<div class="field"><label for="note">Catatan <span style="color:var(--ink-3);font-weight:500">(opsional)</span></label>'+
     '<input class="inp" id="note" placeholder="Contoh: setor tunai ke rekening" value="'+esc(note)+'" maxlength="80"></div>'+
   timeBlockHtml(date,time,(existing?!!existing.approx:!!draft.approx))+
@@ -4071,9 +4470,46 @@ function wireEntry(existing,draft,forceType){
     amt.focus();
   }));
   let cat=existing?existing.catId:(curType==='expense'?(lastUsed.cat||(state.cats[0]||{}).id):(lastUsed.icat||defIncCat()));
-  let wal=existing?existing.walletId:(lastUsed.wal||(state.wallets[0]||{}).id);
+  let wal=existing?existing.walletId:defWal();
   let motorId=existing?motorIdOf(existing):(draft.motor||lastUsed.motor||(state.motors[0]||{}).id);
   let meterId=existing?meterIdOf(existing):(draft.meter||lastUsed.meter||(state.meters[0]||{}).id);
+  /* dompet sedekah: penerima (kalau kategori sedekah) atau tanda meminjam dana sedekah (kalau kategori lain dibayar dari dompet sedekah) */
+  let sdkFree=!!(existing&&existing.sdk==='free');
+  let sdkDays=(existing&&existing.sdkDue)?Math.max(0,Math.min(30,daysBetween(existing.date,existing.sdkDue))):sdkPrefDays();
+  let sdkToVal=existing?(existing.sdkTo||''):(draft.sdkTo||'');
+  let walTouched=!!existing;
+  function sdkAutoWallet(){ /* memilih kategori sedekah pada catatan baru: bayar pakai dompet sedekah, kecuali dompet sudah dipilih sendiri */
+    if(walTouched||existing||curType!=='expense'||!isSdkCat(cat))return;
+    const sw=sedekahWallets()[0];if(!sw||wal===sw.id)return;
+    wal=sw.id;$$('#walPick .cp').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.w===wal)));
+  }
+  function paintSdkEntry(){
+    const box=$('#sdkEntryBox');if(!box)return;
+    let h='';
+    if(curType==='expense'&&isSdkCat(cat)){
+      const rec=sdkRecipients();
+      h='<div class="field"><label for="sdkTo">Disalurkan kepada <span style="color:var(--ink-3);font-weight:500">(opsional)</span></label>'+
+        '<input class="inp" id="sdkTo" list="sdkToList" autocomplete="off" placeholder="Contoh: Masjid Al-Ikhlas, Pak Budi" maxlength="40" value="'+esc(sdkToVal)+'">'+
+        '<datalist id="sdkToList">'+rec.map(n=>'<option value="'+esc(n)+'"></option>').join('')+'</datalist>'+
+        (rec.length?'<div class="tchips" id="sdkRec" style="margin:8px 0 0">'+rec.slice(0,5).map(n=>'<button type="button" class="tchip" data-n="'+esc(n)+'" aria-pressed="false">'+esc(n)+'</button>').join('')+'</div>':'')+'</div>';
+    }else if(curType==='expense'&&isSdkWal(wal)){
+      h='<div class="sdk-box warn"><label class="chk"><input type="checkbox" id="sdkBorrow"'+(sdkFree?'':' checked')+'><span><b>Memakai dana sedekah</b>Ini bukan penyaluran sedekah, jadi dicatat sebagai pinjaman yang harus dikembalikan ke '+esc(walOf(wal).name)+'.</span></label>'+
+        '<div id="sdkDueWrap"'+(sdkFree?' hidden':'')+'><span class="sdk-l">Kembalikan paling lambat</span>'+sdkDaysChips(sdkDays)+'</div></div>';
+    }
+    box.innerHTML=h;
+    const inp=$('#sdkTo');if(inp)inp.addEventListener('input',()=>{sdkToVal=inp.value;});
+    $$('#sdkRec .tchip').forEach(b=>b.addEventListener('click',()=>{sdkToVal=b.dataset.n;if(inp)inp.value=sdkToVal;}));
+    const bo=$('#sdkBorrow');
+    if(bo)bo.addEventListener('change',()=>{sdkFree=!bo.checked;const wr=$('#sdkDueWrap');if(wr)wr.hidden=sdkFree;});
+    $$('#sdkDays .tchip').forEach(b=>b.addEventListener('click',()=>{sdkDays=+b.dataset.d;$$('#sdkDays .tchip').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));}));
+  }
+  function sdkEntryFields(date){
+    const none={sdk:undefined,sdkDue:undefined,sdkTo:undefined};
+    if(curType!=='expense')return none;
+    if(isSdkCat(cat))return{sdk:undefined,sdkDue:undefined,sdkTo:(sdkToVal||'').trim().slice(0,40)||undefined};
+    if(isSdkWal(wal))return sdkFree?{sdk:'free',sdkDue:undefined,sdkTo:undefined}:{sdk:undefined,sdkDue:recShift(date,sdkDays),sdkTo:undefined};
+    return none;
+  }
   function updateOdoHint(){
     const hintEl=$('#odoHint');if(!hintEl)return;
     if(!isMotorCat(cat)){hintEl.innerHTML='';return;}
@@ -4141,6 +4577,7 @@ function wireEntry(existing,draft,forceType){
     updateOdoHint();
     updateMtrLabels();
     updateMtrHint();
+    paintSdkEntry();
   }
   function wireOdoInputs(){
     const odoEl=$('#odo');if(odoEl)odoEl.addEventListener('input',updateOdoHint);
@@ -4160,6 +4597,7 @@ function wireEntry(existing,draft,forceType){
   function wireCatClicks(){
     $$('#catPick .cp').forEach(b=>b.addEventListener('click',()=>{cat=b.dataset.c;
       $$('#catPick .cp').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+      sdkAutoWallet();
       updateOdoField();}));
   }
   wireCatClicks();
@@ -4180,8 +4618,8 @@ function wireEntry(existing,draft,forceType){
     if(g.merchant&&noteEl&&!noteEl.value){noteEl.value=g.merchant;filled.push('catatan');}
     toast(filled.length?'Terisi otomatis: '+filled.join(', '):'Tidak ada yang bisa diisi otomatis');
   }});
-  $$('#walPick .cp').forEach(b=>b.addEventListener('click',()=>{wal=b.dataset.w;
-    $$('#walPick .cp').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));}));
+  $$('#walPick .cp').forEach(b=>b.addEventListener('click',()=>{wal=b.dataset.w;walTouched=true;
+    $$('#walPick .cp').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));paintSdkEntry();}));
   const seg=$('#typeSeg');
   if(seg){
     moveSegGlider(seg);
@@ -4231,18 +4669,19 @@ function wireEntry(existing,draft,forceType){
     }
     const mid=isMotorCat(cat)?motorId:undefined;
     const meid=isMeterCat(cat)?meterId:undefined;
+    const sx=sdkEntryFields(date);
     btn.disabled=true;
     const txId=existing?existing.id:uid();
     let ph={},phErr=false;
     try{ph=await pf.commit(txId);}catch(err){phErr=true;}
     if(existing){
-      Object.assign(existing,{amount:v,catId:cat,walletId:wal,date,time,approx,incomplete:undefined,note,client,odo,motorId:mid,meter:mtr,topup,meterId:meid},ph);
+      Object.assign(existing,{amount:v,catId:cat,walletId:wal,date,time,approx,incomplete:undefined,note,client,odo,motorId:mid,meter:mtr,topup,meterId:meid},ph,sx);
       toast('Perubahan tersimpan');
     }else{
-      state.tx.push(Object.assign({id:txId,type:curType,amount:v,catId:cat,walletId:wal,date,time,approx,note,client,odo,motorId:mid,meter:mtr,topup,meterId:meid,createdAt:Date.now()},ph));
+      state.tx.push(Object.assign({id:txId,type:curType,amount:v,catId:cat,walletId:wal,date,time,approx,note,client,odo,motorId:mid,meter:mtr,topup,meterId:meid,createdAt:Date.now()},ph,sx));
       celebrate(curType==='income'?'var(--mint)':'var(--accent)');
     }
-    lastUsed.type=curType;lastUsed.wal=wal;
+    lastUsed.type=curType;if(!isSdkWal(wal))lastUsed.wal=wal;
     recHookEntry(existing?null:state.tx[state.tx.length-1],{type:curType,amount:v,catId:cat,walletId:wal,note,date,time});
     if(mid)lastUsed.motor=mid;
     if(meid)lastUsed.meter=meid;
@@ -4252,6 +4691,7 @@ function wireEntry(existing,draft,forceType){
     view.listType=curType;
     closeSheet();renderAll();
     if(phErr)setTimeout(()=>toast('Foto gagal disimpan, catatan tetap tersimpan',ICO_ALERT),1500);
+    if(!existing&&sx.sdkDue)setTimeout(()=>sdkNotice('borrow',wal,v,sx.sdkDue),350);
     if(curType==='expense'){
       const after=analyze();
       if(!existing&&after.level>=4)setTimeout(()=>toast(LEVELS[after.level].emoji+' '+LEVELS[after.level].name+', cek peringatan di atas','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>'),1100);
@@ -4285,22 +4725,62 @@ function wireTransfer(existing,draft){
     from=outTx?outTx.walletId:existing.walletId;
     to=inTx?inTx.walletId:(state.wallets.find(w=>w.id!==from)||state.wallets[0]).id;
   }else{
-    from=draft.from||lastUsed.wal||(state.wallets[0]||{}).id;
-    to=draft.to||(state.wallets.find(w=>w.id!==from)||state.wallets[0]||{}).id;
+    from=draft.from||defWal();
+    to=draft.to||defToWal(from);
   }
   function paintPicks(){
     $$('#fromPick .cp').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.w===from)));
     $$('#toPick .cp').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.w===to)));
   }
-  paintPicks();
+  /* --- dana sedekah: pinjam dari dompet sedekah / kembalikan ke dompet sedekah --- */
+  const exOut=existing?(existing.type==='expense'?existing:findTransferPeer(existing)):null;
+  const exIn=existing?(existing.type==='income'?existing:findTransferPeer(existing)):null;
+  let sdkFree=!!(exOut&&exOut.sdk==='free');
+  let sdkDays=(exOut&&exOut.sdkDue)?Math.max(0,Math.min(30,daysBetween(exOut.date,exOut.sdkDue))):sdkPrefDays();
+  let sdkRet=(draft.ret!=null)?!!draft.ret:null; /* null = otomatis: dicentang kalau masih ada dana sedekah yang harus dikembalikan */
+  if(exIn)sdkRet=exIn.sdk==='ret';
+  let sdkRetNow=false;
+  function paintSdk(){
+    const box=$('#sdkTrBox');if(!box)return;
+    const fw=walOf(from),tw=walOf(to);let h='';sdkRetNow=false;
+    if(fw.isSedekah&&tw.isSedekah){
+      h='<div class="sdk-box ok"><span class="sdk-t">🤲 Perpindahan antar dompet sedekah, bukan pinjaman.</span></div>';
+    }else if(fw.isSedekah){
+      h='<div class="sdk-box warn"><label class="chk"><input type="checkbox" id="sdkBorrow"'+(sdkFree?'':' checked')+'><span><b>Pinjam dari '+esc(fw.name)+'</b>Dana sedekah dipakai sementara. Harus dikembalikan, dan Kantong akan mengingatkan.</span></label>'+
+        '<div id="sdkDueWrap"'+(sdkFree?' hidden':'')+'><span class="sdk-l">Kembalikan paling lambat</span>'+sdkDaysChips(sdkDays)+'</div></div>';
+    }else if(tw.isSedekah){
+      let owed=sdkOwed(tw.id);
+      if(exIn&&exIn.sdk==='ret'&&exIn.walletId===tw.id)owed+=(+exIn.amount||0);
+      if(owed>0){
+        sdkRetNow=sdkRet==null?true:sdkRet;
+        h='<div class="sdk-box ok"><label class="chk"><input type="checkbox" id="sdkRet"'+(sdkRetNow?' checked':'')+'><span><b>Ini pengembalian dana sedekah</b>Masih ada '+rp(owed)+' yang harus dikembalikan ke '+esc(tw.name)+'. Hilangkan centang kalau ini setoran sedekah baru.</span></label></div>';
+      }else{
+        h='<div class="sdk-box ok"><span class="sdk-t">🤲 Setoran baru ke '+esc(tw.name)+'. Tidak ada dana sedekah yang sedang terpakai.</span></div>';
+      }
+    }
+    box.innerHTML=h;
+    const bo=$('#sdkBorrow');
+    if(bo)bo.addEventListener('change',()=>{sdkFree=!bo.checked;const wr=$('#sdkDueWrap');if(wr)wr.hidden=sdkFree;});
+    $$('#sdkDays .tchip').forEach(b=>b.addEventListener('click',()=>{sdkDays=+b.dataset.d;$$('#sdkDays .tchip').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));}));
+    const rt=$('#sdkRet');
+    if(rt)rt.addEventListener('change',()=>{sdkRet=rt.checked;sdkRetNow=rt.checked;});
+  }
+  function sdkTransferFields(fw,tw,date){
+    const o={sdk:undefined,sdkDue:undefined},i={sdk:undefined};
+    if(fw.isSedekah&&tw.isSedekah)o.sdk='free';
+    else if(fw.isSedekah){if(sdkFree)o.sdk='free';else o.sdkDue=recShift(date,sdkDays);}
+    else if(tw.isSedekah&&sdkRetNow)i.sdk='ret';
+    return{out:o,in:i};
+  }
+  paintPicks();paintSdk();
   const tb=wireTimeBlock();
   $$('#fromPick .cp').forEach(b=>b.addEventListener('click',()=>{
     if(b.dataset.w===to)to=from;
-    from=b.dataset.w;paintPicks();
+    from=b.dataset.w;paintPicks();paintSdk();
   }));
   $$('#toPick .cp').forEach(b=>b.addEventListener('click',()=>{
     if(b.dataset.w===from)from=to;
-    to=b.dataset.w;paintPicks();
+    to=b.dataset.w;paintPicks();paintSdk();
   }));
   const seg=$('#typeSeg');
   if(seg){
@@ -4321,24 +4801,27 @@ function wireTransfer(existing,draft){
     const approx=tb.approx()||undefined;
     const note=$('#note').value.trim();
     const fromW=walOf(from),toW=walOf(to);
+    const sx=sdkTransferFields(fromW,toW,date);
     if(existing){
       const peer=findTransferPeer(existing);
       const outTx=existing.type==='expense'?existing:peer;
       const inTx=existing.type==='income'?existing:peer;
-      if(outTx)Object.assign(outTx,{amount:v,walletId:from,date,time,approx,note:note||('Transfer ke '+toW.name)});
-      if(inTx)Object.assign(inTx,{amount:v,walletId:to,date,time,approx,note:note||('Transfer dari '+fromW.name)});
+      if(outTx)Object.assign(outTx,{amount:v,walletId:from,date,time,approx,note:note||('Transfer ke '+toW.name)},sx.out);
+      if(inTx)Object.assign(inTx,{amount:v,walletId:to,date,time,approx,note:note||('Transfer dari '+fromW.name)},sx.in);
       toast('Perubahan tersimpan');
     }else{
       const tid=uid();
-      state.tx.push({id:uid(),type:'expense',amount:v,catId:'x-transfer',walletId:from,date,time,approx,note:note||('Transfer ke '+toW.name),createdAt:Date.now(),transferId:tid});
-      state.tx.push({id:uid(),type:'income',amount:v,catId:'x-transfer',walletId:to,date,time,approx,note:note||('Transfer dari '+fromW.name),createdAt:Date.now(),transferId:tid});
+      state.tx.push(Object.assign({id:uid(),type:'expense',amount:v,catId:'x-transfer',walletId:from,date,time,approx,note:note||('Transfer ke '+toW.name),createdAt:Date.now(),transferId:tid},sx.out));
+      state.tx.push(Object.assign({id:uid(),type:'income',amount:v,catId:'x-transfer',walletId:to,date,time,approx,note:note||('Transfer dari '+fromW.name),createdAt:Date.now(),transferId:tid},sx.in));
       celebrate('var(--sky)');
     }
-    lastUsed.wal=from;
+    if(!fromW.isSedekah)lastUsed.wal=from;
     recHookTransfer(existing,{amount:v,walletId:from,toWalletId:to,note,date,time});
     save();
     const d=parseKey(date);view.y=d.getFullYear();view.m=d.getMonth();
     closeSheet();renderAll();
+    if(fromW.isSedekah&&!toW.isSedekah&&sx.out.sdkDue)setTimeout(()=>sdkNotice('borrow',from,v,sx.out.sdkDue),350);
+    else if(toW.isSedekah&&!fromW.isSedekah&&sdkRetNow)setTimeout(()=>sdkNotice('ret',to,v),350);
   });
   const del=$('#delEntry');
   if(del)del.addEventListener('click',()=>{
@@ -4409,6 +4892,7 @@ $('#setBtn').addEventListener('click',async()=>{
       '<button type="button" class="btn ghost sm" id="pwaInstallBtn" style="display:none">📲 Pasang di layar utama</button>'+
       '<p class="qhint" id="pwaIosHint" style="display:none">Di iPhone/iPad: tap ikon Bagikan di Safari, lalu pilih "Tambah ke Layar Utama" — supaya Kantong punya ikon sendiri dan bisa dibuka layar penuh tanpa address bar.</p></div>'+
     remindSettingsHtml()+
+    sdkSettingsHtml()+
     '<div class="field" style="margin-top:16px"><label>Salinan data</label>'+
       '<div class="row"><button class="btn ghost sm" id="sExp">Unduh CSV</button>'+
       '<button class="btn ghost sm" id="sJson">Cadangan JSON</button></div></div>'+
@@ -4424,7 +4908,7 @@ $('#setBtn').addEventListener('click',async()=>{
       $('#chkUpd').addEventListener('click',()=>checkUpdate(true));
       $('#stAcct').addEventListener('click',openAccount);
       lkWireSettings();
-      wireRemindSettings();
+      wireRemindSettings();wireSdkSettings();
       wirePwaInstall();
       $('#sExp').addEventListener('click',()=>exportCSV(state.tx.slice(),'kantong-semua.csv'));
       $('#sJson').addEventListener('click',()=>deliver('kantong-backup.json',JSON.stringify(state,null,2),'application/json'));
@@ -4511,7 +4995,7 @@ function renderAll(){
   if(view.tab==='cats')renderCats();
   moveGlider();
   moveSegGlider($('#listSeg'));
-  renderSvcEntry();renderRecEntry();renderDebtDue();renderRecDue();
+  renderSvcEntry();renderRecEntry();renderSdkDue();renderDebtDue();renderRecDue();
   checkRemind();
 }
 
@@ -4860,9 +5344,9 @@ function wirePhotoField(existing,tb,opts){
 }
 
 /* ---------- catat cepat: cukup nominal, jam & tanggal terekam saat itu juga ---------- */
-function quickWalletId(){
-  const lu=state.wallets.find(w=>w.id===lastUsed.wal&&!w.isSavings);
-  return (lu||regularWallets()[0]||state.wallets[0]).id;
+function quickWalletId(){ /* catat cepat tidak pernah otomatis memakai dompet sedekah */
+  const lu=state.wallets.find(w=>w.id===lastUsed.wal&&!w.isSavings&&!w.isSedekah);
+  return (lu||spendWallets()[0]||regularWallets()[0]||state.wallets[0]).id;
 }
 function quickForm(){
   return ''+
@@ -4945,6 +5429,7 @@ function goPending(){
 let remindKey='';
 function checkRemind(){
   const bar=$('#remindBar');if(!bar||!state.prefs)return;
+  try{sdkNotify();renderSdkDue();}catch(e){}
   const p=state.prefs.remind,now=Date.now(),last=lastRecordAt();
   const pend=state.tx.filter(e=>e.incomplete);
   const since=Math.max(last,rs.ack,rs.first);
@@ -4990,6 +5475,22 @@ setInterval(checkRemind,30000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkRemind();});
 addEventListener('focus',checkRemind);
 
+function sdkSettingsHtml(){
+  const p=state.prefs.sdk;
+  return '<div class="field" style="margin-top:16px"><label>Dana sedekah</label>'+
+    '<label class="chk"><input type="checkbox" id="sdOn"'+(p.on?' checked':'')+'><span><b>Ingatkan mengembalikan dana sedekah</b>Muncul di beranda selama masih ada dana sedekah yang dipakai untuk keperluan lain.</span></label>'+
+    '<div id="sdMore"><span class="sdk-l">Batas pengembalian bawaan</span><div class="tchips" id="sdkDays">'+SDK_OPTS.map(o=>'<button type="button" class="tchip" data-d="'+o[0]+'" aria-pressed="'+(o[0]===p.days)+'">'+o[1]+'</button>').join('')+'</div>'+
+    '<p class="qhint" style="margin-top:6px">Bisa diubah per transaksi saat memindahkan dana dari dompet sedekah.</p></div></div>';
+}
+function wireSdkSettings(){
+  const p=state.prefs.sdk,on=$('#sdOn'),more=$('#sdMore');if(!on)return;
+  const sync=()=>{more.style.opacity=p.on?'1':'.45';more.style.pointerEvents=p.on?'':'none';};
+  sync();
+  on.addEventListener('change',()=>{p.on=on.checked;sync();save();sdkKey='';renderSdkDue();});
+  $$('#sdMore .tchip').forEach(b=>b.addEventListener('click',()=>{
+    p.days=+b.dataset.d;$$('#sdMore .tchip').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));save();
+  }));
+}
 /* ---------- pengaturan pengingat ---------- */
 function remindSettingsHtml(){
   const p=state.prefs.remind;
@@ -5097,7 +5598,7 @@ function recCatId(r){
   if(r.type==='transfer')return 'x-transfer';
   return catOf(r.catId).id!=='?'?r.catId:(r.type==='income'?'ic-lain':'c-lain');
 }
-function recWalId(id){return state.wallets.some(w=>w.id===id)?id:((regularWallets()[0]||state.wallets[0]||{}).id);}
+function recWalId(id){return state.wallets.some(w=>w.id===id)?id:((spendWallets()[0]||regularWallets()[0]||state.wallets[0]||{}).id);}
 function recTitle(r){return r.note||(r.type==='transfer'?'Pindah dana':catOf(recCatId(r)).name);}
 function recLook(r){return r.type==='transfer'?{emoji:'🔁',color:'#3B82F6'}:catOf(recCatId(r));}
 function recMonthlyEq(r){return r.freq==='monthly'?r.amount:(r.freq==='weekly'?r.amount*52/12:r.amount/12);}
@@ -5574,7 +6075,7 @@ function debtRebuildPays(d){
   let before=0;
   d.pays.forEach(p=>{p.txIds=p.w?debtPayTxs(d,p.amount,p.date,p.w,before).map(t=>t.id):[];before+=p.amount;});
 }
-function debtWalId(id){const rw=regularWallets();return rw.some(w=>w.id===id)?id:((rw[0]||state.wallets[0]||{}).id);}
+function debtWalId(id){const rw=regularWallets();return rw.some(w=>w.id===id)?id:((spendWallets()[0]||rw[0]||state.wallets[0]||{}).id);}
 function debtWalPick(sel,id){
   return regularWallets().map(w=>'<button type="button" class="cp" data-w="'+esc(w.id)+'" aria-pressed="'+(w.id===sel)+'"><span class="e">'+w.emoji+'</span><span class="n">'+esc(w.name)+'</span></button>').join('');
 }
@@ -6535,6 +7036,7 @@ $('#cloudState').addEventListener('click',openAccount);
 initCloud(); /* memuat sinkron di latar belakang; recRun(true) jalan setelah sinkron pertama selesai (atau langsung kalau tanpa akun) */
 updateInstallUi();
 if(!lkIsOn())runDeepLink();
+setTimeout(sdkBootNotice,1600);
 
 })();
 </script>
