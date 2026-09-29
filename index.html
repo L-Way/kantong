@@ -2356,7 +2356,7 @@ const DEEP=(()=>{try{return new URLSearchParams(location.search).get('a');}catch
 let deepDone=false;
 function runDeepLink(){
   if(deepDone||!DEEP)return;deepDone=true;
-  try{history.replaceState(null,'',location.pathname+location.hash);}catch(e){}
+  try{history.replaceState(history.state,'',location.pathname+location.hash);}catch(e){}
   const acts={expense:()=>openNewType('expense'),income:()=>openNewType('income'),svc:()=>openSvcForm(null,null),quick:()=>openQuick(),debt:()=>openDebtManager(),recur:()=>openRecManager()};
   setTimeout(()=>{if(acts[DEEP])acts[DEEP]();},350);
 }
@@ -7026,7 +7026,101 @@ function lkInit(){
   });
 }
 
+/* ================= tombol/gestur kembali =================
+   Tombol kembali di HP (dan gestur geser dari tepi) tidak lagi langsung menutup aplikasi. Urutannya:
+   foto besar → dialog → pop-up (sheet) → kembali ke tab Transaksi → "tekan sekali lagi untuk keluar".
+   Cara kerja: riwayat browser berisi  [guard][app][layer…]. Tiap lapisan yang terbuka (sheet/dialog/foto) punya satu entri "layer".
+   Menutup lapisan lewat tombol di layar ikut membuang entri-nya (history.back), dan menekan kembali menutup lapisan teratas.
+   Catatan: Chrome mengabaikan entri riwayat yang dibuat tanpa sentuhan pengguna, jadi entri "app" baru dibuat saat sentuhan pertama. */
+const NAV={have:0,busy:false,ready:false,exiting:false,exitUntil:0,busyT:0};
+const NAV_ICO='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>';
+const navPush=k=>{try{history.pushState({kt:k,d:NAV.have+1},'');}catch(e){}};
+function navLayers(){ /* lapisan yang sedang terbuka, dari yang paling atas */
+  const out=[],lb=$('#lightbox'),sh=$('#sheet');
+  if(lb&&lb.classList.contains('on'))out.push('lightbox');
+  for(let i=document.querySelectorAll('body>.dlg').length;i>0;i--)out.push('dlg');
+  if(sh&&sh.classList.contains('on'))out.push('sheet');
+  return out;
+}
+function navBlocked(){const r=document.documentElement.classList;return r.contains('lk-on')||r.contains('ag-on');}
+function navSync(){ /* samakan jumlah entri riwayat dengan jumlah lapisan yang terbuka */
+  if(!NAV.ready||NAV.busy)return;
+  const want=navLayers().length;
+  while(NAV.have<want){navPush('layer');NAV.have++;}
+  if(NAV.have>want){
+    NAV.busy=true;clearTimeout(NAV.busyT);
+    NAV.busyT=setTimeout(()=>{if(NAV.busy){NAV.busy=false;NAV.have=navLayers().length;}},1200); /* pengaman kalau back() tak menghasilkan popstate */
+    try{history.back();}catch(e){NAV.busy=false;NAV.have=want;}
+  }
+}
+function navCloseTop(top){
+  if(top==='lightbox')closeLightbox();
+  else if(top==='sheet')closeSheet();
+}
+function navRoot(){ /* tidak ada lapisan terbuka: sudah di dasar riwayat ("guard") */
+  const tab=$('.tab[data-p="list"]');
+  if(!navBlocked()&&view.tab!=='list'&&tab){navPush('app');tab.click();return;}
+  if(Date.now()<NAV.exitUntil){ /* tekan kedua: benar-benar keluar */
+    NAV.exiting=true;clearTimeout(NAV.exitT);
+    try{history.back();}catch(e){}
+    NAV.exitT=setTimeout(()=>{ /* kalau halaman masih hidup, tidak ada tujuan di bawah (mis. tab browser baru): pulihkan supaya aplikasi tetap normal */
+      if(NAV.exiting){NAV.exiting=false;NAV.exitUntil=0;navPush('app');}
+    },500);
+    return;
+  }
+  NAV.exitUntil=Date.now()+2200;
+  navPush('app');
+  toast('Tekan sekali lagi untuk keluar',NAV_ICO,2000);
+}
+function navPop(){
+  if(NAV.busy){NAV.busy=false;clearTimeout(NAV.busyT);if(NAV.have>0)NAV.have--;navSync();return;} /* ini hasil back() dari kode kita sendiri */
+  if(NAV.exiting||!NAV.ready)return;
+  const atGuard=NAV.have===0;
+  if(!atGuard)NAV.have--;
+  const layers=navLayers(),top=layers[0];
+  if(top){
+    if(atGuard)navPush('app'); /* entri "app" ikut terbuang, buat lagi di bawah lapisan */
+    if(navBlocked()){ /* layar kunci/login menutupi semuanya: jangan tutup apa pun di baliknya */
+      const lc=$('#lkClose');
+      if(document.documentElement.classList.contains('lk-on')&&lc&&!lc.hidden)lc.click();
+    }else if(top!=='dlg')navCloseTop(top); /* dialog pilihan memang harus dijawab, tidak bisa ditutup dengan kembali */
+    navSync();
+    return;
+  }
+  if(!atGuard){navSync();return;}
+  if(navBlocked()){
+    const lc=$('#lkClose');
+    if(document.documentElement.classList.contains('lk-on')&&lc&&!lc.hidden){navPush('app');lc.click();return;} /* mode atur PIN: batalkan */
+  }
+  navRoot();
+}
+function navArm(){ /* dipanggil pada sentuhan/ketukan pertama */
+  if(NAV.ready)return;
+  NAV.ready=true;
+  ['pointerup','touchend','keydown','click'].forEach(t=>removeEventListener(t,navArm,true));
+  navPush('app');
+  navSync();
+}
+function navInit(){
+  const st=history.state;
+  if(st&&st.kt==='app'){NAV.ready=true;}            /* dimuat ulang: struktur riwayat sudah ada */
+  else{
+    try{history.replaceState({kt:'guard'},'');}catch(e){return;}
+    ['pointerup','touchend','keydown','click'].forEach(t=>addEventListener(t,navArm,true));
+  }
+  addEventListener('popstate',navPop);
+  const mo=new MutationObserver(()=>{
+    const lb=$('#lightbox');
+    if(lb&&!lb._navObs){lb._navObs=1;mo.observe(lb,{attributes:true,attributeFilter:['class']});}
+    navSync();
+  });
+  mo.observe($('#sheet'),{attributes:true,attributeFilter:['class']});
+  mo.observe(document.body,{childList:true});
+  if(NAV.ready)navSync();
+}
+
 /* ================= boot ================= */
+navInit();
 lkInit();
 const local=loadLocal();
 if(local)state=normalize(local);
