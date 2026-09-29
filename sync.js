@@ -134,9 +134,9 @@
   /* ---- pulihkan cadangan TANPA menimpa: tambahkan yang belum ada, lewati yang sudah ada ---- */
   function sigTx(x) {
     return [x.date, x.time || '', x.type, Math.round(+x.amount || 0), x.catId, x.walletId,
-      String(x.note || '').trim().toLowerCase(), x.transferId ? 'T' : '', x.odo == null ? '' : x.odo, x.meter == null ? '' : x.meter].join('|');
+      String(x.note || '').trim().toLowerCase(), x.transferId ? 'T' : '', x.odo == null ? '' : x.odo, x.meter == null ? '' : x.meter, x.sdk || ''].join('|');
   }
-  function nameKey(x) { return String(x.name || '').trim().toLowerCase() + (x.isSavings ? '|s' : ''); }
+  function nameKey(x) { return String(x.name || '').trim().toLowerCase() + (x.isSavings ? '|s' : '') + (x.isSedekah ? '|d' : ''); }
 
   /* local = data sekarang, backup = isi cadangan (keduanya sudah dinormalisasi).
      Aturan: id sama -> pakai yang sekarang; kategori/dompet/motor/meteran dengan nama sama -> dianggap sama
