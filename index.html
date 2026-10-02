@@ -21,7 +21,7 @@
 :root{
   --paper:#F2F0F8; --paper-2:#E8E5F2;
   --surface:#FFFFFF; --surface-2:#FAF9FD;
-  --ink:#211A36; --ink-2:#6A6288; --ink-3:#9A93B4;
+  --ink:#211A36; --ink-2:#6A6288; --ink-3:#6E6790;
   --line:#E5E1F0;
   --accent:#5B3DF5; --accent-2:#8B72FF; --accent-soft:#ECE7FF; --on-accent:#FFFFFF;
   --mint:#0FA88E; --rose:#EE4C6C; --amber:#DD8B1E; --sky:#3B82F6;
@@ -37,7 +37,7 @@
   :root:not([data-theme="light"]){
     --paper:#0F0D1A; --paper-2:#211D3C;
     --surface:#1A1730; --surface-2:#221E3E;
-    --ink:#F1EDFF; --ink-2:#A9A1C9; --ink-3:#7C74A0;
+    --ink:#F1EDFF; --ink-2:#A9A1C9; --ink-3:#948DB9;
     --line:#2E2850;
     --accent:#9078FF; --accent-2:#B8A6FF; --accent-soft:#292253; --on-accent:#140F2E;
     --mint:#2ED3B0; --rose:#FF6C87; --amber:#F5B55B; --sky:#6FA8FF;
@@ -52,7 +52,7 @@
 :root[data-theme="dark"]{
   --paper:#0F0D1A; --paper-2:#211D3C;
   --surface:#1A1730; --surface-2:#221E3E;
-  --ink:#F1EDFF; --ink-2:#A9A1C9; --ink-3:#7C74A0;
+  --ink:#F1EDFF; --ink-2:#A9A1C9; --ink-3:#948DB9;
   --line:#2E2850;
   --accent:#9078FF; --accent-2:#B8A6FF; --accent-soft:#292253; --on-accent:#140F2E;
   --mint:#2ED3B0; --rose:#FF6C87; --amber:#F5B55B; --sky:#6FA8FF;
@@ -769,7 +769,7 @@ html.sheet-lock,html:has(#sheet.on),html:has(.dlg),html:has(.lightbox.on){overfl
 .toast{z-index:9100}
 /* selama kunci/verifikasi tampil, isi aplikasi disembunyikan total (tampilan, fokus keyboard, pembaca layar) */
 html.lk-on,html.lk-on body{overflow:hidden!important}
-html.lk-on:not(.ag-on) body>*:not(#lockScreen):not(#toast):not(script){visibility:hidden!important}
+html.lk-on:not(.ag-on) body>*:not(#lockScreen):not(#toast):not(.dlg):not(script){visibility:hidden!important}
 #lockScreen{--lk-key:clamp(58px,min(20vw,11vh),76px);--lk-gap:clamp(10px,2.2vh,16px);
   position:fixed;inset:0;z-index:9000;display:none;flex-direction:column;overflow-y:auto;overscroll-behavior:contain;
   padding:max(18px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left));
@@ -1067,6 +1067,9 @@ div.sdk-mini{cursor:default}
 .bak-row .mid{flex:1;min-width:0}
 .bak-row .mid b{display:block;font-size:13px;font-weight:700}
 .bak-row .mid span{display:block;font-size:11.5px;color:var(--ink-3)}
+.nx-note{font-size:12px;color:var(--ink-2);margin-top:4px}.nx-w{overflow-x:auto;-webkit-overflow-scrolling:touch}.nx-t{width:100%;border-collapse:collapse;font-size:12px;margin:8px 0 18px}.nx-t th,.nx-t td{padding:7px 5px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}.nx-t th:first-child,.nx-t td:first-child{text-align:left}.nx-t th{color:var(--ink-2);font-weight:700}
+.dlg-card p{white-space:pre-line}
+html.lk-on .dlg{z-index:9100}
 </style>
 <script>/* kunci aplikasi: tutup tampilan sebelum apa pun sempat tergambar */
 try{var c=JSON.parse(localStorage.getItem('kantong.lock')||'null');if(c&&c.on&&c.hash)document.documentElement.classList.add('lk-on');}catch(e){}
@@ -1344,7 +1347,7 @@ try{if(localStorage.getItem('kantong.gate')==='show')document.documentElement.cl
 </div>
 
 <script src="config.js"></script>
-<script src="sync.js"></script>
+<script src="sync.js?v=2"></script>
 <script>
 (function(){
 "use strict";
@@ -1360,7 +1363,7 @@ const MON3=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','D
 const DAYS=['Ahad','Senin','Selasa','Rabu','Kamis',"Jum'at",'Sabtu'];
 const DAY2=['M','S','S','R','K','J','S'];
 const DOW3=['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
-const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const uid=()=>{let r;try{const a=new Uint32Array(2);crypto.getRandomValues(a);r=a[0].toString(36)+a[1].toString(36);}catch(e){r=Math.random().toString(36).slice(2,12);}return Date.now().toString(36)+r.slice(0,10);};
 function keyOf(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function parseKey(k){const p=String(k).split('-');return new Date(+p[0],+p[1]-1,+p[2]);}
 const todayKey=()=>keyOf(new Date());
@@ -1483,13 +1486,25 @@ const DEFAULT_METERS=[{id:'lm-1',name:'Meteran 1',emoji:'⚡',color:'#FBBF24',ty
 /* pengaturan pengingat catat (ikut tersimpan & tersinkron bersama data lain) */
 const DEFAULT_PREFS={remind:{on:true,every:3,from:'08:00',to:'21:00',notify:false},sdk:{on:true,days:1,goal:0,per:'day',nudge:false,nudgeAt:'17:00'}};
 function normFees(f){const o={};if(f&&typeof f==='object')Object.keys(f).slice(0,40).forEach(k=>{const v=f[k]||{},a=Math.round(+v.a||0);if(/^[^>]+>[^>]+$/.test(k)&&a>0&&a<=1e7)o[k]={a,s:v.s==='to'?'to':'from'};});return o;}
+/* aturan kategori otomatis: ikut prefs (jadi ikut cadangan & sinkron akun tanpa mengubah server). Kosong = undefined, seperti fees */
+function normRules(r){
+  const seen={},o=[];
+  (Array.isArray(r)?r:[]).forEach(x=>{
+    if(!x||typeof x!=='object'||o.length>=200)return;
+    const k=String(x.k==null?'':x.k).trim().toLowerCase().slice(0,40),c=String(x.c==null?'':x.c).replace(/[^\w\-:.]/g,'').slice(0,80),t=x.t;
+    if(k.length<1||!c||(t!=='income'&&t!=='expense')||seen[t+'|'+k])return;
+    seen[t+'|'+k]=1;o.push({k,t,c});
+  });
+  return o.length?o:undefined;
+}
 function normPrefs(p){
   const r=(p&&p.remind)||{},ev=+r.every,hm=/^\d{2}:\d{2}$/;
   const sk=(p&&p.sdk)||{},sd=+sk.days; /* dompet sedekah: pengingat mengembalikan dana + batas hari bawaan (0 = hari itu juga) */
   return{remind:{on:r.on!==false,every:[1,2,3,4,6].indexOf(ev)>=0?ev:3,from:hm.test(r.from||'')?r.from:'08:00',to:hm.test(r.to||'')?r.to:'21:00',notify:!!r.notify},
     sdk:{on:sk.on!==false,days:[0,1,2,3,7].indexOf(sd)>=0?sd:1,
       goal:Math.max(0,Math.min(1e9,Math.round(+sk.goal||0))),per:sk.per==='week'?'week':'day',nudge:!!sk.nudge,nudgeAt:hm.test(sk.nudgeAt||'')?sk.nudgeAt:'17:00'},
-    fees:Object.keys(normFees(p&&p.fees)).length?normFees(p&&p.fees):undefined};
+    fees:Object.keys(normFees(p&&p.fees)).length?normFees(p&&p.fees):undefined,
+    rules:normRules(p&&p.rules)};
 }
 let state={v:9,tx:[],cats:DEFAULT_CATS.slice(),incomeCats:DEFAULT_INCOME_CATS.slice(),wallets:DEFAULT_WALLETS.slice(),motors:DEFAULT_MOTORS.slice(),meters:DEFAULT_METERS.slice(),budgets:{},recurring:[],debts:[],svcs:[],prefs:normPrefs(),updatedAt:0};
 let view={y:new Date().getFullYear(),m:new Date().getMonth(),tab:'list',listType:'expense',filter:'all',wfilter:'all',q:''};
@@ -1497,7 +1512,8 @@ let lastUsed={type:'expense',cat:null,icat:null,wal:null,motor:null,meter:null};
 
 /* ================= storage ================= */
 const LS='kantong.v1';
-function normalize(d){
+function normalize(d){return nxSanitize(normalizeRaw(d));}
+function normalizeRaw(d){
   const wallets=(d.wallets&&d.wallets.length)?d.wallets:DEFAULT_WALLETS.slice();
   const w0=wallets[0].id;
   const motors=(d.motors&&d.motors.length)?d.motors.map(m=>({id:m.id,name:m.name,emoji:m.emoji,color:m.color})):DEFAULT_MOTORS.slice();
@@ -1576,18 +1592,113 @@ function normalize(d){
   };
 }
 function loadLocal(){try{const raw=localStorage.getItem(LS);if(raw){const d=JSON.parse(raw);if(d&&(Array.isArray(d.tx)||Array.isArray(d.expenses)))return d;}}catch(e){}return null;}
-function saveLocal(){try{localStorage.setItem(LS,JSON.stringify(state));}catch(e){}}
+/* ---------- penyimpanan data utama ----------
+   UTAMA: IndexedDB (kantong-state / s / 'state'). Tidak kena batas ±5 MB localStorage dan tidak membekukan layar saat menyimpan.
+   localStorage 'kantong.v1' kini HANYA salinan darurat: ditulis bila simpan ke IndexedDB gagal, atau tab ditutup/disembunyikan
+   sebelum simpanan sempat selesai; dihapus lagi begitu IndexedDB berhasil menyimpan. Kalau IndexedDB tidak tersedia, jatuh ke mode lama (localStorage saja).
+   Saat buka aplikasi, yang dipakai adalah salinan dengan updatedAt TERBARU (menangani data lama di localStorage dan salinan darurat). */
+const IDB_OK=(()=>{try{return !!window.indexedDB;}catch(e){return false;}})();
+const STORE={mode:'boot',ready:false,halt:false,dirty:false,busy:null,timer:null,fails:0,warned:false,prev:null};
+let _db=null,_dbP=null;
+function sIdb(){
+  if(_db)return Promise.resolve(_db);
+  if(_dbP)return _dbP;
+  _dbP=new Promise((res,rej)=>{
+    let r;try{r=indexedDB.open('kantong-state',1);}catch(e){return rej(e);}
+    r.onupgradeneeded=()=>{try{r.result.createObjectStore('s');}catch(e){}};
+    r.onsuccess=()=>{const db=r.result;const gone=()=>{if(_db===db){_db=null;_dbP=null;}};db.onversionchange=()=>{try{db.close();}catch(e){}gone();};db.onclose=gone;_db=db;res(db);};
+    r.onerror=()=>rej(r.error||new Error('idb open'));
+  });
+  _dbP.catch(()=>{_dbP=null;});
+  return _dbP;
+}
+function sIdbDrop(){try{if(_db)_db.close();}catch(e){}_db=null;_dbP=null;}
+function sIdbGet(key){return sIdb().then(db=>new Promise((res,rej)=>{const q=db.transaction('s','readonly').objectStore('s').get(key||'state');q.onsuccess=()=>res(q.result||null);q.onerror=()=>rej(q.error);}));}
+/* menulis state terbaru (kloning terjadi saat put dipanggil); 'prev' = dokumen yang tergeser saat boot, dijaga supaya tidak hilang diam-diam */
+function sIdbPut(){return sIdb().then(db=>new Promise((res,rej)=>{
+  const t=db.transaction('s','readwrite',{durability:'strict'}),o=t.objectStore('s');
+  o.put(state,'state');
+  const pv=STORE.prev;if(pv)o.put(pv,'prev');
+  t.oncomplete=()=>{if(STORE.prev===pv)STORE.prev=null;res();};
+  t.onerror=()=>rej(t.error);t.onabort=()=>rej(t.error||new Error('idb abort'));
+}));}
+function nxGuest(){try{return localStorage.getItem('kantong.guest')==='1';}catch(e){return false;}}
+function storeValid(d){return !!(d&&typeof d==='object'&&(Array.isArray(d.tx)||Array.isArray(d.expenses)));}
+/* pilih salinan terbaru; seri -> IndexedDB */
+function storePick(ls,idb){
+  const a=storeValid(ls)?ls:null,b=storeValid(idb)?idb:null;
+  if(a&&b)return(+a.updatedAt||0)>(+b.updatedAt||0)?{doc:a,src:'ls',other:b}:{doc:b,src:'idb',other:a};
+  if(b)return{doc:b,src:'idb',other:null};
+  if(a)return{doc:a,src:'ls',other:null};
+  return{doc:null,src:null,other:null};
+}
+function lsPut(){try{localStorage.setItem(LS,JSON.stringify(state));return true;}catch(e){return false;}}
+function lsDrop(){try{localStorage.removeItem(LS);}catch(e){}}
+function storeWarn(msg){if(STORE.warned)return;STORE.warned=true;try{toast(msg);}catch(e){}}
+function saveLocal(){
+  if(!STORE.ready||STORE.halt)return; /* sebelum data termuat, jangan menimpa apa pun dengan state bawaan */
+  if(STORE.mode==='idb'){STORE.dirty=true;if(!STORE.timer)STORE.timer=setTimeout(flushState,250);return;}
+  if(!lsPut())storeWarn('Penyimpanan peramban penuh. Segera unduh cadangan.');
+}
+/* Tulis ke IndexedDB sekarang. Hasil true = data sudah aman di perangkat (IndexedDB, atau salinan darurat bila IndexedDB gagal) */
+function flushState(){
+  clearTimeout(STORE.timer);STORE.timer=null;
+  if(STORE.mode!=='idb'||STORE.halt)return Promise.resolve(true);
+  if(STORE.busy)return STORE.busy.then(ok=>ok&&STORE.dirty?flushState():ok);
+  if(!STORE.dirty)return Promise.resolve(true);
+  STORE.dirty=false;
+  STORE.busy=sIdbPut().then(()=>{STORE.busy=null;STORE.fails=0;if(!STORE.dirty)lsDrop();return true;}).catch(e=>{
+    STORE.busy=null;STORE.dirty=true;STORE.fails++;sIdbDrop();console.warn('[kantong] simpan IndexedDB gagal',e);
+    const safe=lsPut(); /* jaring pengaman: salinan darurat di localStorage */
+    storeWarn(safe?'Penyimpanan utama bermasalah; data disalin ke cadangan darurat. Segera unduh cadangan.':'Data belum bisa disimpan di perangkat (penyimpanan penuh/bermasalah). Segera unduh cadangan.');
+    if(STORE.fails<6&&!STORE.halt&&!STORE.timer)STORE.timer=setTimeout(flushState,Math.min(30000,1500*Math.pow(2,STORE.fails-1)));
+    return safe;
+  });
+  return STORE.busy;
+}
+/* tab disembunyikan/ditutup: kalau masih ada simpanan yang belum pasti selesai, buat salinan darurat sinkron lalu tulis lagi */
+function storeHide(){
+  if(STORE.mode!=='idb'||!STORE.ready||STORE.halt)return;
+  if(STORE.dirty||STORE.busy)lsPut();
+  flushState();
+}
+function storeHalt(){STORE.halt=true;clearTimeout(STORE.timer);STORE.timer=null;sIdbDrop();} /* sebelum reset total: hentikan semua tulis & tutup koneksi supaya deleteDatabase tidak terblokir */
+document.addEventListener('visibilitychange',()=>{if(document.hidden)storeHide();});
+addEventListener('pagehide',storeHide);
+const idbRead=()=>new Promise((res,rej)=>{const t=setTimeout(()=>rej(new Error('idb timeout')),8000);sIdbGet().then(v=>{clearTimeout(t);res(v);},e=>{clearTimeout(t);rej(e);});});
+/* dipanggil sekali saat boot: memuat data (async) lalu membuka gerbang simpan */
+async function bootState(){
+  const ls=loadLocal();let idb=null,err=false;
+  if(IDB_OK){
+    for(let i=0;i<2;i++){
+      try{idb=await idbRead();err=false;break;}
+      catch(e){err=true;console.warn('[kantong] IndexedDB tidak terbaca',e);sIdbDrop();if(i===0)await sleep(1200);}
+    }
+  }
+  const p=storePick(ls,idb);
+  STORE.mode=IDB_OK&&!err?'idb':'ls';
+  if(p.doc)state=normalize(p.doc);
+  else if(meta&&meta.uid){meta={};saveMeta();} /* tidak ada data sama sekali tapi catatan sinkron masih ada: jangan sampai state kosong dianggap "semua dihapus"; tarik ulang dari akun */
+  STORE.ready=true;
+  if(STORE.mode==='idb'){
+    if(p.src==='ls'){ /* data lama di localStorage (migrasi) atau salinan darurat yang lebih baru */
+      if(p.other&&storeValid(p.other)&&(p.other.tx||[]).length)STORE.prev=p.other;
+      STORE.dirty=true;flushState(); /* localStorage baru dihapus setelah IndexedDB berhasil menyimpan */
+    }else if(ls)lsDrop(); /* salinan localStorage lebih tua/sama: IndexedDB sudah pegang yang terbaru */
+  }else if(err&&!ls){storeWarn('Penyimpanan utama (IndexedDB) tidak bisa dibaca. Catatan baru disimpan sementara di peramban; jangan hapus data situs dan unduh cadangan.');}
+  return p;
+}
 
 /* ================= sinkron akun (Supabase) =================
-   Prinsip: DATA SELALU DISIMPAN DI PERANGKAT DULU (localStorage), jadi aplikasi cepat & tetap jalan tanpa internet.
-   Kalau sudah masuk akun, salinannya dikirim ke Supabase (tabel kantong_data) dan ditarik lagi dari perangkat lain.
+   Prinsip: DATA SELALU DISIMPAN DI PERANGKAT DULU (IndexedDB), jadi aplikasi cepat & tetap jalan tanpa internet.
+   Kalau sudah masuk akun, tiap catatan dikirim ke Supabase (tabel kantong_rec, satu baris per catatan) dan ditarik lagi dari perangkat lain.
    Dua perangkat yang sama-sama mencatat digabung per catatan (lihat sync.js), bukan saling menimpa. */
 const CFG=window.KANTONG_CONFIG||{};
 const KS=window.KantongSync;
-const SB_ON=!!(KS&&CFG.supabaseUrl&&CFG.supabaseKey&&/^https:\/\/\S+$/.test(CFG.supabaseUrl));
-const TABLE='kantong_data',META_KEY='kantong.sync';
+const SB_ON=!!(KS&&KS.linkedSync&&CFG.supabaseUrl&&CFG.supabaseKey&&/^https:\/\/\S+$/.test(CFG.supabaseUrl));
+const TABLE='kantong_rec',META_KEY='kantong.sync';
 function loadMeta(){try{const m=JSON.parse(localStorage.getItem(META_KEY)||'null');if(m&&typeof m==='object')return m;}catch(e){}return{};}
-let meta=loadMeta(); /* {uid,email,rev,dirty,base,at}: rev = versi server yang terakhir cocok, base = ringkasan saat itu */
+let meta=loadMeta(); /* {uid,email,dirty,base,srv,cursor,at}: base = ringkasan catatan saat terakhir tersinkron; srv = {"koleksi|id":[rev,hash]} yang diketahui di server; cursor = seq terakhir yang sudah ditarik */
 function saveMeta(){try{localStorage.setItem(META_KEY,JSON.stringify(meta));}catch(e){}}
 let cloud={sb:null,user:null,uid:null,status:SB_ON?'boot':'off',err:'',busy:false,again:false,timer:null,chan:null,poll:null,seq:0,deferred:false,retry:0,loading:null,initP:null};
 let bootedRec=false;
@@ -1622,6 +1733,8 @@ function refreshAcct(){
 }
 
 /* ---- dialog pilihan yang tidak bisa ditutup tanpa memilih (dipakai saat data perlu diputuskan) ---- */
+function askC(msg,ok){return choose(/^(Hapus|Reset)/.test(msg)?'Yakin?':'Konfirmasi',msg,[{label:'Batal',cls:'ghost',v:false},{label:ok||(/^Hapus/.test(msg)?'Ya, hapus':/^Reset/.test(msg)?'Ya, reset':'Ya, lanjutkan'),v:true}]);}
+function askT(label){return new Promise(res=>{const w=document.createElement('div');w.className='dlg';w.innerHTML='<div class="dlg-card" role="alertdialog" aria-modal="true" aria-labelledby="dlgT"><h3 id="dlgT">Tempel data</h3><textarea class="inp" id="askTx" rows="6" aria-label="'+esc(label)+'" placeholder="'+esc(label)+'" style="width:100%;margin:8px 0 14px"></textarea><div class="dlg-btns"><button type="button" class="btn ghost" data-v="0">Batal</button><button type="button" class="btn" data-v="1">Lanjut</button></div></div>';document.body.appendChild(w);const t=w.querySelector('#askTx');w.querySelectorAll('.dlg-btns .btn').forEach(b=>b.addEventListener('click',()=>{const v=b.dataset.v==='1'?t.value:null;w.remove();res(v);}));setTimeout(()=>t.focus(),50);});}
 function choose(title,msg,opts,extra){
   return new Promise(res=>{
     const w=document.createElement('div');w.className='dlg';
@@ -1642,7 +1755,7 @@ function loadSb(){
   if(cloud.loading)return cloud.loading;
   cloud.loading=new Promise(res=>{
     const s=document.createElement('script');
-    s.src=CFG.supabaseLib||'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+    s.src=CFG.supabaseLib||'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4';if(CFG.supabaseSri){s.integrity=CFG.supabaseSri;s.crossOrigin='anonymous';}
     s.crossOrigin='anonymous';s.async=true;
     s.onload=()=>res(!!(window.supabase&&window.supabase.createClient));
     s.onerror=()=>{s.remove();res(false);};
@@ -1711,7 +1824,7 @@ async function syncNow(manual){
   try{
     if(navigator.onLine===false)throw{offline:true};
     for(let i=0;i<4;i++){
-      try{await doSync(manual);ok=true;break;}
+      try{await doSync(manual,i>=2);ok=true;break;}
       catch(e){if(e&&e.conflict&&i<3)continue;throw e;}
     }
     cloud.retry=0;meta.at=Date.now();saveMeta();setStatus('ok');
@@ -1725,7 +1838,7 @@ function handleSyncErr(e){
   console.warn('[kantong sync]',e);
   const code=String((e&&e.code)||''),msg=String((e&&e.message)||'');
   if(isNetErr(e)){setStatus('wait');scheduleRetry();return;}
-  if(code==='PGRST205'||code==='42P01'||/schema cache|does not exist/i.test(msg)){setStatus('err','setup');return;} /* tabel belum dibuat: percuma diulang */
+  if(code==='PGRST205'||code==='PGRST202'||code==='42P01'||code==='42883'||/schema cache|does not exist|Could not find the function/i.test(msg)){setStatus('err','setup');return;} /* tabel belum dibuat: percuma diulang */
   if(e&&(e.status===401||/JWT|token.*expired/i.test(msg)||code==='PGRST301'||code==='PGRST303')){
     setStatus('err','auth');
     cloud.sb.auth.refreshSession().then(r=>{
@@ -1738,47 +1851,74 @@ function handleSyncErr(e){
 }
 function scheduleRetry(){cloud.retry++;syncSoon(Math.min(120000,5000*Math.pow(2,cloud.retry-1)));}
 
-async function doSync(manual){
-  const sb=cloud.sb,uid=cloud.user.id;
-  const head=await sb.from(TABLE).select('rev,client_updated_at').eq('user_id',uid).maybeSingle();
-  if(head.error)throw head.error;
-  const row=head.data,linked=meta.uid===uid;
-  if(row&&linked&&row.rev===meta.rev&&!meta.dirty)return; /* tidak ada yang perlu dilakukan (pengecekan berkala murah) */
+/* tarik semua baris server dengan seq > cursor (per halaman 1000) */
+async function pullRows(uid,cursor){
+  const rows=[];let cur=cursor;
+  for(let g=0;g<2000;g++){
+    const r=await cloud.sb.from(TABLE).select('coll,id,data,deleted,rev,seq').eq('user_id',uid).gt('seq',cur).order('seq',{ascending:true}).limit(1000);
+    if(r.error)throw r.error;
+    const page=r.data||[];
+    if(!page.length)break;
+    for(const x of page)rows.push(x);
+    cur=page[page.length-1].seq;
+  }
+  return{rows,cursor:cur};
+}
+/* tulis lewat fungsi server (satu-satunya jalan tulis); server menolak baris yang versinya sudah berubah */
+async function pushRowsRpc(batch){
+  const r=await cloud.sb.rpc('kantong_push',{p_rows:batch});
+  if(r.error)throw r.error;
+  return r.data;
+}
+async function setMeta(uid,x){
+  /* data harus sudah aman di perangkat SEBELUM 'base' maju. Kalau base lebih baru daripada data yang tersimpan (mis. tab mati sebelum simpanan selesai),
+     catatan yang baru tersinkron akan terlihat seperti "dihapus di perangkat ini" dan ikut terhapus di server. */
+  if(!(await flushState()))return; /* gagal menyimpan di mana pun: biarkan base lama, sinkron berikutnya menghitung ulang */
+  meta={uid,email:cloud.user.email||meta.email||'',dirty:x.dirty,base:x.base,srv:x.srv,cursor:x.cursor,at:Date.now()};saveMeta();
+  if(meta.dirty)syncSoon(400);
+}
+async function doSync(manual,fullPull){
+  const uid=cloud.user.id;
+
+  /* A) perangkat ini sudah terhubung ke akun: gabung per catatan (logikanya di sync.js: KS.linkedSync) */
+  if(meta.uid===uid){
+    const r=await KS.linkedSync({
+      meta,fullPull,
+      pull:c=>pullRows(uid,c),push:pushRowsRpc,
+      capture,apply:M=>applyDoc(M),seq:()=>cloud.seq,
+      /* tunda penerapan data dari perangkat lain kalau pengguna sedang mengedit, supaya layar tidak berganti tiba-tiba */
+      canDefer:manual?null:()=>sheetOpen||!!pendingUndo
+    });
+    if(r.status==='deferred'){cloud.deferred=true;return;}
+    cloud.deferred=false;
+    if(r.status==='idle'){if(r.cursor!==meta.cursor){meta.cursor=r.cursor;saveMeta();}return;}
+    await setMeta(uid,r.meta);
+    if(r.changed)toast(r.wasDirty?'Data dari perangkat lain digabungkan':'Data diperbarui dari perangkat lain');
+    return;
+  }
+
+  /* B) pertama kali perangkat ini dihubungkan ke akun ini */
+  const pulled=await pullRows(uid,0),srv={},rows=KS.freshRows(pulled.rows,srv);
+  KS.absorb(srv,rows);
   let cap=capture();
+  const finish=async c=>{ /* kirim selisih (kalau ada) lalu catat bahwa perangkat ini sudah sama dengan server */
+    await KS.pushAll(pushRowsRpc,KS.planPush(c.doc,srv),srv);
+    await setMeta(uid,{base:KS.snapshot(c.doc),srv,cursor:pulled.cursor,dirty:cloud.seq!==c.seq});
+  };
 
   /* 1) belum ada apa pun di server untuk akun ini -> unggah */
-  if(!row){
-    if(!linked&&meta.uid&&KS.hasUserData(cap.doc)){
+  if(!rows.length){
+    if(meta.uid&&KS.hasUserData(cap.doc)){
       const c=await choose('Perangkat ini berisi data akun lain','Data di perangkat ini berasal dari akun yang berbeda. Akun yang baru masuk masih kosong.',
         [{v:'up',label:'Unggah data perangkat ini ke akun ini'},{v:'fresh',label:'Mulai dari kosong',cls:'ghost'}],{label:'Unduh cadangan perangkat ini dulu',run:backupNow});
       if(c==='fresh'){wipeLocal();cap=capture();}
     }
-    await pushDoc(uid,null,cap);
+    await finish(cap);
     return;
   }
-  /* 2) server tidak berubah sejak sinkron terakhir */
-  if(linked&&row.rev===meta.rev){
-    if(meta.dirty)await pushDoc(uid,row.rev,cap);
-    return;
-  }
-  /* 3) server berubah (dari perangkat lain). Tunda kalau pengguna sedang mengedit supaya layar tidak berganti tiba-tiba */
-  if(linked&&!manual&&(sheetOpen||pendingUndo)){cloud.deferred=true;return;}
-  cloud.deferred=false;
-  const full=await sb.from(TABLE).select('data,rev').eq('user_id',uid).single();
-  if(full.error)throw full.error;
-  const R=docOf(normalize(full.data.data||{})),rrev=full.data.rev;
-
-  if(linked){
-    if(!meta.dirty){adoptRemote(R,rrev,true);return;}
-    const M=KS.merge(meta.base,cap.doc,R);M.updatedAt=Date.now();
-    applyDoc(M);cap=capture();
-    await pushDoc(uid,rrev,cap);
-    toast('Data dari perangkat lain digabungkan');
-    return;
-  }
-  /* 4) pertama kali perangkat ini dihubungkan ke akun yang sudah punya data */
-  if(!KS.hasUserData(cap.doc)){adoptRemote(R,rrev,false);return;}
-  if(!KS.hasUserData(R)){await pushDoc(uid,rrev,cap);return;}
+  const R=docOf(normalize(KS.applyChanges({v:cap.doc.v},rows)));
+  if(!KS.hasUserData(cap.doc)){applyDoc(R);cap=capture();await finish(cap);return;}
+  if(!KS.hasUserData(R)){await finish(cap);return;}
   const other=!!meta.uid&&meta.uid!==uid;
   const opts=other
     ?[{v:'acct',label:'Pakai data akun ini (ganti isi perangkat)'},{v:'dev',label:'Pakai data perangkat ini (timpa akun)',cls:'danger'}]
@@ -1787,32 +1927,9 @@ async function doSync(manual){
     other?'Perangkat ini berisi data dari akun lain. Gabungan tidak ditawarkan agar data dua akun tidak tercampur.'
          :'Akunmu sudah punya '+R.tx.length+' transaksi, sedangkan perangkat ini punya '+cap.doc.tx.length+'. "Gabungkan" menyimpan semua catatan dari keduanya.',
     opts,{label:'Unduh cadangan perangkat ini dulu',run:backupNow});
-  if(c==='merge'){const M=KS.merge(null,cap.doc,R);M.updatedAt=Date.now();applyDoc(M);cap=capture();await pushDoc(uid,rrev,cap);toast('Data digabungkan');}
-  else if(c==='acct'){adoptRemote(R,rrev,false);}
-  else{await pushDoc(uid,rrev,cap);}
-}
-function adoptRemote(doc,rev,notify){
-  const changed=KS.hash(docOf(state))!==KS.hash(doc);
-  applyDoc(doc);
-  meta={uid:cloud.user.id,email:cloud.user.email||meta.email||'',rev,dirty:false,base:KS.snapshot(docOf(state)),at:Date.now()};saveMeta();
-  if(notify&&changed)toast('Data diperbarui dari perangkat lain');
-}
-async function pushDoc(uid,baseRev,cap){
-  const sb=cloud.sb,body={data:cap.doc,client_updated_at:cap.doc.updatedAt||0};
-  let rev;
-  if(baseRev==null){
-    const r=await sb.from(TABLE).insert(Object.assign({user_id:uid,rev:1},body)).select('rev');
-    if(r.error){if(r.error.code==='23505'||r.status===409)throw{conflict:true};throw r.error;}
-    rev=1;
-  }else{
-    /* hanya berhasil kalau versi di server masih baseRev; kalau perangkat lain sudah menyimpan duluan, 0 baris berubah */
-    const r=await sb.from(TABLE).update(Object.assign({rev:baseRev+1},body)).eq('user_id',uid).eq('rev',baseRev).select('rev');
-    if(r.error)throw r.error;
-    if(!r.data||!r.data.length)throw{conflict:true};
-    rev=baseRev+1;
-  }
-  meta={uid,email:cloud.user.email||meta.email||'',rev,dirty:cloud.seq!==cap.seq,base:KS.snapshot(cap.doc),at:Date.now()};saveMeta();
-  if(meta.dirty)syncSoon(400);
+  if(c==='merge'){const M=KS.merge(null,cap.doc,R);M.updatedAt=Date.now();applyDoc(M);cap=capture();await finish(cap);toast('Data digabungkan');}
+  else if(c==='acct'){applyDoc(R);cap=capture();await finish(cap);}
+  else{await finish(cap);}
 }
 function save(){
   state.updatedAt=Date.now();cloud.seq++;saveLocal();
@@ -1859,7 +1976,8 @@ function gateLoading(){
 }
 function gateSync(){
   if(!SB_ON){gateClose();return;}
-  if(cloud.user){gateClose();return;}
+  if(cloud.user){try{localStorage.removeItem('kantong.guest');}catch(e){}gateClose();return;}
+  if(nxGuest()){gateClose();return;}
   gateOpen();
   if(cloud.status==='boot'){gateLoading();return;}
   if(!$('#agForm'))gateRender('in','');
@@ -1876,9 +1994,11 @@ function gateRender(mode,email,note){
       '<button type="submit" class="btn" id="agGo">'+(up?'Buat akun':'Masuk')+'</button>'+
     '</form>'+
     (up?'':'<button type="button" class="au-link" id="agForgot">Lupa kata sandi?</button>')+
-    '<p class="ag-foot">'+(up?'Catatan yang sudah ada di perangkat ini ikut tersimpan ke akunmu setelah daftar.':'Catatan yang sudah ada di perangkat ini tidak akan hilang saat masuk.')+'</p>';
+    '<p class="ag-foot">'+(up?'Catatan yang sudah ada di perangkat ini ikut tersimpan ke akunmu setelah daftar.':'Catatan yang sudah ada di perangkat ini tidak akan hilang saat masuk.')+'</p>'+
+    '<button type="button" class="au-link" id="agGuest">Lanjut tanpa akun (data hanya di perangkat ini)</button>';
   const msg=(t,k)=>{const m=$('#agMsg');m.textContent=t||'';m.className='au-msg'+(k?' '+k:'');};
   $$('#agTabs .ag-tab').forEach(b=>b.addEventListener('click',()=>gateRender(b.dataset.m,$('#agEmail').value)));
+  const gg=$('#agGuest');if(gg)gg.addEventListener('click',()=>{try{localStorage.setItem('kantong.guest','1');}catch(e){}gateClose();toast('Mode tamu: data tersimpan di perangkat ini. Masuk kapan saja dari Pengaturan.');});
   $('#agEye').addEventListener('click',e=>{const p=$('#agPw'),show=p.type==='password';p.type=show?'text':'password';e.currentTarget.textContent=show?'Sembunyi':'Lihat';e.currentTarget.setAttribute('aria-pressed',String(show));});
   const busy=v=>{const g=$('#agGo');g.disabled=v;g.textContent=v?'Memproses…':(up?'Buat akun':'Masuk');const f=$('#agForgot');if(f)f.disabled=v;};
   $('#agForm').addEventListener('submit',async ev=>{
@@ -1920,7 +2040,7 @@ let acctMode='in';
 function openAccount(){
   if(!SB_ON){
     openSheet('Akun & sinkron','<div class="li-item" style="animation:none"><span class="ic" style="background:var(--accent-soft)">☁️</span><span class="mid"><span class="t">Sinkron akun belum aktif</span><span class="s">Data tersimpan di perangkat ini</span></span></div>'+
-      '<p class="qhint">Untuk menyimpan catatan di akun dan membukanya dari HP lain, hubungkan Kantong ke Supabase: isi <b>config.js</b> lalu jalankan <b>supabase-setup.sql</b>. Langkahnya ada di BACA-DULU.txt.</p>');
+      '<p class="qhint">Untuk menyimpan catatan di akun dan membukanya dari HP lain, hubungkan Kantong ke Supabase: isi <b>config.js</b> lalu jalankan <b>supabase-per-catatan.sql</b>. Langkahnya ada di BACA-DULU.txt.</p>');
     return;
   }
   if(!cloud.sb){
@@ -1936,7 +2056,7 @@ function openAccountIn(){
   const setup=cloud.status==='err'&&cloud.err==='setup';
   openSheet('Akun & sinkron',
     '<div class="li-item" style="animation:none"><span class="ic" style="background:color-mix(in srgb,var(--mint) 16%,transparent)">☁️</span><span class="mid"><span class="t">'+esc(cloud.user.email||'Akunmu')+'</span><span class="s" id="acStat">'+esc(acctStatText())+'</span></span></div>'+
-    (setup?'<p class="qhint" style="color:var(--rose)">Tabel <b>kantong_data</b> belum ada di database Supabase. Jalankan isi <b>supabase-setup.sql</b> di SQL Editor, lalu ketuk Sinkronkan sekarang.</p>':'')+
+    (setup?'<p class="qhint" style="color:var(--rose)">Tabel <b>kantong_rec</b> atau fungsi <b>kantong_push</b> belum ada di database Supabase. Jalankan isi <b>supabase-per-catatan.sql</b> di SQL Editor, lalu ketuk Sinkronkan sekarang.</p>':'')+
     '<p class="qhint">Catatan tersimpan di perangkat ini dan disalin ke akunmu, jadi bisa dibuka dari HP atau komputer lain dan tidak hilang kalau data browser dibersihkan. Foto struk tetap hanya di perangkat ini.</p>'+
     '<div class="row"><button type="button" class="btn ghost sm" id="acSync">Sinkronkan sekarang</button><button type="button" class="btn danger sm" id="acOut">Keluar</button></div>',
     ()=>{
@@ -1953,7 +2073,7 @@ async function signOutFlow(){
   const c=await choose('Keluar dari akun?','Data di akunmu tetap aman dan bisa dibuka lagi kapan saja dengan masuk kembali.',
     [{v:'keep',label:'Keluar, simpan data di perangkat ini'},{v:'wipe',label:'Keluar & hapus data di perangkat ini',cls:'danger'},{v:null,label:'Batal',cls:'ghost'}]);
   if(!c)return;
-  if(c==='wipe'&&meta.dirty&&!confirm('Ada perubahan yang belum sempat tersinkron ke akun. Kalau data perangkat ini dihapus, perubahan itu hilang. Tetap hapus?'))return;
+  if(c==='wipe'&&meta.dirty&&!(await askC('Ada perubahan yang belum sempat tersinkron ke akun. Kalau data perangkat ini dihapus, perubahan itu hilang. Tetap hapus?')))return;
   try{await cloud.sb.auth.signOut({scope:'local'});}catch(e){}
   if(c==='wipe')wipeLocal();
   closeSheet();toast(c==='wipe'?'Keluar. Data perangkat dihapus':'Berhasil keluar');
@@ -2191,10 +2311,14 @@ function prevExpenseAvg(n){
   }
   return vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0;
 }
-function walletBalance(w){
-  const inc=sum(incOf(state.tx.filter(e=>e.walletId===w.id)));
-  const exp=sum(expOf(state.tx.filter(e=>e.walletId===w.id)));
-  return (+w.balance||0)+inc-exp;
+let _wb=null,_wbK='',_wbR=null;
+function walletBalance(w){ /* satu putaran untuk semua dompet; cache dibuang tiap save(), perubahan jumlah catatan, atau akhir tick */
+  const k=cloud.seq+'|'+state.tx.length;
+  if(!_wb||_wbK!==k||_wbR!==state.tx){
+    const m={};state.tx.forEach(e=>{m[e.walletId]=(m[e.walletId]||0)+(e.type==='income'?1:e.type==='expense'?-1:0)*(+e.amount||0);});
+    _wb=m;_wbK=k;_wbR=state.tx;Promise.resolve().then(()=>{_wb=null;});
+  }
+  return (+w.balance||0)+(_wb[w.id]||0);
 }
 
 
@@ -3327,6 +3451,12 @@ function renderQuickActions(){
     {ic:ICO.swap,title:'Pindah dana',desc:'Catat perpindahan saldo antar dompet.',act:openTransferNew},
     {ic:ICO.flag,title:'Tabungan',desc:'Buat atau kelola tujuan tabunganmu.',act:()=>{const t=$('.tab[data-p="savings"]');if(t)t.click();}},
     {ic:ICO.target,title:'Batas belanja',desc:'Pasang atau ubah batas belanja bulanan.',act:openBudget},
+    {ic:nxIc('<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>'),title:'Cari transaksi',desc:'Filter tanggal, nominal, kategori, dan #tag.',act:nxSearch},
+    {ic:nxIc('<path d="M12 3v7"/><path d="m5 21 7-11 7 11"/><path d="M9 21h6"/>'),title:'Pecah transaksi',desc:'Satu struk, beberapa kategori.',act:nxSplit},
+    {ic:nxIc('<path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M5 21h14"/>'),title:'Impor CSV',desc:'Masukkan mutasi bank atau e-wallet.',act:nxImport},
+    {ic:nxIc('<path d="M4 6h16M4 12h10M4 18h6"/>'),title:'Aturan kategori',desc:'Kata kunci yang memilihkan kategori saat impor.',act:nxRulesUi},
+    {ic:nxIc('<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>'),title:'Laporan tahunan',desc:'Setahun penuh, ekspor Excel atau PDF.',act:()=>nxYear(view.y)},
+    {ic:ICO.target,title:'Anggaran kategori',desc:'Batas tiap kategori dan sisa yang dibawa.',act:nxCatBudget},
     {ic:SVC_ICO,title:'Jasa transfer',desc:'Transfer untuk orang lain, biaya jasanya jadi pemasukan.',act:()=>openSvcForm(null,null)},
     {ic:DEBT_ICO,title:'Utang & piutang',desc:'Pantau pinjaman, cicilan, dan tenggatnya.',act:()=>openDebtManager()}
   ];
@@ -3769,6 +3899,7 @@ function renderRecap(){
     (a.prevTotal>0?'<div class="fact"><span class="fi">📊</span><span class="fx">Selisih pengeluaran dengan '+MON3[pmD.getMonth()]+': <b>'+(total>=a.prevTotal?'+':'−')+rp(Math.abs(total-a.prevTotal))+'</b></span></div>':'')+
   '</div></div>';
 
+  html+=nxBudgetHtml()+nxToolsHtml();
   /* 13. ekspor */
   html+='<div class="card"><h3>Simpan salinan</h3><p class="sub">Unduh catatan sebagai CSV untuk dibuka di Excel atau Google Sheets</p>'+
     '<div class="row"><button class="btn ghost sm" id="expMonth">CSV bulan ini</button>'+
@@ -3821,6 +3952,7 @@ function trfRecapHtml(){ /* perpindahan antar dompet: tidak dihitung sebagai pem
     rank.slice(0,5).map(r=>'<div class="bar-sub" style="margin:6px 0"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(r.k)+'</span><span class="num" style="font-weight:800;flex:none">'+rp(r.v)+'</span></div>').join('')+'</div>';
 }
 function wireRecapExport(){
+  nxWire();
   const a=$('#expMonth'),b=$('#expAll');
   if(a)a.addEventListener('click',()=>exportCSV(inMonth(view.y,view.m),'kantong-'+bKey(view.y,view.m)+'.csv'));
   if(b)b.addEventListener('click',()=>exportCSV(state.tx.slice(),'kantong-semua.csv'));
@@ -3846,7 +3978,7 @@ async function analyzeWithAI(list,label){
   if(!box)return;
   box.hidden=false;
   const prompt=buildAIPrompt(list,label);
-  renderManualAI(box,prompt,label);
+  nxAI(box,prompt,label);
 }
 function renderManualAI(box,prompt,label){
   box.innerHTML=
@@ -3917,8 +4049,6 @@ async function exportCSV(list,filename){
 }
 async function deliver(filename,data,mime){
   try{
-    const dl=(typeof window.claude!=='undefined'&&window.claude&&window.claude.use)?await window.claude.use('downloads'):null;
-    if(dl){await dl.save({filename,data});toast('File disiapkan: '+filename);return;}
   }catch(e){}
   try{
     const b=new Blob([data],{type:mime});
@@ -4077,12 +4207,12 @@ function renderWallets(){
   $('#goSavings').addEventListener('click',()=>{const t=$('.tab[data-p="savings"]');if(t)t.click();});
   const dt=$('#doTransfer');if(dt)dt.addEventListener('click',openTransferNew);
   $$('[data-edw]').forEach(b=>b.addEventListener('click',()=>openWalletSheet(walOf(b.dataset.edw))));
-  $$('[data-delw]').forEach(b=>b.addEventListener('click',()=>{
+  $$('[data-delw]').forEach(b=>b.addEventListener('click',async ()=>{
     const w=walOf(b.dataset.delw);
     const used=state.tx.filter(e=>e.walletId===w.id).length;
     const fallback=regularWallets().find(x=>x.id!==w.id)||state.wallets.find(x=>x.id!==w.id);
     const carry=+w.balance||0; /* saldo awal dompet ikut dipindahkan, supaya total saldo tidak berubah diam-diam */
-    if(!confirm('Hapus dompet "'+w.name+'"?'+(used?'\n'+used+' transaksi akan dipindahkan ke "'+fallback.name+'".':'')+(carry?'\nSaldo awal '+rp(carry)+' ikut dipindahkan ke "'+fallback.name+'".':'')+(w.isSedekah&&sdkOwed(w.id)>0?'\nPantauan dana sedekah yang belum dikembalikan ('+rp(sdkOwed(w.id))+') ikut hilang.':'')))return;
+    if(!(await askC('Hapus dompet "'+w.name+'"?'+(used?'\n'+used+' transaksi akan dipindahkan ke "'+fallback.name+'".':'')+(carry?'\nSaldo awal '+rp(carry)+' ikut dipindahkan ke "'+fallback.name+'".':'')+(w.isSedekah&&sdkOwed(w.id)>0?'\nPantauan dana sedekah yang belum dikembalikan ('+rp(sdkOwed(w.id))+') ikut hilang.':''))))return;
     const idx=state.wallets.indexOf(w);
     const affected=state.tx.filter(e=>e.walletId===w.id);
     deleteWithUndo('Dompet "'+w.name+'" dihapus',
@@ -4242,11 +4372,11 @@ function openSdkGive(wid){
       amt.addEventListener('input',hint);hint();
       $$('#sdkWalPick .cp').forEach(b=>b.addEventListener('click',()=>{walId=b.dataset.w;$$('#sdkWalPick .cp').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));hint();}));
       $$('#sdkRec .tchip').forEach(b=>b.addEventListener('click',()=>{$('#sdkTo').value=b.dataset.n;}));
-      $('#saveSdk').addEventListener('click',()=>{
+      $('#saveSdk').addEventListener('click',async ()=>{
         const v=readMoney(amt);
         if(!v){amt.focus();toast('Isi nominalnya dulu ya',ICO_ALERT);return;}
         const bal=walletBalance(walOf(walId));
-        if(v>bal&&!confirm('Saldo dompet sedekah hanya '+rp(bal)+'. Tetap catat penyaluran '+rp(v)+'?'))return;
+        if(v>bal&&!(await askC('Saldo dompet sedekah hanya '+rp(bal)+'. Tetap catat penyaluran '+rp(v)+'?')))return;
         const date=$('#date').value||todayKey(),time=$('#time').value||nowTime(),approx=tb.approx()||undefined;
         const to=($('#sdkTo').value||'').trim().slice(0,40)||undefined,note=$('#note').value.trim();
         state.tx.push({id:uid(),type:'expense',amount:v,catId:SDK_CAT,walletId:walId,date,time,approx,note,sdkTo:to,createdAt:Date.now()});
@@ -4329,12 +4459,12 @@ function openWalletSheet(existing,preset){
       $$('#swGrid .sw').forEach(b=>b.addEventListener('click',()=>{color=b.dataset.c;
         $$('#swGrid .sw').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));}));
       setTimeout(()=>$('#wname').focus(),420);
-      $('#saveWal').addEventListener('click',()=>{
+      $('#saveWal').addEventListener('click',async ()=>{
         const name=$('#wname').value.trim();
         if(!name){$('#wname').focus();toast('Nama dompet belum diisi');return;}
         const balance=readMoney($('#wbal'))*($('#wneg').checked?-1:1);
         const sdkEl=$('#wsdk'),isSdk=sdkEl?sdkEl.checked:!!(existing&&existing.isSedekah);
-        if(existing&&existing.isSedekah&&!isSdk&&sdkOwed(existing.id)>0&&!confirm('Dompet ini bukan lagi dompet sedekah. Pantauan dana sedekah yang belum dikembalikan ('+rp(sdkOwed(existing.id))+') akan hilang. Lanjutkan?'))return;
+        if(existing&&existing.isSedekah&&!isSdk&&sdkOwed(existing.id)>0&&!(await askC('Dompet ini bukan lagi dompet sedekah. Pantauan dana sedekah yang belum dikembalikan ('+rp(sdkOwed(existing.id))+') akan hilang. Lanjutkan?')))return;
         if(existing){Object.assign(existing,{name,emoji,color,balance,isSedekah:isSdk?true:undefined});}
         else{state.wallets.push(isSdk?{id:'w-'+uid(),name,emoji,color,balance,isSedekah:true}:{id:'w-'+uid(),name,emoji,color,balance});}
         save();closeSheet();renderAll();toast(existing?'Dompet diperbarui':(isSdk?'Dompet sedekah "'+name+'" dibuat':'Dompet "'+name+'" ditambahkan'));
@@ -4389,14 +4519,14 @@ function renderSavings(){
   $('#p-savings').innerHTML=h;
   $('#addSav').addEventListener('click',()=>openSavingsSheet(null));
   $$('[data-edsav]').forEach(b=>b.addEventListener('click',()=>openSavingsSheet(walOf(b.dataset.edsav))));
-  $$('[data-delsav]').forEach(b=>b.addEventListener('click',()=>{
+  $$('[data-delsav]').forEach(b=>b.addEventListener('click',async ()=>{
     const w=walOf(b.dataset.delsav);
     const used=state.tx.filter(e=>e.walletId===w.id).length;
     const fallback=regularWallets()[0];
     if(used&&!fallback){toast('Tambah dompet biasa dulu ya, minimal 1');return;}
     const carry=+w.balance||0;
-    if(fallback&&!confirm('Hapus tabungan "'+w.name+'"?'+(used?'\n'+used+' transaksi akan dipindahkan ke "'+fallback.name+'".':'')+(carry?'\nSaldo awal '+rp(carry)+' ikut dipindahkan ke "'+fallback.name+'".':'')))return;
-    if(!fallback&&!confirm('Hapus tabungan "'+w.name+'"?'))return;
+    if(fallback&&!(await askC('Hapus tabungan "'+w.name+'"?'+(used?'\n'+used+' transaksi akan dipindahkan ke "'+fallback.name+'".':'')+(carry?'\nSaldo awal '+rp(carry)+' ikut dipindahkan ke "'+fallback.name+'".':''))))return;
+    if(!fallback&&!(await askC('Hapus tabungan "'+w.name+'"?')))return;
     const idx=state.wallets.indexOf(w);
     const affected=state.tx.filter(e=>e.walletId===w.id);
     deleteWithUndo('Tabungan "'+w.name+'" dihapus',
@@ -4454,11 +4584,11 @@ function openSavingsSheet(existing){
         save();closeSheet();renderAll();toast(existing?'Tabungan diperbarui':'Tabungan "'+name+'" dibuat');
       });
       const delBtn=$('#delSavSheet');
-      if(delBtn)delBtn.addEventListener('click',()=>{
+      if(delBtn)delBtn.addEventListener('click',async ()=>{
         const used=state.tx.filter(e=>e.walletId===existing.id).length;
         const fallback=regularWallets()[0];
         if(used&&!fallback){toast('Tambah dompet biasa dulu ya, minimal 1');return;}
-        if(!confirm('Hapus tabungan "'+existing.name+'"?'+(used?'\n'+used+' transaksi akan dipindahkan ke "'+fallback.name+'".':'')))return;
+        if(!(await askC('Hapus tabungan "'+existing.name+'"?'+(used?'\n'+used+' transaksi akan dipindahkan ke "'+fallback.name+'".':''))))return;
         const idx=state.wallets.indexOf(existing);
         const affected=state.tx.filter(e=>e.walletId===existing.id);
         closeSheet();
@@ -4548,43 +4678,43 @@ function renderCats(){
   $$('[data-edi]').forEach(b=>b.addEventListener('click',()=>openCatSheet(catOf(b.dataset.edi),'income')));
   $$('[data-edm]').forEach(b=>b.addEventListener('click',()=>openMotorSheet(motorOf(b.dataset.edm))));
   $$('[data-ede]').forEach(b=>b.addEventListener('click',()=>openMeterSheet(meterOf(b.dataset.ede))));
-  $$('[data-delc]').forEach(b=>b.addEventListener('click',()=>{
+  $$('[data-delc]').forEach(b=>b.addEventListener('click',async ()=>{
     const c=catOf(b.dataset.delc);
     if(isSdkCat(c.id)){toast('Kategori ini dipakai fitur dompet sedekah, jadi tidak bisa dihapus');return;}
     const used=state.tx.filter(e=>e.catId===c.id).length;
-    if(!confirm('Hapus kategori "'+c.name+'"?'+(used?'\n'+used+' transaksi akan dipindahkan ke Lainnya.':'')))return;
+    if(!(await askC('Hapus kategori "'+c.name+'"?'+(used?'\n'+used+' transaksi akan dipindahkan ke Lainnya.':''))))return;
     const idx=state.cats.indexOf(c);
     const affected=state.tx.filter(e=>e.catId===c.id);
     deleteWithUndo('Kategori "'+c.name+'" dihapus',
       ()=>{affected.forEach(e=>{e.catId='c-lain';});state.cats=state.cats.filter(x=>x.id!==c.id);},
       ()=>{state.cats.splice(idx,0,c);affected.forEach(e=>{e.catId=c.id;});});
   }));
-  $$('[data-deli]').forEach(b=>b.addEventListener('click',()=>{
+  $$('[data-deli]').forEach(b=>b.addEventListener('click',async ()=>{
     const c=catOf(b.dataset.deli);
     const used=state.tx.filter(e=>e.catId===c.id).length;
-    if(!confirm('Hapus kategori "'+c.name+'"?'+(used?'\n'+used+' transaksi akan dipindahkan ke Lainnya.':'')))return;
+    if(!(await askC('Hapus kategori "'+c.name+'"?'+(used?'\n'+used+' transaksi akan dipindahkan ke Lainnya.':''))))return;
     const idx=state.incomeCats.indexOf(c);
     const affected=state.tx.filter(e=>e.catId===c.id);
     deleteWithUndo('Kategori "'+c.name+'" dihapus',
       ()=>{affected.forEach(e=>{e.catId='ic-lain';});state.incomeCats=state.incomeCats.filter(x=>x.id!==c.id);},
       ()=>{state.incomeCats.splice(idx,0,c);affected.forEach(e=>{e.catId=c.id;});});
   }));
-  $$('[data-delm]').forEach(b=>b.addEventListener('click',()=>{
+  $$('[data-delm]').forEach(b=>b.addEventListener('click',async ()=>{
     const m=motorOf(b.dataset.delm);
     const used=state.tx.filter(x=>isMotorCat(x.catId)&&motorIdOf(x)===m.id).length;
     const fallback=state.motors.find(x=>x.id!==m.id);
-    if(!confirm('Hapus motor "'+m.name+'"?'+(used?'\n'+used+' catatan bensin/oli/servis akan dipindahkan ke "'+fallback.name+'".':'')))return;
+    if(!(await askC('Hapus motor "'+m.name+'"?'+(used?'\n'+used+' catatan bensin/oli/servis akan dipindahkan ke "'+fallback.name+'".':''))))return;
     const idx=state.motors.indexOf(m);
     const affected=state.tx.filter(x=>isMotorCat(x.catId)&&motorIdOf(x)===m.id);
     deleteWithUndo('Motor "'+m.name+'" dihapus',
       ()=>{affected.forEach(x=>{x.motorId=fallback.id;});state.motors=state.motors.filter(x=>x.id!==m.id);},
       ()=>{state.motors.splice(idx,0,m);affected.forEach(x=>{x.motorId=m.id;});});
   }));
-  $$('[data-dele]').forEach(b=>b.addEventListener('click',()=>{
+  $$('[data-dele]').forEach(b=>b.addEventListener('click',async ()=>{
     const m=meterOf(b.dataset.dele);
     const used=state.tx.filter(x=>isMeterCat(x.catId)&&meterIdOf(x)===m.id).length;
     const fallback=state.meters.find(x=>x.id!==m.id);
-    if(!confirm('Hapus meteran "'+m.name+'"?'+(used?'\n'+used+' catatan listrik akan dipindahkan ke "'+fallback.name+'".':'')))return;
+    if(!(await askC('Hapus meteran "'+m.name+'"?'+(used?'\n'+used+' catatan listrik akan dipindahkan ke "'+fallback.name+'".':''))))return;
     const idx=state.meters.indexOf(m);
     const affected=state.tx.filter(x=>isMeterCat(x.catId)&&meterIdOf(x)===m.id);
     deleteWithUndo('Meteran "'+m.name+'" dihapus',
@@ -4697,6 +4827,7 @@ function openSheet(title,body,after){
   sheetOpen=true;document.body.style.overflow='hidden';document.documentElement.classList.add('sheet-lock');
   if(after)after();
   recWireField();
+  nxTagBar();
 }
 function closeSheet(){
   recCtx=null;
@@ -5246,8 +5377,8 @@ function wireEntry(existing,draft,forceType){
     }
   });
   const del=$('#delEntry');
-  if(del)del.addEventListener('click',()=>{
-    if(!confirm('Hapus catatan ini?'))return;
+  if(del)del.addEventListener('click',async ()=>{
+    if(!(await askC('Hapus catatan ini?')))return;
     const idx=state.tx.indexOf(existing);
     closeSheet();
     deleteWithUndo('Catatan dihapus',
@@ -5428,8 +5559,8 @@ function wireTransfer(existing,draft){
     else if(toW.isSedekah&&!fromW.isSedekah&&sdkRetNow)setTimeout(()=>sdkNotice('ret',to,v),350);
   });
   const del=$('#delEntry');
-  if(del)del.addEventListener('click',()=>{
-    if(!confirm('Hapus catatan perpindahan ini? Kedua sisi transaksi akan ikut terhapus'+(feeTxOf(existing.transferId)?', termasuk biaya adminnya.':'.')))return;
+  if(del)del.addEventListener('click',async ()=>{
+    if(!(await askC('Hapus catatan perpindahan ini? Kedua sisi transaksi akan ikut terhapus'+(feeTxOf(existing.transferId)?', termasuk biaya adminnya.':'.'))))return;
     const tid=existing.transferId;
     const pair=state.tx.map((x,i)=>({x,i})).filter(o=>o.x.id===existing.id||(tid&&(o.x.transferId===tid||o.x.feeOf===tid)));
     closeSheet();
@@ -5481,6 +5612,383 @@ function openBudget(){
       const c=$('#clrBudget');
       if(c)c.addEventListener('click',()=>{delete state.budgets[k];save();closeSheet();renderAll();toast('Batas belanja dimatikan');});
     });
+}
+
+/* ================= NX: anggaran kategori, cari, pecah, impor, laporan, AI server ================= */
+const nxIc=p=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">'+p+'</svg>';
+const nxNum0=s=>+String(s||'').replace(/\D/g,'')||0;
+const nxNorm=s=>String(s||'').toLowerCase().replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim().slice(0,40);
+const nxK=(y,m,d)=>(m<1||m>12||d<1||d>31)?'':y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+const nxF=(id,l,x,fl)=>'<div class="field"'+(fl?' style="flex:1;min-width:0"':'')+'><label for="'+id+'">'+l+'</label>'+x+'</div>';
+const nxOpt=l=>l.map(c=>'<option value="'+esc(c.id)+'">'+esc(((c.emoji||'')+' '+c.name).trim())+'</option>').join('');
+function nxNow(){const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
+
+/* ---- 1. anggaran per kategori (disimpan di state.budgets: 'k:<id>' = batas, 'r:<id>' = bawa sisa, ikut tersinkron) ---- */
+function nxLim(id){return +(state.budgets['k:'+id]||0);}
+function nxCarry(id,y,m){ /* sisa bulan lalu saja (tidak menumpuk), hanya bila bulan lalu punya catatan */
+  if(!state.budgets['r:'+id]||!nxLim(id))return 0;
+  const d=new Date(y,m-1,1),L=inMonth(d.getFullYear(),d.getMonth());
+  if(!L.length)return 0;
+  return Math.max(0,nxLim(id)-sum(realExpOf(L).filter(e=>e.catId===id)));
+}
+function nxBudgetHtml(){
+  const rows=state.cats.filter(c=>nxLim(c.id)>0);
+  let h='<div class="card"><h3>Anggaran per kategori</h3>';
+  if(!rows.length)return h+'<p class="sub">Pasang batas tiap kategori, misalnya makan atau transport, supaya kelihatan pos mana yang bocor.</p><div class="row"><button class="btn ghost sm" id="nxCb">Atur anggaran</button></div></div>';
+  const ex=realExpOf(inMonth(view.y,view.m));
+  h+='<p class="sub">Pemakaian '+MONTHS[view.m]+' dibanding batas tiap kategori</p>';
+  rows.map(c=>{const sp=sum(ex.filter(e=>e.catId===c.id)),cr=nxCarry(c.id,view.y,view.m),cap=nxLim(c.id)+cr;return{c,sp,cr,cap,p:cap?sp/cap*100:0};}).sort((a,b)=>b.p-a.p).forEach(r=>{
+    const col=r.p>=100?'var(--rose)':r.p>=80?'#F59E0B':'var(--mint)';
+    h+='<div class="bar-row"><div class="bar-top"><span class="e">'+esc(r.c.emoji||'')+'</span><span class="nm">'+esc(r.c.name)+'</span><span class="v">'+rp(r.sp)+' / '+rp(r.cap)+'</span></div>'+
+      '<div class="bar"><i data-w="'+Math.min(r.p,100)+'" style="background:'+col+'"></i></div>'+
+      '<div class="nx-note" style="color:'+(r.p>=100?'var(--rose)':'var(--ink-2)')+'">'+(r.sp>r.cap?'Lewat '+rp(r.sp-r.cap):'Sisa '+rp(r.cap-r.sp))+(r.cr?' · termasuk sisa bulan lalu '+rp(r.cr):'')+'</div></div>';
+  });
+  return h+'<div class="row" style="margin-top:12px"><button class="btn ghost sm" id="nxCb">Atur anggaran</button></div></div>';
+}
+function nxCatBudget(){
+  openSheet('Anggaran per kategori',
+    '<p class="nx-note" style="margin:0 0 14px;line-height:1.6">Isi batas bulanan tiap kategori, kosongkan untuk mematikan. Centang <b>bawa sisa</b> agar sisa bulan lalu ditambahkan ke bulan ini.</p>'+
+    state.cats.map(c=>'<div class="field"><label>'+esc(((c.emoji||'')+' '+c.name).trim())+'</label><div style="display:flex;gap:10px;align-items:center"><input class="inp nx-lim" data-c="'+esc(c.id)+'" inputmode="numeric" placeholder="0" value="'+(nxLim(c.id)?nf.format(nxLim(c.id)):'')+'" style="flex:1;min-width:0"><label style="display:flex;gap:6px;align-items:center;font-size:12px;white-space:nowrap;margin:0"><input type="checkbox" class="nx-rol" data-c="'+esc(c.id)+'"'+(state.budgets['r:'+c.id]?' checked':'')+'>bawa sisa</label></div></div>').join('')+
+    '<div class="row"><button class="btn" id="nxSaveCb">Simpan anggaran</button></div>',
+    ()=>{
+      $$('.nx-lim').forEach(el=>moneyMask(el));
+      $('#nxSaveCb').addEventListener('click',()=>{
+        $$('.nx-lim').forEach(el=>{const id=el.dataset.c,v=Math.round(+readMoney(el)||0),r=$('.nx-rol[data-c="'+id+'"]').checked;
+          if(v>0){state.budgets['k:'+id]=v;if(r)state.budgets['r:'+id]=1;else delete state.budgets['r:'+id];}
+          else{delete state.budgets['k:'+id];delete state.budgets['r:'+id];}});
+        save();closeSheet();renderAll();toast('Anggaran kategori disimpan');
+      });
+    });
+}
+function nxToolsHtml(){
+  return '<div class="card"><h3>Laporan &amp; impor</h3><p class="sub">Lihat setahun penuh, atau masukkan mutasi bank dan e-wallet dari file CSV</p>'+
+    '<div class="row"><button class="btn ghost sm" id="nxRY">Laporan tahunan</button><button class="btn ghost sm" id="nxRI">Impor CSV</button><button class="btn ghost sm" id="nxRR">Aturan kategori</button></div>'+
+    '<h3 style="margin-top:16px">Cadangan terenkripsi</h3><p class="sub">Dikunci kata sandi (AES-256), aman disimpan di mana saja</p><div class="row"><button class="btn ghost sm" id="nxEn">Buat cadangan</button><button class="btn ghost sm" id="nxDe">Pulihkan</button></div></div>';
+}
+function nxWire(){
+  [['nxCb',nxCatBudget],['nxRY',()=>nxYear(view.y)],['nxRI',nxImport],['nxRR',nxRulesUi],['nxEn',nxEncUi],['nxDe',nxDecUi]].forEach(p=>{const b=document.getElementById(p[0]);if(b)b.addEventListener('click',p[1]);});
+}
+
+/* ---- 2. cari & filter global (tag = tulis #tag di catatan) ---- */
+let nxLast=[];
+function nxSearch(){
+  const cs=state.cats.concat(state.incomeCats);
+  openSheet('Cari transaksi',
+    nxF('nxQ','Kata kunci atau #tag','<input class="inp" id="nxQ" placeholder="mis. bensin atau #kantor" autocomplete="off">')+'<div id="nxTg" style="display:flex;gap:6px;flex-wrap:wrap;margin:-4px 0 12px"></div>'+
+    '<div style="display:flex;gap:10px">'+nxF('nxD1','Dari tanggal','<input class="inp" type="date" id="nxD1">',1)+nxF('nxD2','Sampai tanggal','<input class="inp" type="date" id="nxD2">',1)+'</div>'+
+    '<div style="display:flex;gap:10px">'+nxF('nxA1','Nominal min','<input class="inp" id="nxA1" inputmode="numeric" placeholder="0">',1)+nxF('nxA2','Nominal maks','<input class="inp" id="nxA2" inputmode="numeric" placeholder="tanpa batas">',1)+'</div>'+
+    '<div style="display:flex;gap:10px">'+nxF('nxT','Tipe','<select class="inp" id="nxT"><option value="">Semua</option><option value="expense">Pengeluaran</option><option value="income">Pemasukan</option></select>',1)+nxF('nxC','Kategori','<select class="inp" id="nxC"><option value="">Semua</option>'+nxOpt(cs)+'</select>',1)+'</div>'+
+    nxF('nxW','Dompet','<select class="inp" id="nxW"><option value="">Semua</option>'+nxOpt(state.wallets)+'</select>')+
+    '<div id="nxRes"></div>',
+    ()=>{
+      const run=()=>{
+        const q=$('#nxQ').value.trim().toLowerCase(),d1=$('#nxD1').value,d2=$('#nxD2').value,a1=nxNum0($('#nxA1').value),a2=nxNum0($('#nxA2').value),t=$('#nxT').value,c=$('#nxC').value,w=$('#nxW').value;
+        const L=state.tx.filter(e=>(!q||(String(e.note||'')+' '+catOf(e.catId).name+' '+String(e.client||'')).toLowerCase().indexOf(q)>=0)&&(!d1||e.date>=d1)&&(!d2||e.date<=d2)&&(!a1||e.amount>=a1)&&(!a2||e.amount<=a2)&&(!t||e.type===t)&&(!c||e.catId===c)&&(!w||e.walletId===w)).sort((a,b)=>dtVal(a)<dtVal(b)?1:-1);
+        nxLast=L;
+        const inc=sum(realIncOf(L)),exp=sum(realExpOf(L));
+        $('#nxRes').innerHTML=!L.length?'<p class="nx-note" style="text-align:center;margin:18px 0">Tidak ada transaksi yang cocok.</p>':
+          '<div class="card" style="margin:12px 0"><div class="bar-sub"><span>'+L.length+' transaksi</span><span class="num" style="font-weight:800">+'+rp(inc)+' / −'+rp(exp)+'</span></div></div>'+
+          L.slice(0,100).map(e=>{const ct=catOf(e.catId);return '<div class="bar-sub" style="margin:9px 0;gap:12px;align-items:flex-start"><span style="min-width:0"><b>'+esc(((ct.emoji||'')+' '+ct.name).trim())+'</b><br><span class="nx-note">'+esc(e.date)+' · '+esc(walOf(e.walletId).name)+(e.note?' · '+esc(e.note):'')+'</span></span><span class="num" style="font-weight:800;white-space:nowrap;color:'+(e.type==='income'?'var(--mint)':'var(--ink)')+'">'+(e.type==='income'?'+':'−')+rp(e.amount)+'</span></div>';}).join('')+
+          (L.length>100?'<p class="nx-note" style="text-align:center">Menampilkan 100 teratas. Persempit filter, atau unduh semua hasilnya.</p>':'')+
+          '<div class="row" style="margin-top:12px"><button class="btn ghost sm" id="nxX">Unduh CSV hasil ('+L.length+')</button></div>';
+        const x=$('#nxX');if(x)x.addEventListener('click',()=>exportCSV(nxLast,'kantong-hasil-cari.csv'));
+      };
+      $$('#sheetBody input,#sheetBody select').forEach(x=>{x.addEventListener('input',run);x.addEventListener('change',run);});
+      const tg=nxTags().slice(0,12);$('#nxTg').innerHTML=tg.map(x=>'<button type="button" class="chip" data-t="'+esc(x.t)+'">'+esc(x.t)+' · '+x.n+'</button>').join('');
+      $('#nxTg').addEventListener('click',ev=>{const b=ev.target.closest('.chip');if(!b)return;$('#nxQ').value=b.dataset.t;run();});
+      run();
+    });
+}
+
+/* ---- 3. pecah transaksi: satu struk, beberapa kategori ---- */
+function nxSplit(){
+  const co=nxOpt(state.cats);
+  const row='<div class="nx-sp" style="display:flex;gap:8px;margin-bottom:8px"><select class="inp nx-sc" style="flex:1.3;min-width:0">'+co+'</select><input class="inp nx-sa" inputmode="numeric" placeholder="0" style="flex:1;min-width:0"></div>';
+  openSheet('Pecah transaksi',
+    '<p class="nx-note" style="margin:0 0 14px;line-height:1.6">Untuk satu struk yang isinya beda kategori. Tiap bagian disimpan sebagai pengeluaran sendiri, total semua bagian harus pas dengan total struk.</p>'+
+    nxF('nxTot','Total struk','<div class="amount-in"><span class="rp">Rp</span><input id="nxTot" inputmode="numeric" placeholder="0"></div>')+
+    '<div style="display:flex;gap:10px">'+nxF('nxSd','Tanggal','<input class="inp" type="date" id="nxSd" value="'+todayKey()+'">',1)+nxF('nxSw','Dompet','<select class="inp" id="nxSw">'+nxOpt(state.wallets)+'</select>',1)+'</div>'+
+    nxF('nxSn','Catatan','<input class="inp" id="nxSn" placeholder="mis. Belanja Indomaret">')+
+    '<div id="nxRows">'+row+row+'</div><button class="btn ghost sm" id="nxAdd" type="button">+ Tambah baris</button>'+
+    '<p class="nx-note" id="nxRem" style="margin:12px 0"></p><div class="row"><button class="btn" id="nxSv">Simpan pecahan</button></div>',
+    ()=>{
+      const upd=()=>{const t=Math.round(+readMoney($('#nxTot'))||0),s=$$('.nx-sa').reduce((x,el)=>x+Math.round(+readMoney(el)||0),0),d=t-s;
+        $('#nxRem').innerHTML=d===0&&t>0?'<b style="color:var(--mint)">Pas.</b> Semua bagian sudah menutup total.':(d>0?'Belum dialokasikan: <b>'+rp(d)+'</b>':'Kelebihan: <b style="color:var(--rose)">'+rp(-d)+'</b>');};
+      const wire=el=>{moneyMask(el);el.addEventListener('input',upd);};
+      wire($('#nxTot'));$$('.nx-sa').forEach(wire);upd();
+      $('#nxAdd').addEventListener('click',()=>{const d=document.createElement('div');d.innerHTML=row;const n=d.firstChild;$('#nxRows').appendChild(n);wire($('.nx-sa',n));});
+      $('#nxSv').addEventListener('click',()=>{
+        const t=Math.round(+readMoney($('#nxTot'))||0),date=$('#nxSd').value,wal=$('#nxSw').value,note=$('#nxSn').value.trim()||'Belanja';
+        const parts=$$('.nx-sp').map(r=>({c:$('.nx-sc',r).value,a:Math.round(+readMoney($('.nx-sa',r))||0)})).filter(p=>p.a>0);
+        if(!(t>0)||!date||!wal){toast('Isi total, tanggal, dan dompet dulu');return;}
+        if(parts.length<2){toast('Minimal dua bagian dengan nominal');return;}
+        if(parts.reduce((x,p)=>x+p.a,0)!==t){toast('Total bagian harus sama dengan total struk');return;}
+        const time=nxNow(),now=Date.now();
+        parts.forEach((p,i)=>state.tx.push({id:uid(),type:'expense',amount:p.a,catId:p.c,walletId:wal,date,time,note:note+' ('+(i+1)+'/'+parts.length+')',createdAt:now+i}));
+        save();closeSheet();renderAll();toast('Struk dipecah jadi '+parts.length+' catatan');
+      });
+    });
+}
+
+/* ---- 4. impor CSV bank / e-wallet ---- */
+function nxParseCSV(t){
+  t=String(t).replace(/^\uFEFF/,'');
+  const first=t.split(/\r?\n/,1)[0],dl=[';','\t',','].map(d=>[d,first.split(d).length]).sort((a,b)=>b[1]-a[1])[0][0];
+  const rows=[];let r=[],c='',q=false;
+  for(let i=0;i<t.length;i++){const ch=t[i];
+    if(q){if(ch==='"'){if(t[i+1]==='"'){c+='"';i++;}else q=false;}else c+=ch;}
+    else if(ch==='"')q=true;
+    else if(ch===dl){r.push(c);c='';}
+    else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&t[i+1]==='\n')i++;r.push(c);c='';if(r.some(x=>x.trim()))rows.push(r);r=[];}
+    else c+=ch;}
+  r.push(c);if(r.some(x=>x.trim()))rows.push(r);
+  return rows;
+}
+function nxNum(s){
+  s=String(s||'');const neg=/^\s*-|\(/.test(s)||/\bDB\b/i.test(s);s=s.replace(/[^\d.,]/g,'');
+  const lc=s.lastIndexOf(','),ld=s.lastIndexOf('.');
+  if(lc>-1&&ld>-1)s=lc>ld?s.replace(/\./g,'').replace(',','.'):s.replace(/,/g,'');
+  else if(lc>-1)s=(s.split(',').length===2&&/,\d{1,2}$/.test(s))?s.replace(',','.'):s.replace(/,/g,'');
+  else if(ld>-1)s=(s.split('.').length===2&&/\.\d{1,2}$/.test(s))?s:s.replace(/\./g,'');
+  const v=parseFloat(s)||0;return neg?-v:v;
+}
+function nxDate(s){
+  s=String(s||'').trim();let m;
+  if((m=s.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/)))return nxK(+m[1],+m[2],+m[3]);
+  if((m=s.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})/))){let y=+m[3];if(y<100)y+=2000;return nxK(y,+m[2],+m[1]);}
+  return '';
+}
+function nxImport(){
+  openSheet('Impor CSV',
+    '<p class="nx-note" style="margin:0 0 14px;line-height:1.6">Pilih file CSV mutasi bank atau e-wallet, atau hasil ekspor Kantong. Baris pertama harus berisi judul kolom (tanggal, nominal, keterangan, dan sebagainya). Transaksi yang sama persis dengan yang sudah ada otomatis dilewati.</p>'+
+    nxF('nxFile','File CSV','<input class="inp" type="file" id="nxFile" accept=".csv,.txt,text/csv">')+'<div id="nxPv"></div>',
+    ()=>{$('#nxFile').addEventListener('change',async ev=>{
+      const f=ev.target.files[0];if(!f)return;
+      if(f.size>3e6){toast('File terlalu besar (maksimal 3 MB)');return;}
+      let rows;try{rows=nxParseCSV(await f.text());}catch(e){toast('File tidak bisa dibaca');return;}
+      nxPreview(rows);
+    });});
+}
+function nxPreview(rows){
+  const hd=(rows[0]||[]).map(x=>String(x).toLowerCase().trim()),fi=re=>hd.findIndex(h=>re.test(h));
+  const col={date:fi(/tanggal|tgl|date/),time:fi(/waktu|jam|time/),type:fi(/^tipe|jenis|type/),amt:fi(/nominal|jumlah|amount|nilai/),deb:fi(/debit|keluar/),cre:fi(/kredit|credit|masuk/),note:fi(/catatan|keterangan|deskripsi|description|memo|berita|note/),cat:fi(/kategori|category/),wal:fi(/dompet|wallet|rekening|akun/),cnt:fi(/dihitung/)};
+  const pv=$('#nxPv');
+  if(col.date<0||(col.amt<0&&col.deb<0&&col.cre<0)){pv.innerHTML='<p class="nx-note" style="color:var(--rose)">Kolom tanggal dan nominal tidak ditemukan. Pastikan baris pertama berisi judul kolom.</p>';return;}
+  const raw=[];let bad=0,noCnt=0;
+  rows.slice(1,3001).forEach(r=>{
+    const date=nxDate(r[col.date]);let a=0,ty='';
+    if(col.amt>=0){a=nxNum(r[col.amt]);if(col.type>=0)ty=/masuk|income|kredit|credit|\bcr\b/i.test(r[col.type])?'income':'expense';}
+    else{const dv=nxNum(r[col.deb]),cv=nxNum(r[col.cre]);if(Math.abs(cv)>0){a=Math.abs(cv);ty='income';}else{a=Math.abs(dv);ty='expense';}}
+    if(!date||!a){bad++;return;}
+    if(col.cnt>=0&&/^tidak/i.test(r[col.cnt]||'')){noCnt++;return;}
+    const tm=String(col.time>=0?r[col.time]:'').match(/(\d{1,2})[:.](\d{2})/);
+    raw.push({date,a,ty,note:String(col.note>=0?r[col.note]:'').trim().slice(0,120),time:tm?String(+tm[1]).padStart(2,'0')+':'+tm[2]:'00:00',cat:col.cat>=0?String(r[col.cat]||'').trim().toLowerCase():'',wal:col.wal>=0?String(r[col.wal]||'').trim().toLowerCase():''});
+  });
+  if(!raw.length){pv.innerHTML='<p class="nx-note" style="color:var(--rose)">Tidak ada baris yang valid.'+(bad?' '+bad+' baris dilewati karena tanggal atau nominal tidak terbaca.':'')+'</p>';return;}
+  const hasNeg=raw.some(x=>!x.ty&&x.a<0),needDef=!hasNeg&&col.type<0&&col.amt>=0;
+  const hist={};state.tx.forEach(e=>{const k=nxNorm(e.note);if(k){const h=hist[k]=hist[k]||{};h[e.catId]=(h[e.catId]||0)+1;}});
+  const seen=new Set(state.tx.map(e=>e.date+'|'+Math.round(e.amount)+'|'+e.type+'|'+nxNorm(e.note)));
+  const RL=nxRules();
+  const guess=(x,ty)=>{
+    const L=ty==='income'?state.incomeCats:state.cats;if(!L.length)return null;
+    const n0=x.note.toLowerCase(),rl=RL.find(r=>r.t===ty&&n0.indexOf(r.k)>=0&&L.some(c=>c.id===r.c));if(rl)return L.find(c=>c.id===rl.c);
+    let c=x.cat&&L.find(c=>c.name.toLowerCase()===x.cat);if(c)return c;
+    const h=hist[nxNorm(x.note)];
+    if(h){const id=Object.keys(h).sort((p,q)=>h[q]-h[p]).find(id=>L.some(c=>c.id===id));if(id)return L.find(c=>c.id===id);}
+    const n=x.note.toLowerCase();c=n&&L.find(c=>c.name.length>2&&n.indexOf(c.name.toLowerCase())>=0);
+    return c||L.find(c=>/lain/i.test(c.name))||L[L.length-1];
+  };
+  const build=()=>{
+    const def=needDef?$('#nxDt').value:'income',dw=$('#nxWd').value,ok=[];let dup=0;
+    raw.forEach(x=>{
+      const ty=x.ty||(x.a<0?'expense':(hasNeg?'income':def)),amt=Math.abs(x.a),k=x.date+'|'+Math.round(amt)+'|'+ty+'|'+nxNorm(x.note);
+      if(seen.has(k)){dup++;return;}
+      const ct=guess(x,ty);if(!ct)return;
+      const w=state.wallets.find(w=>w.name.toLowerCase()===x.wal);
+      ok.push({type:ty,amount:Math.round(amt),catId:ct.id,walletId:w?w.id:dw,date:x.date,time:x.time,note:x.note||('Impor: '+ct.name)});
+    });
+    return{ok,dup};
+  };
+  pv.innerHTML=
+    nxF('nxWd','Dompet bawaan (bila file tidak menyebut dompet)','<select class="inp" id="nxWd">'+nxOpt(state.wallets)+'</select>')+
+    (needDef?nxF('nxDt','File tidak punya kolom tipe. Nominal positif dianggap','<select class="inp" id="nxDt"><option value="expense">Pengeluaran</option><option value="income">Pemasukan</option></select>'):'')+
+    '<div id="nxSum"></div>';
+  const draw=()=>{
+    const b=build();
+    $('#nxSum').innerHTML='<div class="card" style="margin:10px 0"><div class="bar-sub"><span>Siap diimpor</span><b class="num">'+b.ok.length+'</b></div><div class="bar-sub"><span>Sudah ada (dilewati)</span><b class="num">'+b.dup+'</b></div>'+((bad+noCnt)?'<div class="bar-sub"><span>Tidak terbaca / bukan transaksi</span><b class="num">'+(bad+noCnt)+'</b></div>':'')+'</div>'+
+      b.ok.slice(0,8).map(e=>'<div class="bar-sub" style="margin:7px 0;gap:10px"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(e.date)+' · '+esc(catOf(e.catId).name)+' · '+esc(e.note)+'</span><span class="num" style="font-weight:800;white-space:nowrap;color:'+(e.type==='income'?'var(--mint)':'var(--ink)')+'">'+(e.type==='income'?'+':'−')+rp(e.amount)+'</span></div>').join('')+
+      (b.ok.length>8?'<p class="nx-note">dan '+(b.ok.length-8)+' lainnya. Kategori ditebak dari catatan lama; bisa kamu rapikan setelahnya.</p>':'')+
+      '<div class="row" style="margin-top:12px"><button class="btn" id="nxGo"'+(b.ok.length?'':' disabled')+'>Impor '+b.ok.length+' transaksi</button></div>';
+    const g=$('#nxGo');if(g)g.addEventListener('click',()=>{
+      const now=Date.now();b.ok.forEach((e,i)=>state.tx.push(Object.assign({id:uid(),createdAt:now+i},e)));
+      save();closeSheet();renderAll();toast(b.ok.length+' transaksi diimpor');
+    });
+  };
+  $$('#nxPv select').forEach(s=>s.addEventListener('change',draw));draw();
+}
+
+/* ---- 5. laporan tahunan (layar, Excel, PDF) ---- */
+function nxYData(y){
+  const mo=[];for(let m=0;m<12;m++){const L=inMonth(y,m);mo.push({i:sum(realIncOf(L)),e:sum(realExpOf(L)),n:L.length});}
+  const by={};realExpOf(state.tx.filter(e=>String(e.date).slice(0,4)===String(y))).forEach(e=>{(by[e.catId]=by[e.catId]||Array(12).fill(0))[parseKey(e.date).getMonth()]+=+e.amount||0;});
+  const now=new Date(),cut=y===now.getFullYear()?now.getMonth():11,s=(a,f,t)=>{let x=0;for(let i=Math.max(0,f);i<=t;i++)x+=a[i]||0;return x;};
+  const act=mo.filter(x=>x.n).length||1;
+  const cats=Object.keys(by).map(id=>{const a=by[id],t=a.reduce((x,v)=>x+v,0),r=s(a,cut-2,cut),p=s(a,cut-5,cut-3);return{id,t,avg:t/act,tr:p>0?Math.round((r-p)/p*100):null};}).sort((a,b)=>b.t-a.t);
+  return{y,mo,cats,ti:mo.reduce((x,m)=>x+m.i,0),te:mo.reduce((x,m)=>x+m.e,0),act};
+}
+function nxYTables(D,raw){
+  const f=v=>raw?String(Math.round(v)):rp(v),th=a=>'<tr>'+a.map(x=>'<th>'+x+'</th>').join('')+'</tr>',tr=a=>'<tr>'+a.map(x=>'<td>'+x+'</td>').join('')+'</tr>';
+  let h='<h2>Per bulan</h2><table class="nx-t">'+th(['Bulan','Pemasukan','Pengeluaran','Selisih'])+D.mo.map((m,i)=>tr([MONTHS[i],f(m.i),f(m.e),f(m.i-m.e)])).join('')+tr(['<b>Total</b>','<b>'+f(D.ti)+'</b>','<b>'+f(D.te)+'</b>','<b>'+f(D.ti-D.te)+'</b>'])+'</table>';
+  h+='<h2>Per kategori (pengeluaran)</h2><table class="nx-t">'+th(['Kategori','Total','Rata-rata/bln','Porsi','Tren 3 bln'])+D.cats.map(c=>tr([esc(catOf(c.id).name),f(c.t),f(c.avg),(D.te?Math.round(c.t/D.te*100):0)+'%',c.tr==null?'-':(c.tr>0?'▲ ':c.tr<0?'▼ ':'')+Math.abs(c.tr)+'%'])).join('')+'</table>';
+  return h;
+}
+function nxYear(y){
+  const D=nxYData(y),mx=Math.max.apply(null,D.mo.map(m=>m.e).concat([1])),worst=D.mo.reduce((b,m,i)=>m.e>D.mo[b].e?i:b,0);
+  openSheet('Laporan '+y,
+    '<div class="row" style="align-items:center;margin-bottom:12px"><button class="btn ghost sm" id="nxYp" aria-label="Tahun sebelumnya">‹ '+(y-1)+'</button><button class="btn ghost sm" id="nxYn" aria-label="Tahun berikutnya">'+(y+1)+' ›</button></div>'+
+    (D.mo.some(m=>m.n)?
+    '<div class="card" style="margin:0 0 14px"><div class="bar-sub"><span>Pemasukan</span><b class="num" style="color:var(--mint)">'+rp(D.ti)+'</b></div><div class="bar-sub"><span>Pengeluaran</span><b class="num">'+rp(D.te)+'</b></div><div class="bar-sub"><span>Selisih</span><b class="num" style="color:'+(D.ti>=D.te?'var(--mint)':'var(--rose)')+'">'+rp(D.ti-D.te)+'</b></div><div class="bar-sub"><span>Rata-rata keluar/bulan</span><b class="num">'+rp(D.te/D.act)+'</b></div>'+(D.te?'<div class="bar-sub"><span>Bulan paling boros</span><b>'+MONTHS[worst]+'</b></div>':'')+'</div>'+
+    '<h3 class="sdk-h">Pengeluaran per bulan</h3>'+D.mo.map((m,i)=>'<div class="bar-row"><div class="bar-top"><span class="nm">'+MON3[i]+'</span><span class="v">'+rp(m.e)+'</span></div><div class="bar"><i data-w="'+(m.e/mx*100)+'"></i></div></div>').join('')+
+    '<div class="nx-w">'+nxYTables(D,false)+'</div>'+
+    '<div class="row" style="margin-top:14px"><button class="btn ghost" id="nxXl">Unduh Excel</button><button class="btn" id="nxPdf">Cetak / PDF</button></div>'
+    :'<p class="nx-note" style="text-align:center;margin:24px 0">Belum ada catatan di tahun '+y+'.</p>'),
+    ()=>{
+      $$('#sheetBody .bar i').forEach(i=>i.style.width=i.dataset.w+'%');
+      $('#nxYp').addEventListener('click',()=>nxYear(y-1));$('#nxYn').addEventListener('click',()=>nxYear(y+1));
+      const xl=$('#nxXl');if(xl)xl.addEventListener('click',()=>deliver('kantong-laporan-'+y+'.xls','<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"></head><body><h1>Laporan Keuangan '+y+'</h1>'+nxYTables(D,true)+'</body></html>','application/vnd.ms-excel'));
+      const pd=$('#nxPdf');if(pd)pd.addEventListener('click',()=>{
+        const w=window.open('','_blank');if(!w){toast('Pop-up diblokir. Pakai Unduh Excel, atau izinkan pop-up');return;}
+        w.document.write('<!doctype html><meta charset="utf-8"><title>Laporan Keuangan '+y+'</title><style>body{font:13px system-ui,sans-serif;margin:24px;color:#111}table{border-collapse:collapse;width:100%;margin:8px 0 22px}td,th{border-bottom:1px solid #ddd;padding:6px;text-align:right}td:first-child,th:first-child{text-align:left}h1{font-size:20px}h2{font-size:15px;margin:18px 0 0}</style><h1>Laporan Keuangan '+y+'</h1>'+nxYTables(D,false)+'<script>onload=function(){print()}<\/script>');
+        w.document.close();
+      });
+    });
+}
+
+/* ---- 6. analisis AI lewat Supabase Edge Function (jatuh ke cara manual bila belum siap) ---- */
+async function nxAI(box,prompt,label){
+  if(!(cloud.sb&&cloud.user)||CFG.aiFunction===false){renderManualAI(box,prompt,label);return;}
+  if(box.dataset.busy)return;
+  box.dataset.busy='1';box.innerHTML='<div class="nx-note" style="padding:6px 0">Sedang menganalisis, biasanya 10–30 detik…</div>';
+  try{
+    const r=await cloud.sb.functions.invoke(CFG.aiFunction||'kantong-ai',{body:{prompt,label}});
+    if(r.error||!r.data||!r.data.text)throw (r.error||new Error('kosong'));
+    box.innerHTML=mdToHtml(r.data.text)+'<div class="ai-meta">Dibuat AI lewat server Kantong dari ringkasan catatanmu. Bukan saran finansial profesional.</div>';
+  }catch(e){renderManualAI(box,prompt,label);toast('AI otomatis belum tersedia, pakai cara manual');}
+  finally{delete box.dataset.busy;}
+}
+
+/* ================= NX2: sanitasi data, aturan kategori, tag, cadangan terenkripsi ================= */
+/* sanitasi: function (bukan const) supaya sudah tersedia saat normalize() dipanggil di awal */
+function nxId(s){return String(s==null?'':s).replace(/[^\w\-:.]/g,'').slice(0,80);}
+function nxCol(c){c=String(c||'');return /^(#[0-9a-f]{3,8}|(rgb|hsl)a?\([\d\s.,%\/]+\)|var\(--[\w-]+\)|[a-z]{3,20})$/i.test(c)?c:'#94A3B8';}
+function nxEmo(e){return String(e==null?'':e).replace(/[<>&"'`\\]/g,'').slice(0,16);}
+function nxTxt(s,n){return String(s==null?'':s).slice(0,n);}
+function nxSanitize(s){
+  ['cats','incomeCats','wallets','motors','meters'].forEach(k=>{if(Array.isArray(s[k]))s[k].forEach(o=>{if(!o)return;o.id=nxId(o.id);o.color=nxCol(o.color);o.emoji=nxEmo(o.emoji);o.name=nxTxt(o.name,60);});});
+  if(Array.isArray(s.tx)){
+    s.tx=s.tx.filter(e=>/^\d{4}-\d{2}-\d{2}$/.test(String(e.date))&&isFinite(+e.amount));
+    s.tx.forEach(e=>{e.id=nxId(e.id);e.catId=nxId(e.catId);e.walletId=nxId(e.walletId);if(!/^\d{2}:\d{2}$/.test(String(e.time)))e.time='00:00';e.note=nxTxt(e.note,200);});
+  }
+  return s;
+}
+
+/* aturan kategori otomatis: tersimpan di state.prefs.rules (tersinkron). Aturan lama di localStorage 'kantong.rules' (per perangkat)
+   tetap terbaca dan digabung; baru dihapus saat daftar disimpan ulang, jadi tidak ada aturan yang hilang waktu pindah ke versi ini. */
+function nxRulesLegacy(){try{return normRules(JSON.parse(localStorage.getItem('kantong.rules')||'[]'))||[];}catch(e){return[];}}
+function nxRules(){
+  const base=((state.prefs&&state.prefs.rules)||[]).slice(),have={};
+  base.forEach(r=>{have[r.t+'|'+r.k]=1;});
+  nxRulesLegacy().forEach(r=>{if(!have[r.t+'|'+r.k]){have[r.t+'|'+r.k]=1;base.push(r);}});
+  return base;
+}
+function nxRulesSave(r){
+  if(!state.prefs)state.prefs=normPrefs();
+  state.prefs.rules=normRules(r);
+  try{localStorage.removeItem('kantong.rules');}catch(e){}
+  save();
+}
+function nxRulesUi(){
+  const draw=()=>{
+    const R=nxRules();
+    $('#nxRl').innerHTML=R.length?R.map((r,i)=>'<div class="bar-sub" style="margin:8px 0;gap:10px"><span style="min-width:0">Catatan memuat <b>'+esc(r.k)+'</b><br><span class="nx-note">→ '+esc(catOf(r.c).name)+' ('+(r.t==='income'?'pemasukan':'pengeluaran')+')</span></span><button class="btn ghost sm" data-d="'+i+'">Hapus</button></div>').join(''):'<p class="nx-note">Belum ada aturan.</p>';
+    $$('#nxRl [data-d]').forEach(b=>b.addEventListener('click',()=>{const R=nxRules();R.splice(+b.dataset.d,1);nxRulesSave(R);draw();}));
+  };
+  openSheet('Aturan kategori',
+    '<p class="nx-note" style="margin:0 0 14px;line-height:1.6">Kalau catatan memuat kata kunci tertentu, kategorinya dipilihkan otomatis saat <b>impor CSV</b>. Aturan ikut tersinkron ke perangkat lain lewat akun dan didahulukan dari tebakan riwayat.</p>'+
+    nxF('nxRk','Kata kunci','<input class="inp" id="nxRk" maxlength="40" placeholder="mis. grab, indomaret, gaji" autocomplete="off">')+
+    '<div style="display:flex;gap:10px">'+nxF('nxRt','Tipe','<select class="inp" id="nxRt"><option value="expense">Pengeluaran</option><option value="income">Pemasukan</option></select>',1)+nxF('nxRc','Kategori','<select class="inp" id="nxRc"></select>',1)+'</div>'+
+    '<div class="row"><button class="btn" id="nxRa">Tambah aturan</button></div><div id="nxRl" style="margin-top:14px"></div>',
+    ()=>{
+      const fill=()=>{$('#nxRc').innerHTML=nxOpt($('#nxRt').value==='income'?state.incomeCats:state.cats);};
+      $('#nxRt').addEventListener('change',fill);fill();draw();
+      $('#nxRa').addEventListener('click',()=>{
+        const k=$('#nxRk').value.trim().toLowerCase().slice(0,40),t=$('#nxRt').value,c=$('#nxRc').value;
+        if(k.length<2||!c){toast('Isi kata kunci minimal 2 huruf');return;}
+        const R=nxRules().filter(r=>!(r.k===k&&r.t===t));R.unshift({k,t,c});nxRulesSave(R);$('#nxRk').value='';draw();toast('Aturan ditambahkan');
+      });
+    });
+}
+
+/* tag: tetap berupa #tag di catatan (aman untuk sinkron), tapi dibantu chip saran di form dan daftar tag di pencarian */
+function nxTags(){const c={};state.tx.forEach(e=>{(String(e.note||'').match(/#[\p{L}\p{N}_]+/gu)||[]).forEach(t=>{t=t.toLowerCase();c[t]=(c[t]||0)+1;});});return Object.keys(c).sort((a,b)=>c[b]-c[a]).map(t=>({t,n:c[t]}));}
+function nxTagBar(){
+  const n=document.getElementById('note');if(!n||n.dataset.nxt||!n.closest('#sheetBody'))return;
+  n.dataset.nxt='1';const T=nxTags().slice(0,8);if(!T.length)return;
+  const d=document.createElement('div');d.style.cssText='display:flex;gap:6px;flex-wrap:wrap;margin-top:8px';
+  d.innerHTML=T.map(x=>'<button type="button" class="chip" data-t="'+esc(x.t)+'">'+esc(x.t)+'</button>').join('');
+  d.addEventListener('click',ev=>{
+    const b=ev.target.closest('.chip');if(!b)return;const t=b.dataset.t;
+    if(n.value.toLowerCase().indexOf(t)>=0)return;
+    const v=(n.value.trim()+' '+t).trim();if(v.length>(+n.maxLength>0?+n.maxLength:80)){toast('Catatan sudah penuh');return;}
+    n.value=v;n.dispatchEvent(new Event('input',{bubbles:true}));
+  });
+  n.parentNode.appendChild(d);
+}
+
+/* cadangan terenkripsi: AES-256-GCM, kunci dari kata sandi lewat PBKDF2-SHA256 600.000 putaran */
+function nxB64(b){let s='';new Uint8Array(b).forEach(c=>{s+=String.fromCharCode(c);});return btoa(s);}
+function nxUn64(s){return Uint8Array.from(atob(s),c=>c.charCodeAt(0));}
+async function nxKey(pw,salt,it){const m=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:it,hash:'SHA-256'},m,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);}
+async function nxEncrypt(text,pw){const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12)),it=600000,k=await nxKey(pw,salt,it);const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},k,new TextEncoder().encode(text));return JSON.stringify({kantong:'enc1',i:it,s:nxB64(salt),iv:nxB64(iv),d:nxB64(ct)});}
+async function nxDecrypt(env,pw){const e=JSON.parse(env);if(!e||e.kantong!=='enc1'||!(e.i>=100000&&e.i<=2000000))throw new Error('format');const k=await nxKey(pw,nxUn64(e.s),e.i);return new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:nxUn64(e.iv)},k,nxUn64(e.d)));}
+const nxSecure=()=>{if(window.crypto&&crypto.subtle)return true;toast('Enkripsi butuh https atau localhost, tidak jalan lewat file://');return false;};
+function nxNxId(k){return nxId(k);}
+function nxPhotosAll(){return phOpen().then(db=>new Promise((res,rej)=>{const out={},ids=new Set(state.tx.filter(e=>e.photo).map(e=>e.id)),t=db.transaction('p','readonly'),c=t.objectStore('p').openCursor();c.onsuccess=()=>{const u=c.result;if(u){if(ids.has(u.key)&&typeof u.value==='string')out[u.key]=u.value;u.continue();}};t.oncomplete=()=>res(out);t.onerror=()=>rej(t.error);}));}
+async function nxPutPhotos(ph){let n=0;if(!ph||typeof ph!=='object')return 0;for(const k of Object.keys(ph)){const v=ph[k];if(typeof v==='string'&&/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/.test(v)&&v.length<4e6){try{await phPut(nxNxId(k),v);n++;}catch(e){}}}return n;}
+function nxEncUi(){
+  if(!nxSecure())return;
+  openSheet('Cadangan terenkripsi',
+    '<p class="nx-note" style="margin:0 0 14px;line-height:1.6">File cadangan dikunci dengan kata sandi. <b>Kata sandi tidak bisa dipulihkan</b>: kalau lupa, file tidak bisa dibuka lagi.</p>'+
+    nxF('nxP1','Kata sandi (minimal 8 karakter)','<input class="inp" type="password" id="nxP1" autocomplete="new-password">')+
+    nxF('nxP2','Ulangi kata sandi','<input class="inp" type="password" id="nxP2" autocomplete="new-password">')+
+    (state.tx.some(e=>e.photo)?'<label style="display:flex;gap:8px;align-items:center;margin:0 0 14px;font-size:13px"><input type="checkbox" id="nxPh" checked>Sertakan foto struk (file jadi lebih besar)</label>':'')+
+    '<div class="row"><button class="btn" id="nxEg">Buat file terenkripsi</button></div>',
+    ()=>{$('#nxEg').addEventListener('click',async()=>{
+      const a=$('#nxP1').value;
+      if(a.length<8){toast('Kata sandi minimal 8 karakter');return;}
+      if(a!==$('#nxP2').value){toast('Kedua kata sandi belum sama');return;}
+      const b=$('#nxEg');b.disabled=true;b.textContent='Mengunci…';
+      try{const doc=Object.assign({},state),cb=$('#nxPh');if(cb&&cb.checked)doc._photos=await nxPhotosAll();const env=await nxEncrypt(JSON.stringify(doc),a);markBackup();await deliver('kantong-backup-terenkripsi.json',env,'application/json');closeSheet();}
+      catch(e){toast('Gagal membuat cadangan terenkripsi');b.disabled=false;b.textContent='Buat file terenkripsi';}
+    });});
+}
+function nxDecUi(){
+  if(!nxSecure())return;
+  openSheet('Pulihkan cadangan terenkripsi',
+    nxF('nxDf','File cadangan','<input class="inp" type="file" id="nxDf" accept=".json,application/json">')+
+    nxF('nxDp','Kata sandi','<input class="inp" type="password" id="nxDp" autocomplete="current-password">')+
+    '<div class="row"><button class="btn" id="nxDg">Buka file</button></div>',
+    ()=>{$('#nxDg').addEventListener('click',async()=>{
+      const f=$('#nxDf').files[0],pw=$('#nxDp').value;
+      if(!f||!pw){toast('Pilih file dan isi kata sandi');return;}
+      let nrm,ph;
+      try{const raw=JSON.parse(await nxDecrypt(await f.text(),pw));ph=raw._photos;delete raw._photos;nrm=normalize(raw);}
+      catch(e){toast('Kata sandi salah atau file rusak');return;}
+      openSheet('Pulihkan data',
+        '<p class="nx-note" style="line-height:1.6;margin:0 0 14px">File berisi <b>'+nrm.tx.length+' transaksi</b>'+(ph?' dan <b>'+Object.keys(ph).length+' foto struk</b>':'')+'. <b>Gabung</b> menambahkan yang belum ada. <b>Timpa</b> mengganti semua data di perangkat ini (salinan otomatis dibuat dulu).</p>'+
+        '<div class="row"><button class="btn ghost" id="nxMg">Gabung</button><button class="btn" id="nxRp">Timpa</button></div>',
+        ()=>{$('#nxMg').addEventListener('click',async()=>{await nxPutPhotos(ph);restoreApply(nrm,'merge');});$('#nxRp').addEventListener('click',async()=>{await nxPutPhotos(ph);restoreApply(nrm,'replace');});});
+    });});
 }
 
 /* ================= settings ================= */
@@ -5548,11 +6056,11 @@ $('#setBtn').addEventListener('click',async()=>{
         reader.onerror=()=>{toast('Gagal membaca file');ev.target.value='';};
         reader.readAsText(f);
       });
-      $('#sImpPaste').addEventListener('click',()=>{
-        doRestore(prompt('Tempel isi file cadangan JSON di sini:'));
+      $('#sImpPaste').addEventListener('click',async ()=>{
+        doRestore((await askT('Tempel isi file cadangan JSON di sini:')));
       });
-      $('#wipe').addEventListener('click',()=>{
-        if(!confirm('Hapus SEMUA transaksi beserta foto struknya dan kembalikan kategori serta dompet ke bawaan?'+(cloud.user?' Karena kamu masuk akun, ini juga menghapusnya dari akun dan perangkat lain.':'')))return;
+      $('#wipe').addEventListener('click',async ()=>{
+        if(!(await askC('Hapus SEMUA transaksi beserta foto struknya dan kembalikan kategori serta dompet ke bawaan?'+(cloud.user?' Karena kamu masuk akun, ini juga menghapusnya dari akun dan perangkat lain.':''))))return;
         bakSnapshot('p','sebelum reset');
         const snap=JSON.parse(JSON.stringify({tx:state.tx,cats:state.cats,incomeCats:state.incomeCats,wallets:state.wallets,motors:state.motors,meters:state.meters,budgets:state.budgets,recurring:state.recurring,debts:state.debts,svcs:state.svcs}));
         closeSheet();
@@ -5685,12 +6193,25 @@ function wireTimeBlock(){
 
 /* ---------- baca struk otomatis: OCR di browser (Tesseract.js via CDN), tanpa server/API luar ---------- */
 let ocrLoadPromise=null;
+/* hosting mandiri (opsional): CFG.tesseractBase = alamat folder di situs sendiri berisi tesseract.min.js, worker.min.js, core/, lang/.
+   Dengan ini worker, core, dan data bahasa tidak lagi diambil dari CDN pihak lain (SRI tidak bisa mengunci file yang dimuat worker).
+   Hanya alamat satu asal (https atau path relatif di situs ini) yang diterima; selain itu diabaikan dan jatuh ke CDN. */
+function ocrBase(){
+  const b=String((typeof CFG!=='undefined'&&CFG&&CFG.tesseractBase)||'').replace(/\/+$/,'');
+  if(!b)return '';
+  try{const u=new URL(b,location.href);return(u.origin===location.origin)?u.href.replace(/\/+$/,''):'';}catch(e){return '';}
+}
+function ocrOpts(onProgress){
+  const o=onProgress?{logger:onProgress}:{},b=ocrBase();
+  if(b){o.workerPath=b+'/worker.min.js';o.corePath=b+'/core';o.langPath=b+'/lang';}
+  return Object.keys(o).length?o:undefined;
+}
 function loadTesseract(){
   if(window.Tesseract)return Promise.resolve(window.Tesseract);
   if(ocrLoadPromise)return ocrLoadPromise;
   ocrLoadPromise=new Promise((resolve,reject)=>{
     const s=document.createElement('script');
-    s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+    s.src=ocrBase()?ocrBase()+'/tesseract.min.js':'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';if(CFG.tesseractSri){s.integrity=CFG.tesseractSri;s.crossOrigin='anonymous';}
     s.onload=()=>window.Tesseract?resolve(window.Tesseract):reject(new Error('no-tesseract'));
     s.onerror=()=>reject(new Error('load-fail'));
     document.head.appendChild(s);
@@ -5699,7 +6220,7 @@ function loadTesseract(){
 }
 async function runReceiptOCR(dataUrl,onProgress){
   const Tesseract=await loadTesseract();
-  const worker=await Tesseract.createWorker('eng',1,onProgress?{logger:onProgress}:undefined);
+  const worker=await Tesseract.createWorker('eng',1,ocrOpts(onProgress));
   try{
     const {data}=await worker.recognize(dataUrl);
     return data.text||'';
@@ -6542,8 +7063,8 @@ function openRecEditor(ex,preset){
       save();renderAll();openRecManager();toast(ex.active?'Jadwal diaktifkan lagi':'Jadwal dijeda');
     });
     const dl=$('#rDel');
-    if(dl)dl.addEventListener('click',()=>{
-      if(!confirm('Hapus jadwal "'+recTitle(ex)+'"? Catatan yang sudah dibuat tetap ada.'))return;
+    if(dl)dl.addEventListener('click',async ()=>{
+      if(!(await askC('Hapus jadwal "'+recTitle(ex)+'"? Catatan yang sudah dibuat tetap ada.')))return;
       const idx=state.recurring.indexOf(ex);
       closeSheet();
       deleteWithUndo('Jadwal berulang dihapus',()=>{state.recurring.splice(idx,1);},()=>{state.recurring.splice(idx,0,ex);});
@@ -6851,17 +7372,17 @@ function openDebtDetail(id,fromTab){
       toast(ok?'Pesan disalin':'Tidak bisa menyalin di sini');
     });
     $('#ddEdit').addEventListener('click',()=>openDebtForm(d,null,again));
-    $$('[data-delpay]').forEach(b=>b.addEventListener('click',()=>{
+    $$('[data-delpay]').forEach(b=>b.addEventListener('click',async ()=>{
       const p=d.pays.find(x=>x.id===b.dataset.delpay);if(!p)return;
-      if(!confirm('Hapus pembayaran '+rp(p.amount)+'?'+(p.txIds&&p.txIds.length?'\nCatatan di dompetnya ikut terhapus.':'')))return;
+      if(!(await askC('Hapus pembayaran '+rp(p.amount)+'?'+(p.txIds&&p.txIds.length?'\nCatatan di dompetnya ikut terhapus.':''))))return;
       d.pays=d.pays.filter(x=>x!==p);
       state.tx=state.tx.filter(x=>(p.txIds||[]).indexOf(x.id)<0);
       if(d.pass!=null&&d.pass<d.amount)debtRebuildPays(d);
       save();renderAll();again();toast('Pembayaran dihapus');
     }));
-    $('#ddDel').addEventListener('click',()=>{
+    $('#ddDel').addEventListener('click',async ()=>{
       const sv=d.svcId?state.svcs.find(x=>x.id===d.svcId):null;
-      if(!confirm('Hapus '+debtTitle(d)+'?'+(sv?'\nPiutang ini berasal dari Jasa transfer, jadi catatan jasanya ikut terhapus.':'')+'\nCatatan pergerakan uangnya di dompet ikut terhapus.'))return;
+      if(!(await askC('Hapus '+debtTitle(d)+'?'+(sv?'\nPiutang ini berasal dari Jasa transfer, jadi catatan jasanya ikut terhapus.':'')+'\nCatatan pergerakan uangnya di dompet ikut terhapus.')))return;
       const hit=x=>x.debtId===d.id||(d.svcId&&x.svcId===d.svcId);
       const idx=state.debts.indexOf(d),svIdx=sv?state.svcs.indexOf(sv):-1;
       const gone=state.tx.map((x,i)=>({x,i})).filter(o=>hit(o.x));
@@ -7098,8 +7619,8 @@ function openSvcDetail(id){
   openSheet('Jasa transfer',h,()=>{
     const e=$('#svcEdit');if(e)e.addEventListener('click',()=>openSvcForm(s,()=>openSvcDetail(s.id)));
     const b=$('#svcDebt');if(b)b.addEventListener('click',()=>openDebtDetail(d.id));
-    $('#svcDel').addEventListener('click',()=>{
-      if(!confirm('Hapus catatan jasa transfer ini?'+(d?'\nPiutangnya juga ikut terhapus.':'')+'\nCatatan di dompet ikut terhapus.'))return;
+    $('#svcDel').addEventListener('click',async ()=>{
+      if(!(await askC('Hapus catatan jasa transfer ini?'+(d?'\nPiutangnya juga ikut terhapus.':'')+'\nCatatan di dompet ikut terhapus.')))return;
       const hit=x=>x.svcId===s.id||(d&&x.debtId===d.id);
       const sIdx=state.svcs.indexOf(s),dIdx=d?state.debts.indexOf(d):-1,gone=state.tx.map((x,i)=>({x,i})).filter(o=>hit(o.x));
       closeSheet();
@@ -7214,7 +7735,7 @@ $('#svcAdd').addEventListener('click',()=>openSvcForm(null,null));
 $('#sideSvcBtn').addEventListener('click',()=>openSvcManager());
 
 /* ================= kunci aplikasi: PIN + biometrik (opsional) =================
-   Kunci ini bekerja di sisi perangkat. PIN tidak pernah disimpan polos: yang tersimpan hanya hash-nya (SHA-256 berulang + garam acak)
+   Kunci ini bekerja di sisi perangkat. PIN tidak pernah disimpan polos: yang tersimpan hanya hash-nya (PBKDF2-SHA256 600.000 putaran + garam acak; SHA-256 JS 20.000 putaran hanya untuk data lama atau konteks tanpa WebCrypto)
    di localStorage 'kantong.lock'. Sengaja TIDAK ikut cadangan JSON maupun sinkron akun, jadi tiap perangkat punya kunci sendiri.
    Ini penghalang untuk orang yang iseng pegang HP/laptop, bukan enkripsi data. */
 const LKEY='kantong.lock',LFAIL='kantong.lockfail',LNUDGE='kantong.lockNudge';
@@ -7261,6 +7782,14 @@ function lkDerive(secret,saltHex,it){
   for(let i=1;i<it;i++)h=lkSha(lkCat(h,salt,enc));
   return lkHex(h);
 }
+const LK_PBKDF2=600000; /* OWASP: PBKDF2-HMAC-SHA256 minimal 600.000 putaran */
+const lkHasSubtle=()=>{try{return !!(crypto&&crypto.subtle&&crypto.subtle.deriveBits);}catch(e){return false;}};
+async function lkDeriveV(secret,saltHex,kdf,it){ /* kdf 'pbkdf2' = WebCrypto; selain itu = SHA-256 JS lama (hanya untuk http/file:// dan data lama) */
+  if(kdf!=='pbkdf2')return lkDerive(secret,saltHex,it);
+  const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(secret),'PBKDF2',false,['deriveBits']);
+  return lkHex(new Uint8Array(await crypto.subtle.deriveBits({name:'PBKDF2',salt:lkUnhex(saltHex),iterations:it,hash:'SHA-256'},k,256)));
+}
+function lkEq(a,b){a=String(a);b=String(b);let d=a.length^b.length;for(let i=0;i<a.length;i++)d|=a.charCodeAt(i)^(b.charCodeAt(i)||0);return d===0;}
 const lkB64=u=>btoa(String.fromCharCode.apply(null,u)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 const lkUnB64=s=>Uint8Array.from(atob(s.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0));
 
@@ -7277,17 +7806,26 @@ function lkRegisterFail(){
   if(f.n%5===0)f.until=Date.now()+[30,60,300,900,1800][Math.min(f.n/5-1,4)]*1000;
   lkFailSet(f);return f;
 }
-function lkMake(pin,old){
-  const cfg=Object.assign({on:true,it:LK_ITER,grace:60,bio:null},old||{});
-  cfg.salt=lkHex(lkRand(16));cfg.hash=lkDerive(pin,cfg.salt,cfg.it);cfg.len=pin.length;
+async function lkMake(pin,old){
+  const cfg=Object.assign({on:true,grace:60,bio:null},old||{});
+  if(cfg.rHash&&!cfg.rKdf){cfg.rKdf='sha';cfg.rIt=(old&&old.it)||LK_ITER;} /* hash kode pemulihan lama tetap diverifikasi dengan parameternya sendiri */
+  const kdf=lkHasSubtle()?'pbkdf2':'sha';
+  cfg.kdf=kdf;cfg.it=kdf==='pbkdf2'?LK_PBKDF2:LK_ITER;
+  cfg.salt=lkHex(lkRand(16));cfg.hash=await lkDeriveV(pin,cfg.salt,kdf,cfg.it);cfg.len=pin.length;
   return cfg;
+}
+/* PIN lama (SHA-256 JS, 20.000 putaran) dinaikkan ke PBKDF2 diam-diam saat PIN benar dimasukkan; batal kalau PIN diubah di sela-selanya */
+async function lkUpgrade(pin){
+  const c=lkCfg();if(!c||c.kdf==='pbkdf2'||!lkHasSubtle())return;
+  const n=await lkMake(pin,c),cur=lkCfg();
+  if(cur&&cur.salt===c.salt)lkSave(n);
 }
 const lkNorm=s=>String(s||'').toUpperCase().replace(/[^A-Z2-9]/g,'');
 const lkFmt=s=>s.replace(/(.{4})(?=.)/g,'$1-');
 function lkNewRecovery(){const a=new Uint8Array(1);let s='';while(s.length<12){lkFill(a);if(a[0]<248)s+=LK_ALPHA[a[0]%31];}return s;}
-function lkWithRecovery(cfg,code){cfg.rSalt=lkHex(lkRand(16));cfg.rHash=lkDerive(code,cfg.rSalt,cfg.it);return cfg;}
-function lkCheckPin(pin){const c=lkCfg();return !!c&&lkDerive(pin,c.salt,c.it)===c.hash;}
-function lkCheckRec(code){const c=lkCfg();return !!c&&!!c.rHash&&lkDerive(lkNorm(code),c.rSalt,c.it)===c.rHash;}
+async function lkWithRecovery(cfg,code){cfg.rSalt=lkHex(lkRand(16));cfg.rKdf=cfg.kdf||'sha';cfg.rIt=cfg.it;cfg.rHash=await lkDeriveV(code,cfg.rSalt,cfg.rKdf,cfg.rIt);return cfg;}
+async function lkCheckPin(pin){const c=lkCfg();return !!c&&lkEq(await lkDeriveV(pin,c.salt,c.kdf||'sha',c.it),c.hash);}
+async function lkCheckRec(code){const c=lkCfg();return !!c&&!!c.rHash&&lkEq(await lkDeriveV(lkNorm(code),c.rSalt,c.rKdf||'sha',c.rIt||c.it),c.rHash);}
 function lkWeak(p){
   if(/^(\d)\1+$/.test(p))return true;
   let up=true,dn=true;
@@ -7300,7 +7838,7 @@ const LKB={ok:false};
 async function lkBioAvail(){
   try{
     if(!window.PublicKeyCredential||!navigator.credentials||!PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable)return false;
-    return !!(await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable());
+    return lkHasSubtle()&&!!(await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable());
   }catch(e){return false;}
 }
 async function lkBioEnroll(){
@@ -7309,12 +7847,46 @@ async function lkBioEnroll(){
     pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
     authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',residentKey:'discouraged'},
     timeout:60000,attestation:'none'}});
-  return cred?lkB64(new Uint8Array(cred.rawId)):null;
+  if(!cred)return null;
+  const R=cred.response,pk=R.getPublicKey&&R.getPublicKey(),alg=R.getPublicKeyAlgorithm&&R.getPublicKeyAlgorithm();
+  if(!pk||(alg!==-7&&alg!==-257))return null; /* tanpa kunci publik, tanda tangan tidak bisa diperiksa: jangan diaktifkan */
+  return{id:lkB64(new Uint8Array(cred.rawId)),pk:lkB64(new Uint8Array(pk)),alg};
 }
-async function lkBioAsk(id){
-  const a=await navigator.credentials.get({publicKey:{challenge:lkRand(32),
-    allowCredentials:[{type:'public-key',id:lkUnB64(id),transports:['internal']}],userVerification:'required',timeout:60000}});
-  return !!a;
+const lkBioOn=c=>!!(c&&c.bio&&c.bpk&&c.balg); /* bio lama tanpa kunci publik dianggap mati sampai didaftarkan ulang */
+function lkBioApply(c,r){c.bio=r.id;c.bpk=r.pk;c.balg=r.alg;c.bsc=0;}
+function lkBioClear(c){c.bio=null;delete c.bpk;delete c.balg;delete c.bsc;}
+function lkDerToRaw(d){ /* tanda tangan ECDSA DER -> r||s 64 byte (format WebCrypto) */
+  if(d[0]!==0x30)throw new Error('der');
+  let i=2+((d[1]&0x80)?(d[1]&0x7f):0);
+  const rd=()=>{if(d[i++]!==2)throw new Error('der');const n=d[i++];const v=d.slice(i,i+n);i+=n;let k=0;while(v.length-k>32&&v[k]===0)k++;if(v.length-k>32)throw new Error('der');const o=new Uint8Array(32);o.set(v.slice(k),32-(v.length-k));return o;};
+  const r=rd(),sg=rd();return lkCat(r,sg);
+}
+/* periksa tanda tangan, tantangan, asal, rpId, flag UP+UV, dan penghitung; hanya kalau semuanya cocok kunci dibuka */
+async function lkBioVerify(c,a,ch){try{return await lkBioVerify0(c,a,ch);}catch(e){return false;}} /* data cacat/aneh = ditolak, bukan error */
+async function lkBioVerify0(c,a,ch){
+  const R=a.response,cd=new Uint8Array(R.clientDataJSON),ad=new Uint8Array(R.authenticatorData),sig=new Uint8Array(R.signature);
+  const j=JSON.parse(new TextDecoder().decode(cd));
+  if(j.type!=='webauthn.get'||j.challenge!==lkB64(ch)||j.origin!==location.origin||j.crossOrigin===true)return false;
+  if(lkB64(new Uint8Array(a.rawId))!==c.bio||ad.length<37)return false;
+  const rp=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(location.hostname));
+  if(!lkEq(lkHex(ad.subarray(0,32)),lkHex(new Uint8Array(rp))))return false;
+  if(!(ad[32]&1)||!(ad[32]&4))return false; /* harus ada kehadiran pengguna (UP) dan verifikasi biometrik/kunci layar (UV) */
+  const sc=new DataView(ad.buffer,ad.byteOffset+33,4).getUint32(0,false),last=c.bsc||0;
+  if((sc||last)&&sc<=last)return false; /* penghitung tidak boleh mundur/diam kalau dipakai (kunci terduplikasi) */
+  const msg=lkCat(ad,new Uint8Array(await crypto.subtle.digest('SHA-256',cd))),pk=lkUnB64(c.bpk);
+  let ok;
+  if(c.balg===-7)ok=await crypto.subtle.verify({name:'ECDSA',hash:'SHA-256'},await crypto.subtle.importKey('spki',pk,{name:'ECDSA',namedCurve:'P-256'},false,['verify']),lkDerToRaw(sig),msg);
+  else if(c.balg===-257)ok=await crypto.subtle.verify('RSASSA-PKCS1-v1_5',await crypto.subtle.importKey('spki',pk,{name:'RSASSA-PKCS1-v1_5',hash:'SHA-256'},false,['verify']),sig,msg);
+  else return false;
+  if(!ok)return false;
+  if(sc>last){const cur=lkCfg();if(cur&&cur.bio===c.bio){cur.bsc=sc;lkSave(cur);}}
+  return true;
+}
+async function lkBioAsk(c){
+  const ch=lkRand(32);
+  const a=await navigator.credentials.get({publicKey:{challenge:ch,
+    allowCredentials:[{type:'public-key',id:lkUnB64(c.bio),transports:['internal']}],userVerification:'required',timeout:60000}});
+  return !!a&&await lkBioVerify(c,a,ch);
 }
 
 /* --- pengendali layar kunci --- */
@@ -7374,7 +7946,7 @@ function lkPin(mode,o){
   $('#lkLen').hidden=(mode!=='new');lkLenPaint();
   lkDotsBuild();lkMsg(o.msg,!!o.err);
   $('#lkForgot').hidden=(mode!=='unlock');
-  const bio=$('#lkBio'),show=(mode==='unlock'&&!!c&&!!c.bio&&LKB.ok);
+  const bio=$('#lkBio'),show=(mode==='unlock'&&lkBioOn(c)&&LKB.ok);
   bio.classList.toggle('off',!show);bio.tabIndex=show?0:-1;
   lkPane('pin');lkCountdown(chk);
 }
@@ -7390,12 +7962,14 @@ function lkPress(d){
   if(LK.buf.length===LK.len){LK.busy=true;setTimeout(lkSubmit,90);} /* jeda singkat supaya titik terakhir sempat terlihat */
 }
 function lkDel(){if(LK.busy||!LK.buf)return;LK.buf=LK.buf.slice(0,-1);lkDotsPaint();}
-function lkSubmit(){
-  const pin=LK.buf,m=LK.mode;LK.busy=false;
+async function lkSubmit(){
+  const pin=LK.buf,m=LK.mode;
   if(m==='unlock'||m==='verify'){
-    if(lkCheckPin(pin)){
+    let good=false;try{good=await lkCheckPin(pin);}catch(e){}
+    LK.busy=false;
+    if(good){
       lkFailSet({n:0,until:0});
-      if(m==='unlock')lkUnlocked();
+      if(m==='unlock'){lkUnlocked();lkUpgrade(pin).catch(()=>{});}
       else{const cb=LK.verifyCb;LK.verifyCb=null;if(cb)cb(pin);}
       return;
     }
@@ -7403,9 +7977,11 @@ function lkSubmit(){
     lkMsg(wait>0?'Terlalu banyak percobaan salah':'PIN salah. Sisa '+(5-f.n%5)+' percobaan',true);
     lkShake(()=>{if(wait>0)lkCountdown(true);});
   }else if(m==='new'){
+    LK.busy=false;
     if(lkWeak(pin)){lkMsg('Terlalu mudah ditebak, coba angka lain',true);lkShake();return;}
     LK.first=pin;lkPin('confirm',{title:LK.flow==='change'?'Ulangi PIN baru':undefined});
   }else if(m==='confirm'){
+    LK.busy=false;
     if(pin===LK.first)lkFinishSet(pin);
     else{lkMsg('PIN tidak sama, ulangi dari awal',true);lkShake(()=>lkPin('new',{msg:'PIN tidak sama, ulangi dari awal',err:true,title:LK.flow==='change'?'PIN baru':undefined}));}
   }
@@ -7422,15 +7998,15 @@ function lkSaveFail(){
 }
 function lkAskPin(title,cb){lkOpen();LK.verifyCb=cb;lkPin('verify',{title});}
 function lkStartEnable(){LK.flow='enable';lkOpen();lkPin('new');}
-function lkFinishSet(pin){
+async function lkFinishSet(pin){
   const flow=LK.flow,old=lkCfg();
-  const cfg=lkMake(pin,flow==='enable'?null:old);
+  let cfg;try{cfg=await lkMake(pin,flow==='enable'?null:old);}catch(e){return lkSaveFail();}
   if(flow==='change'){
     if(!lkSave(cfg))return lkSaveFail();
     lkFailSet({n:0,until:0});return lkFinish('PIN diperbarui');
   }
   /* aktifkan pertama kali / setel ulang lewat kode pemulihan: keluarkan kode pemulihan baru; baru disimpan setelah user menyatakan sudah mencatatnya */
-  const code=lkNewRecovery();lkWithRecovery(cfg,code);
+  const code=lkNewRecovery();await lkWithRecovery(cfg,code);
   lkShowRecovery(code,()=>{
     if(!lkSave(cfg))return lkSaveFail();
     lkFailSet({n:0,until:0});
@@ -7452,10 +8028,10 @@ function lkLock(){
 }
 async function lkTryBio(auto){
   const c=lkCfg();
-  if(!c||!c.bio||!LKB.ok||LK.unlocked||LK.mode!=='unlock'||LKP.pin.hidden||LK.bioBusy)return;
+  if(!lkBioOn(c)||!LKB.ok||LK.unlocked||LK.mode!=='unlock'||LKP.pin.hidden||LK.bioBusy)return;
   if(auto&&LK.bioTried)return; /* otomatis hanya sekali per kunci; sesudahnya lewat tombol */
   LK.bioTried=true;LK.bioBusy=true;
-  try{if(await lkBioAsk(c.bio)&&!LK.unlocked&&LK.mode==='unlock'){lkFailSet({n:0,until:0});lkUnlocked();}}
+  try{if(await lkBioAsk(c)&&!LK.unlocked&&LK.mode==='unlock'){lkFailSet({n:0,until:0});lkUnlocked();}}
   catch(e){/* dibatalkan atau gagal: tetap pakai PIN */}
   LK.bioBusy=false;
 }
@@ -7468,9 +8044,11 @@ function lkCancel(){
   }
   LK.flow=null;LK.verifyCb=null;lkClose();
 }
-function lkWipe(){
-  if(!confirm('Reset aplikasi akan menghapus SEMUA data Kantong di perangkat ini: catatan, foto struk, dan kunci PIN. Data di akun (kalau kamu pernah masuk) tidak ikut terhapus dan bisa dipulihkan dengan masuk lagi. Lanjutkan?'))return;
+async function lkWipe(){
+  if(!(await askC('Reset aplikasi akan menghapus SEMUA data Kantong di perangkat ini: catatan, foto struk, dan kunci PIN. Data di akun (kalau kamu pernah masuk) tidak ikut terhapus dan bisa dipulihkan dengan masuk lagi. Lanjutkan?')))return;
+  storeHalt();
   try{Object.keys(localStorage).filter(k=>k.indexOf('kantong.')===0).forEach(k=>localStorage.removeItem(k));}catch(e){}
+  try{indexedDB.deleteDatabase('kantong-state');}catch(e){}
   let done=false;const go=()=>{if(done)return;done=true;location.reload();};
   try{const rq=indexedDB.deleteDatabase('kantong-photos');rq.onsuccess=rq.onerror=rq.onblocked=go;}catch(e){}
   setTimeout(go,1200);
@@ -7486,10 +8064,10 @@ function lkSettingsInner(){
   }
   const chips=LK_GRACE.map(g=>'<button type="button" class="tchip" data-s="'+g[0]+'" aria-pressed="'+((+c.grace||0)===g[0])+'">'+g[1]+'</button>').join('');
   let bioRow='';
-  if(LKB.ok||c.bio)bioRow='<label class="chk"><input type="checkbox" id="lkBioChk"'+(c.bio?' checked':'')+'><span><b>Buka dengan sidik jari atau wajah</b>PIN tetap jadi cadangan kalau biometrik gagal.</span></label>';
+  if(LKB.ok||c.bio)bioRow='<label class="chk"><input type="checkbox" id="lkBioChk"'+(lkBioOn(c)?' checked':'')+'><span><b>Buka dengan sidik jari atau wajah</b>PIN tetap jadi cadangan kalau biometrik gagal.</span></label>';
   else bioRow='<p class="qhint">Biometrik tidak tersedia di perangkat atau browser ini, kunci PIN tetap berfungsi.</p>';
   return '<div class="li-item" style="animation:none"><span class="ic" style="background:color-mix(in srgb,var(--mint) 16%,transparent)">🔒</span>'+
-      '<span class="mid"><span class="t">Kunci aplikasi aktif</span><span class="s">PIN '+c.len+' digit'+(c.bio?' · biometrik aktif':'')+'</span></span></div>'+
+      '<span class="mid"><span class="t">Kunci aplikasi aktif</span><span class="s">PIN '+c.len+' digit'+(lkBioOn(c)?' · biometrik aktif':'')+'</span></span></div>'+
     '<div class="row"><button type="button" class="btn ghost sm" id="lkNow">Kunci sekarang</button><button type="button" class="btn ghost sm" id="lkChg">Ubah PIN</button></div>'+
     '<div class="field" style="margin:14px 0 0"><label>Kunci otomatis setelah ditinggal</label><div class="tchips" id="lkGr" style="margin:0">'+chips+'</div>'+
       '<p class="qhint" style="margin:8px 0 0">Berlaku saat Kantong ditinggal ke aplikasi atau tab lain. Layar yang dibiarkan tanpa disentuh juga terkunci setelah 5 menit (atau sesuai pilihanmu bila lebih lama).</p></div>'+
@@ -7506,7 +8084,7 @@ function lkWireSettings(){
     LK.flow='rec';
     lkAskPin('Kode pemulihan baru',()=>{
       const code=lkNewRecovery();
-      lkShowRecovery(code,()=>{const c=lkCfg();if(!c)return lkSaveFail();lkWithRecovery(c,code);if(!lkSave(c))return lkSaveFail();lkFinish('Kode pemulihan diganti');});
+      lkShowRecovery(code,async()=>{const c=lkCfg();if(!c)return lkSaveFail();await lkWithRecovery(c,code);if(!lkSave(c))return lkSaveFail();lkFinish('Kode pemulihan diganti');});
     });
   });
   const off=$('#lkOff');if(off)off.addEventListener('click',()=>{
@@ -7521,9 +8099,9 @@ function lkWireSettings(){
     bc.disabled=true;
     const c=lkCfg();
     if(c){
-      if(c.bio){c.bio=null;lkSave(c);toast('Biometrik dimatikan');}
+      if(lkBioOn(c)){lkBioClear(c);lkSave(c);toast('Biometrik dimatikan');}
       else{
-        try{const id=await lkBioEnroll();if(!id)throw 0;c.bio=id;lkSave(c);toast('Biometrik aktif');}
+        try{const r=await lkBioEnroll();if(!r)throw 0;lkBioApply(c,r);lkSave(c);toast('Biometrik aktif');}
         catch(e){toast('Biometrik tidak bisa diaktifkan di sini, PIN tetap berfungsi',ICO_ALERT);}
       }
     }
@@ -7587,10 +8165,11 @@ $('#lkForgot').addEventListener('click',()=>{
 });
 $('#lkFgBack').addEventListener('click',()=>{LK.flow=null;lkPin('unlock');});
 $('#lkFgIn').addEventListener('input',e=>{e.target.value=lkFmt(lkNorm(e.target.value).slice(0,12));$('#lkFgMsg').textContent='';});
-function lkFgSubmit(){
+async function lkFgSubmit(){
   const v=$('#lkFgIn').value,m=$('#lkFgMsg');
   if(lkNorm(v).length!==12){m.textContent='Kode pemulihan terdiri dari 12 karakter';m.classList.add('err');return;}
-  if(lkCheckRec(v)){LK.flow='reset';lkPin('new',{title:'Buat PIN baru',sub:'Kode diterima. Pilih PIN yang baru'});}
+  let okRec=false;try{okRec=await lkCheckRec(v);}catch(e){}
+  if(okRec){LK.flow='reset';lkPin('new',{title:'Buat PIN baru',sub:'Kode diterima. Pilih PIN yang baru'});}
   else{m.textContent='Kode tidak cocok, cek lagi ya';m.classList.add('err');try{if(navigator.vibrate)navigator.vibrate([40,40,40]);}catch(e){}}
 }
 $('#lkFgOk').addEventListener('click',lkFgSubmit);
@@ -7607,7 +8186,7 @@ $('#lkCopy').addEventListener('click',async()=>{
 $('#lkRecOk').addEventListener('click',()=>{const f=LK.recOk;LK.recOk=null;LK.recCode='';if(f)f();});
 $('#lkBoYes').addEventListener('click',async()=>{
   const c=lkCfg();if(!c){lkFinish();return;}
-  try{const id=await lkBioEnroll();if(!id)throw 0;c.bio=id;lkSave(c);lkFinish('Kunci aktif dengan biometrik');}
+  try{const r=await lkBioEnroll();if(!r)throw 0;lkBioApply(c,r);lkSave(c);lkFinish('Kunci aktif dengan biometrik');}
   catch(e){lkFinish('Kunci PIN aktif. Biometrik tidak bisa diaktifkan di sini');}
 });
 $('#lkBoNo').addEventListener('click',()=>lkFinish('Kunci aplikasi aktif'));
@@ -7734,8 +8313,8 @@ function navInit(){
 /* ================= boot ================= */
 navInit();
 lkInit();
-const local=loadLocal();
-if(local)state=normalize(local);
+(async()=>{
+await bootState(); /* data dimuat dari IndexedDB dulu; baru setelah itu layar digambar dan sinkron dimulai */
 recRun(false);
 greet();renderQuickActions();syncSideNav();renderAll();setTimeout(moveGlider,60);setTimeout(()=>moveSegGlider($('#listSeg')),60);
 $('#cloudState').addEventListener('click',openAccount);
@@ -7745,6 +8324,7 @@ if(!lkIsOn())runDeepLink();
 setTimeout(sdkBootNotice,1600);
 setTimeout(()=>{try{bakMaybe();}catch(e){}},6000);
 document.addEventListener('visibilitychange',()=>{if(document.hidden){try{bakMaybe();}catch(e){}}});
+})().catch(e=>{console.error('[kantong] gagal memulai',e);try{toast('Gagal memuat data. Muat ulang aplikasi; jangan mencatat dulu.');}catch(_){}});
 
 })();
 </script>

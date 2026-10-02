@@ -223,6 +223,159 @@
     return { doc: out, added: added, skipped: skipped };
   }
 
+  /* ================= sinkron PER CATATAN (tabel kantong_rec) =================
+     Server menyimpan satu baris per catatan: (coll, id, data, deleted, rev, seq).
+     Semua fungsi di bawah murni (tanpa jaringan) supaya bisa diuji.
+     - "entri" = satu catatan, satu anggaran (budgets), pengaturan (prefs), atau urutan tampil satu koleksi (order).
+     - srv  : apa yang diketahui perangkat ini tentang server: { "coll|id": [rev, hash] }  (hash null = sudah dihapus di server)
+     - baris yang dikirim selalu membawa base_rev; server menolak (konflik) kalau rev di server sudah berbeda. */
+
+  function known(coll) { return coll === 'budgets' || coll === 'prefs' || coll === 'order' || COLL.indexOf(coll) >= 0; }
+  function kOf(coll, id) { return coll + '|' + id; }
+
+  /* hash isi sebuah baris dari server, sama persis dengan hash entri lokal yang setara */
+  function rowHash(r) {
+    var d = r.data;
+    if (r.coll === 'budgets') return hash(d && d.v !== undefined ? d.v : null);
+    if (r.coll === 'order') return hash((d && d.ids) || []);
+    return hash(d === undefined ? null : d);
+  }
+
+  /* semua entri dari satu dokumen */
+  function entries(doc) {
+    var e = {};
+    COLL.forEach(function (c) {
+      var ids = [];
+      list(doc, c).forEach(function (x) {
+        var id = String(x.id), k = kOf(c, id);
+        if (has(e, k)) return; /* id ganda: yang pertama dipakai, sama seperti merge() */
+        e[k] = { coll: c, id: id, data: x, h: hash(x) };
+        ids.push(id);
+      });
+      if (ORDERED.indexOf(c) >= 0) e[kOf('order', c)] = { coll: 'order', id: c, data: { ids: ids }, h: hash(ids) };
+    });
+    var b = (doc && doc.budgets) || {};
+    Object.keys(b).forEach(function (k) { e[kOf('budgets', k)] = { coll: 'budgets', id: k, data: { v: b[k] }, h: hash(b[k]) }; });
+    if (doc && doc.prefs != null) e[kOf('prefs', 'main')] = { coll: 'prefs', id: 'main', data: doc.prefs, h: hash(doc.prefs) };
+    return e;
+  }
+
+  /* baris dari server yang BELUM diketahui perangkat ini (rev lebih baru dari yang tercatat di srv).
+     Baris milik kita sendiri yang kembali lewat penarikan (rev sama) dibuang, jadi tidak memicu gabung ulang. */
+  function freshRows(rows, srv) {
+    return (rows || []).filter(function (r) {
+      if (!known(r.coll)) return false; /* koleksi dari versi aplikasi yang lebih baru: diabaikan */
+      var s = srv && srv[kOf(r.coll, r.id)];
+      return !(s && s[0] >= r.rev);
+    });
+  }
+
+  /* catat baris-baris itu ke srv (mengubah srv di tempat) */
+  function absorb(srv, rows) {
+    rows.forEach(function (r) { srv[kOf(r.coll, r.id)] = [r.rev, r.deleted ? null : rowHash(r)]; });
+    return srv;
+  }
+
+  /* dokumen "server" untuk digabung: salinan dokumen lokal + perubahan dari server.
+     Yang tidak berubah di server dianggap sama dengan lokal (nasibnya ditentukan merge() lewat base). */
+  function applyChanges(L, rows) {
+    var R = { v: L && L.v, budgets: Object.assign({}, (L && L.budgets) || {}), prefs: L && L.prefs, updatedAt: L && L.updatedAt };
+    var idx = {}, orders = {};
+    COLL.forEach(function (c) {
+      R[c] = list(L, c).slice();
+      var m = new Map(); R[c].forEach(function (x, i) { if (!m.has(String(x.id))) m.set(String(x.id), i); });
+      idx[c] = m;
+    });
+    (rows || []).forEach(function (ch) {
+      var c = ch.coll, id = String(ch.id), gone = !!ch.deleted || ch.data == null;
+      if (c === 'budgets') { if (gone) delete R.budgets[id]; else if (ch.data.v !== undefined) R.budgets[id] = ch.data.v; return; }
+      if (c === 'prefs') { if (!gone) R.prefs = ch.data; return; }
+      if (c === 'order') { if (!gone && Array.isArray(ch.data.ids)) orders[id] = ch.data.ids.map(String); return; }
+      if (COLL.indexOf(c) < 0) return;
+      var arr = R[c], m = idx[c];
+      if (gone) { if (m.has(id)) { arr[m.get(id)] = null; m.delete(id); } }
+      else if (m.has(id)) arr[m.get(id)] = ch.data;
+      else { arr.push(ch.data); m.set(id, arr.length - 1); }
+    });
+    COLL.forEach(function (c) { R[c] = R[c].filter(function (x) { return x !== null; }); });
+    Object.keys(orders).forEach(function (c) {
+      if (ORDERED.indexOf(c) < 0) return;
+      var byId = new Map(), out = [], seen = new Set();
+      R[c].forEach(function (x) { if (!byId.has(String(x.id))) byId.set(String(x.id), x); });
+      orders[c].forEach(function (id) { if (byId.has(id) && !seen.has(id)) { seen.add(id); out.push(byId.get(id)); } });
+      R[c].forEach(function (x) { var id = String(x.id); if (!seen.has(id)) { seen.add(id); out.push(x); } });
+      R[c] = out;
+    });
+    return R;
+  }
+
+  /* perangkat yang sudah terhubung: gabungkan perubahan server ke data lokal (3 arah, lewat merge) */
+  function reconcile(base, L, rows) { return merge(base, L, applyChanges(L, rows)); }
+
+  /* baris yang perlu dikirim agar server sama dengan dokumen ini, dibanding yang diketahui di srv */
+  function planPush(doc, srv) {
+    var e = entries(doc), rows = [];
+    Object.keys(e).forEach(function (k) {
+      var s = srv[k];
+      if (!s || s[1] !== e[k].h) rows.push({ coll: e[k].coll, id: e[k].id, data: e[k].data, deleted: false, base_rev: s ? s[0] : 0, h: e[k].h });
+    });
+    Object.keys(srv).forEach(function (k) {
+      if (has(e, k) || srv[k][1] === null) return; /* masih ada, atau server sudah menandainya terhapus */
+      var i = k.indexOf('|');
+      rows.push({ coll: k.slice(0, i), id: k.slice(i + 1), data: null, deleted: true, base_rev: srv[k][0], h: null });
+    });
+    return rows;
+  }
+
+  /* kirim baris ke server per 200; srv diperbarui dengan rev baru dari server.
+     Kalau ada baris yang ditolak karena rev di server sudah berubah -> lempar {conflict:true} SETELAH semua batch diproses. */
+  async function pushAll(push, rows, srv) {
+    var conflict = false;
+    for (var i = 0; i < rows.length; i += 200) {
+      var batch = rows.slice(i, i + 200), hm = {};
+      batch.forEach(function (x) { hm[kOf(x.coll, x.id)] = x.h; });
+      var d = (await push(batch.map(function (x) { return { coll: x.coll, id: x.id, data: x.data, deleted: x.deleted, base_rev: x.base_rev }; }))) || {};
+      (d.applied || []).forEach(function (a) { var k = kOf(a.coll, a.id); srv[k] = [a.rev, has(hm, k) ? hm[k] : null]; });
+      if (d.conflicts && d.conflicts.length) conflict = true;
+    }
+    if (conflict) throw { conflict: true };
+  }
+
+  /* satu putaran sinkron untuk perangkat yang SUDAH terhubung ke akun.
+     o.meta      : {base, srv, cursor, dirty}  (srv/cursor kosong = perangkat dari protokol lama -> tarik semua)
+     o.pull(cur) : Promise<{rows, cursor}>     baris server dengan seq > cur
+     o.push(rows): Promise<{applied, conflicts}>
+     o.capture() : {doc, seq}                  salinan data lokal sekarang (sudah dinormalisasi)
+     o.apply(M)  : menerapkan hasil gabungan ke data lokal (aplikasi menormalisasi lalu menyimpan)
+     o.seq()     : penghitung perubahan lokal sekarang (untuk mendeteksi edit saat sinkron berjalan)
+     o.canDefer(): true = pengguna sedang mengedit, tunda penerapan perubahan dari server
+     o.fullPull  : paksa tarik dari awal (dipakai setelah konflik berulang)
+     Hasil: {status:'idle'|'deferred'|'synced', changed, meta?, cursor?}.  Melempar {conflict:true} bila ditolak server. */
+  async function linkedSync(o) {
+    var m = o.meta || {}, legacy = m.cursor == null || !m.srv;
+    var srv = legacy ? {} : Object.assign({}, m.srv);
+    var cursor = (legacy || o.fullPull) ? 0 : m.cursor;
+    var pulled = await o.pull(cursor);
+    var next = Math.max(cursor, +(pulled && pulled.cursor) || 0);
+    var fresh = freshRows(pulled && pulled.rows, srv);
+    var cap = o.capture(), changed = false;
+    if (!fresh.length) {
+      if (!m.dirty && !legacy) return { status: 'idle', changed: false, cursor: Math.max(next, m.cursor || 0) };
+    } else {
+      if (o.canDefer && o.canDefer()) return { status: 'deferred', changed: false };
+      absorb(srv, fresh);
+      var before = hash(snapshot(cap.doc));
+      var M = reconcile(m.base, cap.doc, fresh);
+      if (m.dirty) M.updatedAt = Date.now();
+      o.apply(M);
+      cap = o.capture();
+      changed = hash(snapshot(cap.doc)) !== before;
+    }
+    await pushAll(o.push, planPush(cap.doc, srv), srv);
+    return { status: 'synced', changed: changed, wasDirty: !!m.dirty,
+      meta: { base: snapshot(cap.doc), srv: srv, cursor: next, dirty: o.seq() !== cap.seq } };
+  }
+
   /* apakah ada isi buatan pengguna (bukan sekadar bawaan aplikasi)? */
   function hasUserData(doc) {
     if (!doc) return false;
@@ -231,6 +384,7 @@
     return list(doc, 'wallets').some(function (w) { return (+w.balance || 0) !== 0 || w.isSavings; });
   }
 
-  root.KantongSync = { canon: canon, hash: hash, snapshot: snapshot, merge: merge, mergeBackup: mergeBackup, hasUserData: hasUserData, COLL: COLL };
+  root.KantongSync = { canon: canon, hash: hash, snapshot: snapshot, merge: merge, mergeBackup: mergeBackup, hasUserData: hasUserData, COLL: COLL,
+    known: known, rowHash: rowHash, entries: entries, freshRows: freshRows, absorb: absorb, applyChanges: applyChanges, reconcile: reconcile, planPush: planPush, pushAll: pushAll, linkedSync: linkedSync };
   if (typeof module !== 'undefined' && module.exports) module.exports = root.KantongSync;
 })(typeof window !== 'undefined' ? window : globalThis);

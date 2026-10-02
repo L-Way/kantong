@@ -4,12 +4,15 @@
    - Ikon & berkas statis: pakai salinan tersimpan, diperbarui diam-diam di belakang.
    - Font Google: disimpan supaya tampilan tetap sama saat offline.
    - Pustaka Supabase (cdn.jsdelivr.net): disimpan juga, supaya sinkron akun tetap bisa dimulai saat offline.
+   - Hosting mandiri Tesseract (folder ocr/): disimpan di cache tersendiri (OCR) yang TIDAK ikut terhapus saat VERSION naik,
+     supaya berkas besar (core wasm, data bahasa) tidak diunduh ulang tiap pembaruan aplikasi.
    Data keuanganmu TIDAK lewat sini: permintaan ke Supabase (*.supabase.co) sengaja tidak disentuh service worker.
    Tiap kali mengganti index.html/ikon, naikkan VERSION supaya pengguna diberi tahu ada versi baru. */
-const VERSION = '2026.09.30-1';
+const VERSION = '2026.10.02-1';
 const SHELL = 'kantong-shell-' + VERSION;
 const FONTS = 'kantong-fonts-v1';
 const LIB = 'kantong-lib-v1';
+const OCR = 'kantong-ocr-v1'; /* ganti nama (v2, ...) kalau isi folder ocr/ diperbarui, supaya salinan lama dibuang */
 const PRECACHE = [
   './', './index.html', './manifest.webmanifest', './config.js', './sync.js',
   './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png',
@@ -37,7 +40,7 @@ self.addEventListener('install', e => {
 self.addEventListener('activate', e => {
   e.waitUntil((async () => {
     for (const k of await caches.keys()) {
-      if (k.startsWith('kantong-shell-') && k !== SHELL) await caches.delete(k);
+      if (k.startsWith('kantong-shell-') && k !== SHELL) await caches.delete(k); /* cache OCR, font, dan pustaka sengaja dibiarkan */
     }
     await self.clients.claim();
   })());
@@ -48,6 +51,7 @@ self.addEventListener('fetch', e => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (req.mode === 'navigate') { e.respondWith(navigate(req)); return; }
+  if (url.origin === location.origin && url.href.indexOf(new URL('./ocr/', self.registration.scope).href) === 0) { e.respondWith(ocr(req)); return; }
   if (url.origin === location.origin) { e.respondWith(sameOrigin(req)); return; }
   if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') { e.respondWith(fonts(url)); return; }
   if (url.hostname === 'cdn.jsdelivr.net' && url.pathname.indexOf('/npm/@supabase/supabase-js') === 0) { e.respondWith(lib(req)); return; }
@@ -76,6 +80,15 @@ async function sameOrigin(req) {
   const cached = await cache.match(req, { ignoreSearch: true });
   const net = fetch(req, { cache: 'no-cache' }).then(res => { if (res && res.ok) cache.put(req, res.clone()); return res; }).catch(() => null);
   return cached || (await net) || Response.error();
+}
+
+async function ocr(req) {
+  const cache = await caches.open(OCR);
+  const cached = await cache.match(req.url);
+  if (cached) return cached;
+  const res = await fetch(req).catch(() => null);
+  if (res && res.ok && res.status === 200) cache.put(req.url, res.clone());
+  return res || Response.error();
 }
 
 async function fonts(url) {

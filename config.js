@@ -3,4 +3,6 @@ window.KANTONG_CONFIG = {
   supabaseUrl: 'https://ozgpcqyfylybnocsgnhq.supabase.co',
   supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im96Z3BjcXlmeWx5Ym5vY3NnbmhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk4OTM2NzEsImV4cCI6MjEwNTQ2OTY3MX0.G0eclN1dIZ_0-ZaHXzY1zOVX_mZKQYnmFJ4BKKqOWag',
   vapidPublicKey: 'BPBXvi5WQ_M0JXG5cdhWUtmo4ARfiaAo30-FaSGVggr3RW_AoEJvIFAQuM0GCFf8nQcmI_fKc2X5pMUaYHaoHZQ',
+  supabaseSri: "sha384-GFr3yTh5lJznCbZfpTtXnwboFsxqtTQoeTZCRHhE0579KrRmlCzen5AA8ohaB5ug",
+  tesseractSri: "sha384-GJqSu7vueQ9qN0E9yLPb3Wtpd7OrgK8KmYzC8T1IysG1bcvxvIO4qtYR/D3A991F",
 };
