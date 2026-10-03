@@ -3273,7 +3273,7 @@ function analyze(){
   const perDay=total/el;
 
   /* cadangan dana (di luar dompet sedekah dan tabungan) dan runway: berapa bulan dana bertahan dengan laju belanja sekarang */
-  const reserve=state.wallets.filter(w=>!w.isSedekah&&!w.isSavings).reduce((t,w)=>t+walletBalance(w),0);
+  const reserve=state.wallets.filter(w=>!w.isSedekah&&!w.isSavings).reduce((t,w)=>t+walletBalance(w),0)-sdkOwed()-debtTotals().so; /* dana sedekah yang sedang terpakai dan utang yang belum lunas bukan milik sendiri */
   const runway=(reserve>0&&projected>0)?reserve/projected:Infinity;
   /* batas level untuk penilaian relatif (pemasukan / rata-rata): makin lama dana bertahan, makin rendah level maksimalnya */
   let relCap=5;
@@ -3355,7 +3355,7 @@ function renderHint(){
   }else{
     if(a.basis==='batas'){
       const useP=Math.round(a.total/a.budget*100),paceP=Math.round(a.pace*100),left=a.budget-a.total,dl=daysLeft();
-      msg='Kamu sudah memakai <b>'+useP+'%</b> batas belanja, padahal bulan baru jalan <b>'+paceP+'%</b>. '+
+      msg='Kamu sudah memakai <b>'+useP+'%</b> batas belanja'+(useP>paceP?', padahal bulan baru jalan <b>'+paceP+'%</b>. ':', sementara bulan sudah jalan <b>'+paceP+'%</b>, jadi masih di bawah jalur. ')+
         (left>0?(dl>0?'Sisa <b>'+rp(left)+'</b> untuk '+dl+' hari, maksimal <b>'+rp(left/dl)+' per hari</b> supaya tetap aman.'
                      :'Sisa <b>'+rp(left)+'</b>, batas tidak terlampaui bulan itu.')
                 :'Batas sudah terlampaui <b>'+rp(-left)+'</b>. Rem dulu pengeluaran yang bisa ditunda.');
@@ -3698,7 +3698,8 @@ function renderRecap(){
   }
   const list=a.list,total=a.total,dim=a.dim,elp=a.el,totalIncome=a.totalIncome,net=a.net;
   const dayKeys=Object.keys(a.byDay);
-  const activeDays=dayKeys.length;
+  const lastKey=keyOf(new Date(view.y,view.m,elp));
+  const activeDays=dayKeys.filter(k=>k<=lastKey).length; /* transaksi bertanggal ke depan tidak boleh mengurangi hari tanpa belanja */
   let html='';
 
   /* 1. arus kas */
