@@ -8,7 +8,7 @@
      supaya berkas besar (core wasm, data bahasa) tidak diunduh ulang tiap pembaruan aplikasi.
    Data keuanganmu TIDAK lewat sini: permintaan ke Supabase (*.supabase.co) sengaja tidak disentuh service worker.
    Tiap kali mengganti index.html/ikon, naikkan VERSION supaya pengguna diberi tahu ada versi baru. */
-const VERSION = '2026.10.02-1';
+const VERSION = '2026.10.03-1';
 const SHELL = 'kantong-shell-' + VERSION;
 const FONTS = 'kantong-fonts-v1';
 const LIB = 'kantong-lib-v1';

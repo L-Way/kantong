@@ -3934,6 +3934,9 @@ function renderRecap(){
     '<button class="btn ghost sm" id="expAll">CSV semua data</button></div></div>';
 
   html+='<div class="card"><h3>🤖 Analisis AI</h3><p class="sub">Minta AI baca pola transaksimu dan kasih saran singkat</p>'+
+    '<div class="row" style="margin-bottom:8px"><select id="aiProv" aria-label="Pilih AI" style="flex:1;min-width:0;padding:8px 10px;border-radius:10px;border:1px solid var(--line,#ddd);background:var(--surface-2,#fff);color:inherit;font:inherit">'+
+      [['auto','Otomatis (ChatGPT, lalu Claude, lalu Gemini)'],['openai','ChatGPT'],['claude','Claude'],['gemini','Gemini']].map(o=>'<option value="'+o[0]+'"'+(aiProvPref()===o[0]?' selected':'')+'>'+o[1]+'</option>').join('')+
+    '</select></div>'+
     '<div class="row"><button class="btn ghost sm" id="aiAnalyzeMonth">Analisis bulan ini</button>'+
     '<button class="btn ghost sm" id="aiAnalyzeAll">Analisis semua data</button></div>'+
     '<div class="ai-box" id="aiBox" hidden></div></div>';
@@ -3984,6 +3987,7 @@ function wireRecapExport(){
   const a=$('#expMonth'),b=$('#expAll');
   if(a)a.addEventListener('click',()=>exportCSV(inMonth(view.y,view.m),'kantong-'+bKey(view.y,view.m)+'.csv'));
   if(b)b.addEventListener('click',()=>exportCSV(state.tx.slice(),'kantong-semua.csv'));
+  const ap=$('#aiProv');if(ap)ap.addEventListener('change',()=>aiProvSet(ap.value));
   const c=$('#aiAnalyzeMonth'),d=$('#aiAnalyzeAll');
   if(c)c.addEventListener('click',()=>analyzeWithAI(inMonth(view.y,view.m),MONTHS[view.m]+' '+view.y));
   if(d)d.addEventListener('click',()=>analyzeWithAI(state.tx.slice(),'semua catatan'));
@@ -5920,6 +5924,9 @@ function nxYear(y){
 
 /* ---- 6. analisis AI lewat Supabase Edge Function (jatuh ke cara manual bila belum siap) ---- */
 /* alasan gagal yang bisa dimengerti, dari error Supabase Functions (HTTP error punya Response di e.context) */
+/* pilihan AI disimpan per perangkat */
+function aiProvPref(){try{const v=localStorage.getItem('kantong-ai-prov');return ['auto','claude','gemini','openai'].indexOf(v)>=0?v:'auto';}catch(e){return 'auto';}}
+function aiProvSet(v){try{localStorage.setItem('kantong-ai-prov',v);}catch(e){}}
 async function nxAIWhy(e){
   let st=0,msg='';
   try{
@@ -5933,7 +5940,8 @@ async function nxAIWhy(e){
   if(st===404)return 'Fungsi AI belum dipasang di server.';
   if(st===413)return 'Data terlalu besar untuk dikirim.';
   if(st===429)return 'Batas pemakaian AI tercapai'+(msg?' ('+msg.slice(0,80)+')':'')+', coba lagi nanti.';
-  if(st>=500)return 'Server AI sedang bermasalah'+(msg?' ('+msg.slice(0,80)+')':'')+'.';
+  if(st===503&&msg)return 'Server AI: '+msg.slice(0,120)+'.';
+  if(st>=500)return 'Server AI sedang bermasalah'+(msg?' ('+msg.slice(0,140)+')':'')+'.';
   if(e&&e.message==='kosong')return 'Server AI tidak mengembalikan jawaban.';
   return 'AI otomatis belum bisa dipakai'+(msg?' ('+msg.slice(0,80)+')':'')+'.';
 }
@@ -5942,9 +5950,9 @@ async function nxAI(box,prompt,label){
   if(box.dataset.busy)return;
   box.dataset.busy='1';box.innerHTML='<div class="nx-note" style="padding:6px 0">Sedang menganalisis, biasanya 10–30 detik…</div>';
   try{
-    const r=await cloud.sb.functions.invoke(CFG.aiFunction||'kantong-ai',{body:{prompt,label}});
+    const r=await cloud.sb.functions.invoke(CFG.aiFunction||'kantong-ai',{body:{prompt,label,provider:aiProvPref()}});
     if(r.error||!r.data||!r.data.text)throw (r.error||new Error('kosong'));
-    box.innerHTML=mdToHtml(r.data.text)+'<div class="ai-meta">Dibuat AI lewat server Kantong dari ringkasan catatanmu. Bukan saran finansial profesional.</div>';
+    box.innerHTML=mdToHtml(r.data.text)+'<div class="ai-meta">Dibuat oleh '+esc(String(r.data.providerName||'AI'))+' lewat server Kantong dari catatanmu. Bukan saran finansial profesional.</div>';
   }catch(e){
     const why=await nxAIWhy(e);
     renderManualAI(box,prompt,label);
