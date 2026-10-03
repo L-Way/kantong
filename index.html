@@ -1038,6 +1038,15 @@ body{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-ri
 .sdk-box[hidden],.sdk-box [hidden]{display:none}
 .sdk-l{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin:12px 0 6px}
 .sdk-t{display:block;font-size:12.5px;font-weight:600;color:var(--ink-2);line-height:1.5}
+.avatar{display:grid;place-items:center;border-radius:50%;overflow:hidden;flex:none;line-height:1;user-select:none}
+.avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.avatar-btn{padding:0;overflow:hidden;border-radius:50%}
+.avatar-btn .avatar{width:100%;height:100%;border-radius:50%}
+.prof-head{display:flex;flex-direction:column;align-items:center;gap:10px;margin:2px 0 16px}
+.prof-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 14px}
+.prof-stats div{background:var(--surface-2,var(--accent-soft));border-radius:14px;padding:10px 12px}
+.prof-stats b{display:block;font-size:17px;font-weight:800}
+.prof-stats span{font-size:11px;color:var(--ink-3);font-weight:600}
 .total-usable{margin-top:6px;font-size:12px;font-weight:600;opacity:.82}
 .pill-sdk{display:inline-flex;align-items:center;padding:1px 7px;margin-left:6px;border-radius:99px;font-size:10px;font-weight:800;font-style:normal;
   background:color-mix(in srgb,var(--mint) 16%,transparent);color:var(--mint);vertical-align:middle}
@@ -1156,6 +1165,7 @@ try{if(localStorage.getItem('kantong.gate')==='show')document.documentElement.cl
         <div class="clock" id="clockBox"><span id="clockDate">-</span><span id="clockTime">-</span></div>
       </div>
     </div>
+    <button class="icon-btn avatar-btn" id="profBtn" aria-label="Profil akun" title="Profil akun"></button>
     <button class="icon-btn" id="installBtn" aria-label="Pasang Kantong di layar utama" title="Pasang di layar utama" hidden>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
     </button>
@@ -1514,6 +1524,17 @@ function normAccounts(a){
   });
   return o.length?o:undefined;
 }
+/* profil: nama, ikon/warna, atau foto kecil (data URL). Tersimpan di prefs.profile jadi ikut cadangan & sinkron akun */
+const PROF_PHOTO_RE=/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/;
+function normProfile(x){
+  if(!x||typeof x!=='object')return undefined;
+  const name=String(x.name==null?'':x.name).replace(/[<>]/g,'').replace(/\s+/g,' ').trim().slice(0,24);
+  const photo=(typeof x.photo==='string'&&x.photo.length<=24000&&PROF_PHOTO_RE.test(x.photo))?x.photo:undefined;
+  const emoji=x.emoji?String(x.emoji).slice(0,12):undefined;
+  const color=/^#[0-9a-fA-F]{3,8}$/.test(x.color||'')?x.color:undefined;
+  if(!name&&!photo&&!emoji&&!color)return undefined;
+  return{name,emoji,color,photo};
+}
 function normPrefs(p){
   const r=(p&&p.remind)||{},ev=+r.every,hm=/^\d{2}:\d{2}$/;
   const sk=(p&&p.sdk)||{},sd=+sk.days; /* dompet sedekah: pengingat mengembalikan dana + batas hari bawaan (0 = hari itu juga) */
@@ -1522,7 +1543,8 @@ function normPrefs(p){
       goal:Math.max(0,Math.min(1e9,Math.round(+sk.goal||0))),per:sk.per==='week'?'week':'day',nudge:!!sk.nudge,nudgeAt:hm.test(sk.nudgeAt||'')?sk.nudgeAt:'17:00'},
     fees:Object.keys(normFees(p&&p.fees)).length?normFees(p&&p.fees):undefined,
     rules:normRules(p&&p.rules),
-    accounts:normAccounts(p&&p.accounts)};
+    accounts:normAccounts(p&&p.accounts),
+    profile:normProfile(p&&p.profile)};
 }
 let state={v:9,tx:[],cats:DEFAULT_CATS.slice(),incomeCats:DEFAULT_INCOME_CATS.slice(),wallets:DEFAULT_WALLETS.slice(),motors:DEFAULT_MOTORS.slice(),meters:DEFAULT_METERS.slice(),budgets:{},recurring:[],debts:[],svcs:[],prefs:normPrefs(),updatedAt:0};
 let view={y:new Date().getFullYear(),m:new Date().getMonth(),tab:'list',listType:'expense',filter:'all',wfilter:'all',q:''};
@@ -2163,10 +2185,138 @@ function showRecovery(){
       setTimeout(()=>{const el=$('#rcPw');if(el)el.focus();},420);
     });
 }
+/* ================= profil akun ================= */
+const PEMOJIS=['🙂','😎','🤓','🧑‍💼','👩','👨','🧕','🦊','🐼','🐱','🦁','🌟','🚀','☕','🎯','🌿'];
+function profOf(){return state.prefs&&state.prefs.profile||{};}
+function profFirstName(){const n=(profOf().name||'').trim();return n?n.split(' ')[0]:'';}
+function profAvatarHtml(sz,d){
+  const pr=d||profOf(),c=pr.color||'#5B3DF5';
+  if(pr.photo&&PROF_PHOTO_RE.test(pr.photo))return '<span class="avatar" style="width:'+sz+'px;height:'+sz+'px"><img alt="" src="'+pr.photo+'"></span>';
+  const init=(pr.name||'').trim().charAt(0).toUpperCase();
+  const face=pr.emoji||(init&&/[A-Z0-9]/i.test(init)?init:'🙂');
+  return '<span class="avatar" style="width:'+sz+'px;height:'+sz+'px;background:'+c+'26;font-size:'+Math.round(sz*(pr.emoji||!init?.52:.46))+'px;'+((pr.emoji||!init)?'':'color:'+c+';')+'">'+esc(face)+'</span>';
+}
+function renderProfBtn(){const b=$('#profBtn');if(b)b.innerHTML=profAvatarHtml(38);}
+function profDateTxt(iso){try{const d=new Date(iso);if(isNaN(d))return '';return d.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});}catch(e){return '';}}
+function profStats(){
+  const own=state.tx.filter(e=>!e.pass&&!e.val&&!e.transferId&&!e.feeOf&&e.catId!=='ic-saldo');
+  const days={};own.forEach(e=>{days[e.date]=1;});
+  const first=own.reduce((m,e)=>(!m||e.date<m)?e.date:m,'');
+  return{n:own.length,days:Object.keys(days).length,first,wal:state.wallets.length,acc:accList().length};
+}
+/* bagian info akun: logged = sudah masuk & sinkron aktif (dipisah supaya mudah diuji) */
+function profAcctHtml(logged,user,statusTxt){
+  if(logged)return '<div class="li-item" style="animation:none"><span class="ic" style="background:color-mix(in srgb,var(--mint) 16%,transparent)">☁️</span><span class="mid"><span class="t">'+esc(user.email||'Akunmu')+'</span><span class="s">'+esc(statusTxt||'')+(user.created_at&&profDateTxt(user.created_at)?' · bergabung '+esc(profDateTxt(user.created_at)):'')+'</span></span></div>'+
+    '<div class="row" style="margin-top:8px"><button type="button" class="btn ghost sm" id="prAcct">Akun & sinkron</button><button type="button" class="btn ghost sm" id="prPw">Ubah kata sandi</button></div>'+
+    '<div class="row" style="margin-top:8px"><button type="button" class="btn danger sm" id="prOut">Keluar</button></div>';
+  if(SB_ON)return '<div class="li-item" style="animation:none"><span class="ic" style="background:var(--accent-soft)">📱</span><span class="mid"><span class="t">Belum masuk akun</span><span class="s">Data hanya ada di perangkat ini</span></span></div>'+
+    '<div class="row" style="margin-top:8px"><button type="button" class="btn sm" id="prAcct">Masuk / Daftar</button></div>';
+  return '<div class="li-item" style="animation:none"><span class="ic" style="background:var(--accent-soft)">📱</span><span class="mid"><span class="t">Tanpa akun</span><span class="s">Data tersimpan di perangkat ini</span></span></div>';
+}
+function openProfile(){
+  const cur=profOf();
+  const d={name:cur.name||'',emoji:cur.emoji,color:cur.color||PALETTE[0],photo:cur.photo};
+  const st=profStats(),logged=!!(SB_ON&&cloud.user);
+  openSheet('Profil',
+    '<div class="prof-head"><div id="prAv">'+profAvatarHtml(84,d)+'</div>'+
+      '<div class="row" style="justify-content:center;gap:8px"><button type="button" class="btn ghost sm" id="prPhotoBtn">📷 Pilih foto</button><button type="button" class="btn ghost sm" id="prPhotoDel"'+(d.photo?'':' hidden')+'>Hapus foto</button></div>'+
+      '<input type="file" id="prFile" accept="image/*" style="display:none"></div>'+
+    '<div class="field"><label for="prName">Nama panggilan</label><input class="inp" id="prName" maxlength="24" autocomplete="nickname" placeholder="Contoh: Budi" value="'+esc(d.name)+'"></div>'+
+    '<div class="field"><label>Ikon <span style="color:var(--ink-3);font-weight:500">(kalau tanpa foto)</span></label><div class="emo-grid" id="prEmo">'+
+      PEMOJIS.map(e=>'<button type="button" class="emo" data-e="'+e+'" aria-pressed="'+(!d.photo&&e===d.emoji)+'">'+e+'</button>').join('')+'</div></div>'+
+    '<div class="field"><label>Warna</label><div class="swatches" id="prSw">'+
+      PALETTE.map(c=>'<button type="button" class="sw" data-c="'+c+'" style="background:'+c+'" aria-pressed="'+(c===d.color)+'" aria-label="Warna"></button>').join('')+'</div></div>'+
+    '<button class="btn" id="prSave">Simpan profil</button>'+
+    '<div class="field" style="margin-top:22px"><label>Aktivitasmu</label><div class="prof-stats">'+
+      '<div><b>'+nf.format(st.n)+'</b><span>catatan</span></div><div><b>'+nf.format(st.days)+'</b><span>hari mencatat</span></div>'+
+      '<div><b>'+nf.format(st.wal)+'</b><span>dompet & kantong</span></div><div><b>'+nf.format(st.acc)+'</b><span>rekening</span></div></div>'+
+      (st.first?'<p class="qhint" style="margin:0">Pertama kali mencatat '+esc(profDateTxt(st.first+'T00:00:00'))+'.</p>':'')+'</div>'+
+    '<div class="field" style="margin-top:16px"><label>Akun</label>'+profAcctHtml(logged,cloud.user||{},acctStatText())+'</div>',
+    ()=>{
+      const av=$('#prAv'),nameEl=$('#prName'),delB=$('#prPhotoDel');
+      const paint=()=>{d.name=nameEl.value;av.innerHTML=profAvatarHtml(84,d);delB.hidden=!d.photo;
+        $$('#prEmo .emo').forEach(x=>x.setAttribute('aria-pressed',String(!d.photo&&x.dataset.e===d.emoji)));};
+      nameEl.addEventListener('input',paint);
+      $$('#prEmo .emo').forEach(b=>b.addEventListener('click',()=>{d.emoji=(!d.photo&&d.emoji===b.dataset.e)?undefined:b.dataset.e;d.photo=undefined;paint();}));
+      $$('#prSw .sw').forEach(b=>b.addEventListener('click',()=>{d.color=b.dataset.c;$$('#prSw .sw').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));paint();}));
+      delB.addEventListener('click',()=>{d.photo=undefined;paint();});
+      $('#prPhotoBtn').addEventListener('click',()=>$('#prFile').click());
+      $('#prFile').addEventListener('change',e=>{
+        const f=e.target.files&&e.target.files[0];e.target.value='';
+        if(!f)return;
+        if(!/^image\//.test(f.type)){toast('Pilih file gambar ya');return;}
+        profResize(f).then(url=>{d.photo=url;d.emoji=undefined;paint();}).catch(()=>toast('Foto tidak bisa dibaca, coba gambar lain'));
+      });
+      $('#prSave').addEventListener('click',()=>{
+        d.name=nameEl.value;
+        if(!state.prefs)state.prefs=normPrefs();
+        state.prefs.profile=normProfile({name:d.name,emoji:d.photo?undefined:d.emoji,color:d.color,photo:d.photo});
+        save();closeSheet();renderAll();greet();toast('Profil disimpan');
+      });
+      const a=$('#prAcct');if(a)a.addEventListener('click',openAccount);
+      const pw=$('#prPw');if(pw)pw.addEventListener('click',openChangePassword);
+      const o=$('#prOut');if(o)o.addEventListener('click',signOutFlow);
+    });
+}
+/* foto profil: dipotong persegi, diperkecil, dikompres supaya ringan untuk disimpan & disinkronkan */
+function profResize(file){
+  return new Promise((res,rej)=>{
+    const fr=new FileReader();
+    fr.onerror=()=>rej(new Error('read'));
+    fr.onload=()=>{
+      const img=new Image();
+      img.onerror=()=>rej(new Error('img'));
+      img.onload=()=>{
+        try{
+          const sz=[160,128,96];
+          for(let i=0;i<sz.length;i++){
+            const c=document.createElement('canvas');c.width=c.height=sz[i];
+            const x=c.getContext('2d'),m=Math.min(img.width,img.height),sx=(img.width-m)/2,sy=(img.height-m)/2;
+            x.fillStyle='#fff';x.fillRect(0,0,sz[i],sz[i]);
+            x.drawImage(img,sx,sy,m,m,0,0,sz[i],sz[i]);
+            const url=c.toDataURL('image/jpeg',i?0.6:0.72);
+            if(url.length<=20000&&PROF_PHOTO_RE.test(url)){res(url);return;}
+          }
+          rej(new Error('big'));
+        }catch(e){rej(e);}
+      };
+      img.src=fr.result;
+    };
+    fr.readAsDataURL(file);
+  });
+}
+function openChangePassword(){
+  if(!(cloud.sb&&cloud.user)){toast('Masuk ke akun dulu ya');return;}
+  openSheet('Ubah kata sandi',
+    '<form id="cpForm" novalidate><div class="field"><label for="cpPw">Kata sandi baru</label><input class="inp" id="cpPw" type="password" autocomplete="new-password" placeholder="Minimal 8 karakter"></div>'+
+    '<div class="field"><label for="cpPw2">Ulangi kata sandi baru</label><input class="inp" id="cpPw2" type="password" autocomplete="new-password" placeholder="Ketik lagi"></div>'+
+    '<p class="au-msg" id="cpMsg" role="status" aria-live="polite"></p>'+
+    '<button type="submit" class="btn" id="cpGo">Simpan kata sandi</button></form>'+
+    '<button type="button" class="au-link" id="cpBack">Kembali ke profil</button>',
+    ()=>{
+      const m=$('#cpMsg');
+      $('#cpBack').addEventListener('click',openProfile);
+      $('#cpForm').addEventListener('submit',async ev=>{
+        ev.preventDefault();
+        const a=$('#cpPw').value,b=$('#cpPw2').value,g=$('#cpGo');
+        if(a.length<8){m.textContent='Kata sandi minimal 8 karakter.';m.className='au-msg err';return;}
+        if(a!==b){m.textContent='Dua kata sandi belum sama.';m.className='au-msg err';return;}
+        g.disabled=true;g.textContent='Menyimpan…';
+        try{const r=await cloud.sb.auth.updateUser({password:a});if(r.error)throw r.error;closeSheet();toast('Kata sandi diperbarui');}
+        catch(e){g.disabled=false;g.textContent='Simpan kata sandi';m.textContent=authErr(e);m.className='au-msg err';}
+      });
+      setTimeout(()=>{const el=$('#cpPw');if(el&&el.isConnected)el.focus();},420);
+    });
+}
+
 function accountSettingsHtml(){
   const t=!SB_ON?'Sinkron akun belum aktif':(cloud.user?(cloud.user.email||'Akunmu'):'Belum masuk');
   const s=!SB_ON?'Data hanya di perangkat ini':(cloud.user?acctStatText():'Masuk agar data tersinkron & aman');
-  return '<div class="field" style="margin-top:16px"><label>Akun & sinkron</label>'+
+  const pr=profOf();
+  return '<div class="field" style="margin-top:16px"><label>Profil</label>'+
+    '<button type="button" class="li-item li-btn" id="stProf" style="animation:none"><span style="flex:none;display:inline-flex">'+profAvatarHtml(40)+'</span><span class="mid"><span class="t">'+esc(pr.name||'Atur profilmu')+'</span><span class="s">Nama, foto, dan info akun</span></span>'+
+    '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="flex:none;color:var(--ink-3)"><path d="m9 6 6 6-6 6"/></svg></button></div>'+
+    '<div class="field" style="margin-top:16px"><label>Akun & sinkron</label>'+
     '<button type="button" class="li-item li-btn" id="stAcct" style="animation:none"><span class="ic" style="background:var(--accent-soft)">☁️</span><span class="mid"><span class="t">'+esc(t)+'</span><span class="s" id="stAcctS">'+esc(s)+'</span></span>'+
     '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="flex:none;color:var(--ink-3)"><path d="m9 6 6 6-6 6"/></svg></button></div>';
 }
@@ -6319,6 +6469,7 @@ $('#setBtn').addEventListener('click',async()=>{
     ()=>{
       $('#chkUpd').addEventListener('click',()=>checkUpdate(true));
       $('#stAcct').addEventListener('click',openAccount);
+      $('#stProf').addEventListener('click',openProfile);
       lkWireSettings();
       wireRemindSettings();wireSdkSettings();wirePushSettings();wireHealth();
       wirePwaInstall();
@@ -6387,7 +6538,8 @@ function greet(){
     malam:['malam yang tenang, catatan yang lengkap','sebelum mimpi datang, catat dulu semuanya','tutup hari ini dengan angka yang rapi']
   }[period];
   const t=taglines[Math.floor(Math.random()*taglines.length)];
-  $('#hello').textContent=g+', '+t;
+  const fn=profFirstName();
+  $('#hello').textContent=g+(fn?' '+fn:'')+', '+t;
 }
 function updateClock(){
   const n=new Date();
@@ -6397,6 +6549,7 @@ function updateClock(){
 }
 updateClock();setInterval(updateClock,1000);
 function renderAll(){
+  renderProfBtn();
   renderHero();
   renderHint();
   renderFilters();
@@ -8615,6 +8768,7 @@ await bootState(); /* data dimuat dari IndexedDB dulu; baru setelah itu layar di
 recRun(false);
 greet();renderQuickActions();syncSideNav();renderAll();setTimeout(moveGlider,60);setTimeout(()=>moveSegGlider($('#listSeg')),60);
 $('#cloudState').addEventListener('click',openAccount);
+$('#profBtn').addEventListener('click',openProfile);
 initCloud(); /* memuat sinkron di latar belakang; recRun(true) jalan setelah sinkron pertama selesai (atau langsung kalau tanpa akun) */
 updateInstallUi();
 if(!lkIsOn())runDeepLink();
