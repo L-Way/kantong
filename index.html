@@ -3272,6 +3272,16 @@ function analyze(){
   const refAvg=prevExpenseAvg(3);
   const perDay=total/el;
 
+  /* cadangan dana (di luar dompet sedekah dan tabungan) dan runway: berapa bulan dana bertahan dengan laju belanja sekarang */
+  const reserve=state.wallets.filter(w=>!w.isSedekah&&!w.isSavings).reduce((t,w)=>t+walletBalance(w),0);
+  const runway=(reserve>0&&projected>0)?reserve/projected:Infinity;
+  /* batas level untuk penilaian relatif (pemasukan / rata-rata): makin lama dana bertahan, makin rendah level maksimalnya */
+  let relCap=5;
+  if(reserve>0){relCap=runway>=12?2:runway>=6?3:runway>=3?4:5;}
+  /* data terlalu sedikit (kurang dari 3 transaksi atau 5 hari) belum cukup untuk menyebut kritis */
+  const thin=list.length<3||el<5;
+  if(thin)relCap=Math.min(relCap,2);
+
   let level=0,basis='',score=0;
   if(!list.length){level=0;basis='kosong';}
   else{
@@ -3284,12 +3294,12 @@ function analyze(){
     if(refAvg>0){
       const sc=projected/refAvg;
       let lvl=sc>=1.5?5:sc>=1.3?4:sc>=1.12?3:sc>=0.98?2:1;
-      cands.push({basis:'rata-rata',level:lvl,score:sc});
+      cands.push({basis:'rata-rata',level:Math.min(lvl,relCap),score:sc});
     }
     if(totalIncome>0){
       const sc=total/totalIncome;
       let lvl=sc>=1.3?5:sc>=1.0?4:sc>=0.85?3:sc>=0.7?2:1;
-      cands.push({basis:'pemasukan',level:lvl,score:sc});
+      cands.push({basis:'pemasukan',level:Math.min(lvl,relCap),score:sc});
     }
     if(cands.length){
       cands.sort((a,b)=>b.level-a.level);
@@ -3319,8 +3329,15 @@ function analyze(){
   list.forEach(e=>{byDay[e.date]=(byDay[e.date]||0)+(+e.amount||0);});
   const dayRank=Object.keys(byDay).map(k=>({k,v:byDay[k]})).sort((a,b)=>b.v-a.v);
 
-  return {list,incList,total,totalIncome,net,dim,el,pace,projected,budget,refAvg,perDay,level,basis,score,
+  return {list,incList,total,totalIncome,net,dim,el,pace,projected,budget,refAvg,perDay,level,basis,score,reserve,runway,thin,
           catsRank,jump,small,byDay,dayRank,prevTotal:sum(prevList)};
+}
+
+function runwayTxt(m){
+  if(!isFinite(m))return 'sangat lama';
+  if(m>=24)return Math.floor(m/12)+' tahun lebih';
+  if(m>=1)return Math.floor(m)+' bulan';
+  return Math.max(1,Math.floor(m*30))+' hari';
 }
 
 function renderHint(){
@@ -3349,23 +3366,25 @@ function renderHint(){
     }else if(a.basis==='pemasukan'){
       const useP=Math.round(a.score*100);
       msg='Pengeluaran bulan ini sudah <b>'+useP+'%</b> dari pemasukan (<b>'+rp(a.total)+'</b> dari '+rp(a.totalIncome)+'). '+
-        (a.total>=a.totalIncome?'Sudah menyamai atau melebihi pemasukan, arus kas berisiko negatif.'
+        (a.total>=a.totalIncome?(a.reserve>0&&a.runway>=6?'Arus kas bulan ini negatif, tapi dana tersedia <b>'+rp(a.reserve)+'</b> masih cukup menutupnya (± '+runwayTxt(a.runway)+' dengan laju sekarang).':'Sudah menyamai atau melebihi pemasukan, arus kas berisiko negatif.')
                                :'Sisa yang masih bisa dialokasikan ke tabungan: <b>'+rp(a.totalIncome-a.total)+'</b>.');
     }else{
       msg='Pengeluaran sudah tercatat, tapi belum ada batas belanja, riwayat bulan lalu, atau pemasukan untuk membandingkannya.';
     }
     if(a.totalIncome>0&&a.net<0){
-      tips.push(['💸','Pengeluaran melebihi pemasukan bulan ini sebesar <b>'+rp(-a.net)+'</b>, arus kas sedang negatif.']);
+      tips.push(['💸','Pengeluaran melebihi pemasukan bulan ini sebesar <b>'+rp(-a.net)+'</b>'+(a.reserve>0&&a.runway>=6?', ditutup dari dana yang ada (ini belum tentu masalah kalau pemasukan memang belum masuk).':', arus kas sedang negatif.')]);
     }
+    if(a.reserve>0&&isFinite(a.runway)&&a.level<=3&&!a.thin)tips.push(['🛟','Dengan laju sekarang, dana tersedia cukup untuk ± <b>'+runwayTxt(a.runway)+'</b>.']);
     const top=a.catsRank[0];
-    if(top)tips.push(['🥇','<b>'+esc(top.cat.name)+'</b> menyedot '+pct(top.sum,a.total)+'% pengeluaran ('+rp(top.sum)+'). '+
+    if(top&&!a.thin&&a.list.length>=5)tips.push(['🥇','<b>'+esc(top.cat.name)+'</b> menyedot '+pct(top.sum,a.total)+'% pengeluaran ('+rp(top.sum)+'). '+
       (pct(top.sum,a.total)>=45?'Porsinya terlalu dominan, ini pos pertama yang layak ditekan.':'Masih wajar, tapi pantau terus.')]);
     if(a.jump)tips.push(['📈','<b>'+esc(a.jump.cat.name)+'</b> naik '+a.jump.growth+'% dari bulan lalu (+'+rp(a.jump.diff)+'). Cek apakah ini kebutuhan atau kebiasaan baru.']);
     if(a.small.length>=5)tips.push(['🫧','Ada <b>'+a.small.length+' transaksi kecil</b> (≤Rp25.000) senilai '+rp(sum(a.small))+'. Jajan receh sering jadi bocor halus.']);
-    if(a.dayRank[0]&&a.dayRank[0].v>a.perDay*2.2){
+    if(!a.thin&&a.list.length>=5&&a.dayRank[0]&&a.dayRank[0].v>a.perDay*2.2){
       const dt=parseKey(a.dayRank[0].k);
       tips.push(['📅','Hari paling boros: <b>'+DAYS[dt.getDay()]+', '+dt.getDate()+' '+MON3[dt.getMonth()]+'</b> senilai '+rp(a.dayRank[0].v)+'.']);
     }
+    if(a.thin)tips.push(['⏳','Data bulan ini masih sedikit, jadi penilaian belum bisa dianggap pola. Insight lengkap muncul setelah beberapa transaksi.']);
     if(a.level>=4)tips.push(['🧊','Coba aturan tunda 24 jam untuk belanja non-pokok sampai akhir bulan.']);
     if(a.level<=1&&a.budget)tips.push(['🎉','Ritme belanja masih di bawah jalur batas. Pertahankan sampai akhir bulan.']);
     if(a.totalIncome>0&&a.net>=0&&tips.length<4)tips.push(['🏦','Sisa dari pemasukan bulan ini <b>'+rp(a.net)+'</b> ('+pct(a.net,a.totalIncome)+'% dari pemasukan), bisa dialokasikan ke tabungan.']);
