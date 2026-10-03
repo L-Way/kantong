@@ -1038,6 +1038,7 @@ body{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-ri
 .sdk-box[hidden],.sdk-box [hidden]{display:none}
 .sdk-l{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin:12px 0 6px}
 .sdk-t{display:block;font-size:12.5px;font-weight:600;color:var(--ink-2);line-height:1.5}
+.total-usable{margin-top:6px;font-size:12px;font-weight:600;opacity:.82}
 .pill-sdk{display:inline-flex;align-items:center;padding:1px 7px;margin-left:6px;border-radius:99px;font-size:10px;font-weight:800;font-style:normal;
   background:color-mix(in srgb,var(--mint) 16%,transparent);color:var(--mint);vertical-align:middle}
 .sdk-h{font-size:13px;margin:16px 0 4px}
@@ -1200,6 +1201,7 @@ try{if(localStorage.getItem('kantong.gate')==='show')document.documentElement.cl
       </button></div>
       <div class="total-amt money"><span class="rp">Rp</span><span id="totalAmt">0</span></div>
       <div class="delta" id="delta">Belum ada pembanding</div>
+      <div class="total-usable" id="usableLine" hidden></div>
     </div>
     <div class="wal-strip" id="walStripWrap" hidden></div>
     <div class="flow-row" id="flowRow"></div>
@@ -1391,7 +1393,7 @@ const PALETTE=['#5B3DF5','#F2506E','#0FA88E','#DD8B1E','#3B82F6','#EC4899','#14B
 const EMOJIS=['🍜','🛵','🛍️','💡','💊','🎬','📚','🏠','☕','🍱','⛽','🚕','👕','🎁','✈️','🐱','🏋️','💻','📱','🧴','🧃','🍰','🎮','💇','🧾','💳','🪙','🌿','🎧','🍼','🚌','🧹','🩺','📦','✨'];
 const IEMOJIS=['💰','💼','🎉','🧾','📈','🎁','🏦','🪙','📦','🛠️','🎓','🏆','💹','🧧','✨','💵'];
 const WEMOJIS=['💵','🏦','📱','💳','🐷','👛','🪙','💰','🏧','🎫','🧧','📒','🤲','🕌'];
-const SEMOJIS=['🐷','🎯','🏖️','🎓','🏠','💍','🚗','📱','🎁','🩺','🛡️','🌴','👶','🧧','⛑️','✈️'];
+const SEMOJIS=['📈','📊','🪙','🐷','🎯','🏖️','🎓','🏠','💍','🚗','📱','🎁','🩺','🛡️','🌴','👶','🧧','⛑️','✈️'];
 /* kategori khusus motor: field "motor" menandai subtipe (dipakai untuk fitur odometer/km) */
 const MOTOR_CATS=[
   {id:'c-bensin',name:'Bensin',emoji:'⛽',color:'#F97316',motor:'bensin'},
@@ -1497,6 +1499,21 @@ function normRules(r){
   });
   return o.length?o:undefined;
 }
+/* rekening (Bank Jago, Tunai, ...): wadah nyata berisi beberapa kantong/dompet. Tersimpan di prefs.accounts (jadi ikut cadangan & sinkron akun
+   tanpa mengubah bentuk dompet). Tiap rekening menyimpan daftar id dompet miliknya (w). Kosong = undefined, seperti fees/rules */
+function normAccounts(a){
+  const seen={},o=[];
+  (Array.isArray(a)?a:[]).forEach(x=>{
+    if(!x||typeof x!=='object'||o.length>=20)return;
+    const id=String(x.id==null?'':x.id).replace(/[^\w\-:.]/g,'').slice(0,60);
+    if(!id||seen[id])return;seen[id]=1;
+    const name=String(x.name==null?'':x.name).replace(/[<>]/g,'').trim().slice(0,24);
+    if(!name)return;
+    const w=[];(Array.isArray(x.w)?x.w:[]).forEach(v=>{v=String(v).replace(/[^\w\-:.]/g,'').slice(0,60);if(v&&w.indexOf(v)<0&&w.length<100)w.push(v);});
+    o.push({id,name,emoji:String(x.emoji||'🏦').slice(0,8),color:/^#[0-9a-fA-F]{3,8}$/.test(x.color||'')?x.color:'#3B82F6',w});
+  });
+  return o.length?o:undefined;
+}
 function normPrefs(p){
   const r=(p&&p.remind)||{},ev=+r.every,hm=/^\d{2}:\d{2}$/;
   const sk=(p&&p.sdk)||{},sd=+sk.days; /* dompet sedekah: pengingat mengembalikan dana + batas hari bawaan (0 = hari itu juga) */
@@ -1504,7 +1521,8 @@ function normPrefs(p){
     sdk:{on:sk.on!==false,days:[0,1,2,3,7].indexOf(sd)>=0?sd:1,
       goal:Math.max(0,Math.min(1e9,Math.round(+sk.goal||0))),per:sk.per==='week'?'week':'day',nudge:!!sk.nudge,nudgeAt:hm.test(sk.nudgeAt||'')?sk.nudgeAt:'17:00'},
     fees:Object.keys(normFees(p&&p.fees)).length?normFees(p&&p.fees):undefined,
-    rules:normRules(p&&p.rules)};
+    rules:normRules(p&&p.rules),
+    accounts:normAccounts(p&&p.accounts)};
 }
 let state={v:9,tx:[],cats:DEFAULT_CATS.slice(),incomeCats:DEFAULT_INCOME_CATS.slice(),wallets:DEFAULT_WALLETS.slice(),motors:DEFAULT_MOTORS.slice(),meters:DEFAULT_METERS.slice(),budgets:{},recurring:[],debts:[],svcs:[],prefs:normPrefs(),updatedAt:0};
 let view={y:new Date().getFullYear(),m:new Date().getMonth(),tab:'list',listType:'expense',filter:'all',wfilter:'all',q:''};
@@ -1566,6 +1584,7 @@ function normalizeRaw(d){
       debtId:e.debtId?String(e.debtId):undefined,
       svcId:e.svcId?String(e.svcId):undefined,
       pass:e.pass?true:undefined,
+      val:e.val?true:undefined, /* pembaruan nilai investasi: selisih untung/rugi, bukan pemasukan/pengeluaran sungguhan */
       /* dompet sedekah: 'ret' = pengembalian dana sedekah, 'free' = keluar dari dompet sedekah tapi bukan pinjaman; sdkTo = penerima; sdkDue = batas pengembalian */
       sdk:(e.sdk==='ret'||e.sdk==='free')?e.sdk:undefined,
       sdkTo:e.sdkTo?(String(e.sdkTo).trim().slice(0,40)||undefined):undefined,
@@ -1577,7 +1596,7 @@ function normalizeRaw(d){
     cats,
     incomeCats:incCatsIn,
     wallets:wallets.map(w=>w.isSavings?
-      {id:w.id,name:w.name,emoji:w.emoji,color:w.color,balance:+w.balance||0,isSavings:true,target:+w.target||0}:
+      {id:w.id,name:w.name,emoji:w.emoji,color:w.color,balance:+w.balance||0,isSavings:true,target:+w.target||0,inv:w.inv?true:undefined}:
       w.isSedekah?
       {id:w.id,name:w.name,emoji:w.emoji,color:w.color,balance:+w.balance||0,isSedekah:true}:
       {id:w.id,name:w.name,emoji:w.emoji,color:w.color,balance:+w.balance||0}),
@@ -2225,6 +2244,49 @@ function savingsWallets(){return state.wallets.filter(w=>w.isSavings);}
 function savingsProgress(w){
   const bal=walletBalance(w),target=+w.target||0;
   return {bal,target,pct:target>0?Math.round(bal/target*100):0};
+}
+/* ================= investasi (tabungan dengan inv=true: nilainya naik-turun, mis. Bibit/saham/reksa dana) =================
+   Setor & tarik = perpindahan dana biasa (modal). Nilai sekarang diperbarui manual: selisihnya dicatat sebagai catatan 'val' + 'pass'
+   di dompet itu, jadi saldo dompet = nilai sekarang di semua tempat (rekening, total aset), tapi untung/rugi tidak masuk Rekap. */
+function invGain(w){return state.tx.filter(e=>e.walletId===w.id&&e.val).reduce((t,e)=>t+(e.type==='income'?1:-1)*(+e.amount||0),0);}
+function invLastDate(w){let d='';state.tx.forEach(e=>{if(e.walletId===w.id&&e.val&&e.date>d)d=e.date;});return d;}
+function invDaysAgo(d){if(!d)return null;const a=new Date(d+'T00:00:00'),b=new Date(todayKey()+'T00:00:00');return Math.max(0,Math.round((b-a)/864e5));}
+function invInfo(w){
+  const val=walletBalance(w),gain=invGain(w),modal=val-gain;
+  return {val,gain,modal,pct:modal>0?gain/modal*100:null,last:invLastDate(w)};
+}
+function invGainTxt(g,pct){return (g>=0?'+':'−')+rp(Math.abs(g))+(pct==null?'':' ('+(pct>=0?'+':'−')+Math.abs(pct).toFixed(2).replace('.',',')+'%)');}
+function openInvUpdate(wid){
+  const w=walOf(wid);if(!w.inv)return;
+  const i=invInfo(w);
+  openSheet('Perbarui nilai '+w.name,
+    '<p class="sub" style="margin:0 0 12px">Isi nilai investasi sekarang seperti yang tampil di aplikasinya (misalnya Bibit). Selisihnya dicatat sebagai untung/rugi, bukan pemasukan atau pengeluaran.</p>'+
+    '<div class="bar-sub"><span>Nilai tercatat</span><span class="num" style="font-weight:800">'+rp(i.val)+'</span></div>'+
+    '<div class="bar-sub" style="margin-top:4px"><span>Modal (setoran dikurangi tarikan)</span><span class="num">'+rp(i.modal)+'</span></div>'+
+    '<div class="field" style="margin-top:12px"><label for="ivnow">Nilai sekarang</label>'+
+      '<input class="inp num" id="ivnow" inputmode="numeric" autocomplete="off" placeholder="0" value="'+nf.format(Math.round(i.val))+'">'+opRowHtml()+'</div>'+
+    '<p class="qhint" id="ivdiff" style="margin:0 0 14px;font-weight:700"></p>'+
+    '<button class="btn" id="ivSave">Simpan nilai</button>',
+    ()=>{
+      const el=$('#ivnow'),dEl=$('#ivdiff');
+      moneyMask(el);wireOpButtons(el);
+      const nowV=()=>el.value.trim()?Math.round(readMoney(el)):null;
+      const upd=()=>{const v=nowV();if(v===null){dEl.textContent='';return;}
+        const d=v-Math.round(i.val),g=i.gain+d,m=i.modal;
+        dEl.textContent=(d===0?'Tidak ada perubahan. ':'Berubah '+(d>0?'+':'−')+rp(Math.abs(d))+'. ')+'Untung/rugi total '+invGainTxt(g,m>0?g/m*100:null);};
+      el.addEventListener('input',upd);upd();
+      setTimeout(()=>{if(el.isConnected){el.focus();el.select();}},420);
+      $('#ivSave').addEventListener('click',()=>{
+        const v=nowV();
+        if(v===null||v<0){el.focus();toast('Isi nilai sekarang dulu ya');return;}
+        const d=v-Math.round(i.val);
+        if(d===0){closeSheet();toast('Nilai tidak berubah');return;}
+        const incCat=state.incomeCats.some(c=>c.id==='ic-lain')?'ic-lain':defIncCat(),expCat=state.cats.some(c=>c.id==='c-lain')?'c-lain':(state.cats[0]||{}).id;
+        state.tx.push({id:uid(),type:d>0?'income':'expense',amount:Math.abs(d),catId:d>0?incCat:expCat,walletId:w.id,date:todayKey(),time:nowTime(),
+          note:'Pembaruan nilai '+w.name,createdAt:Date.now(),pass:true,val:true});
+        save();closeSheet();renderAll();toast('Nilai '+w.name+' diperbarui · '+(d>0?'naik ':'turun ')+rp(Math.abs(d)));
+      });
+    });
 }
 /* ================= motor / odometer ================= */
 function isMotorCat(catId){return !!catOf(catId).motor;}
@@ -2997,6 +3059,16 @@ function renderHero(){
   const list=inMonth(y,m),total=sum(realExpOf(list)),totalIncome=sum(realIncOf(list)),net=totalIncome-total;
   const totalSaldo=state.wallets.reduce((s,w)=>s+walletBalance(w),0);
   const hideBal=isBalHidden();
+  /* total keuangan memuat tabungan, investasi, dan dana sedekah; baris ini memisahkan bagian yang benar-benar bisa dipakai */
+  {const ul=$('#usableLine');
+    if(ul){
+      const sv=savingsWallets(),sd=sedekahWallets();
+      if(sv.length||sd.length){
+        const usable=totalSaldo-sv.reduce((s,w)=>s+walletBalance(w),0)-sd.reduce((s,w)=>s+walletBalance(w),0)-sdkOwed();
+        ul.textContent='bisa dipakai '+(hideBal?'••••••':rp(usable))+' · sisanya tabungan'+(sv.some(w=>w.inv)?'/investasi':'')+(sd.length?' & dana sedekah':'');
+        ul.hidden=false;
+      }else ul.hidden=true;
+    }}
   if(hideBal){$('#totalAmt').textContent='••••••';$('#totalAmt').dataset.v=totalSaldo;}
   else countUp($('#totalAmt'),totalSaldo);
 
@@ -3033,7 +3105,7 @@ function renderWalStrip(){
       const bal=walletBalance(w),owed=w.isSedekah?sdkOwed(w.id):0;
       let sub='';
       if(w.isSedekah)sub=owed>0?'<b class="warn">terpakai '+(hide?'••••':shortRp(owed))+'</b>':'🤲 sedekah';
-      else if(w.isSavings){const pg=savingsProgress(w);sub='🐷 tabungan'+(pg.target>0&&!hide?' · '+pg.pct+'%':'');}
+      else if(w.isSavings){const pg=savingsProgress(w);sub=(w.inv?'📈 investasi':'🐷 tabungan')+(pg.target>0&&!hide?' · '+pg.pct+'%':'');}
       return '<button type="button" class="ws-card'+(w.isSedekah?' sdk':'')+(w.isSavings?' sav':'')+'" data-w="'+esc(w.id)+'" aria-label="'+esc(w.name)+(hide?'':', saldo '+mny(bal))+'">'+
         '<span class="ws-top"><span class="ws-e">'+w.emoji+'</span><span class="ws-n">'+esc(w.name)+'</span></span>'+
         '<span class="ws-v num'+(bal<0&&!hide?' neg':'')+'">'+mny(bal)+'</span>'+
@@ -3068,7 +3140,7 @@ function openWalletsSheet(){
   const html='<div class="total-amt money" style="font-size:28px;margin-bottom:2px"><span class="rp" style="font-size:.5em">Rp</span>'+(hide?'••••••':fmt(totalBal))+'</div>'+
     '<p class="sub" style="margin-bottom:10px">Total semua dompet, tabungan, dan dana sedekah</p>'+
     brk('Bisa dipakai',mny(usable))+
-    (goals.length?brk('🐷 Tabungan',mny(totalSav)):'')+
+    (goals.length?brk(goals.every(w=>w.inv)?'📈 Investasi':'🐷 Tabungan'+(goals.some(w=>w.inv)?' & investasi':''),mny(totalSav)):'')+
     (sdkW.length?brk('🤲 Dana sedekah',mny(totalSdk)):'')+
     (owe>0?brk('↩ Perlu dikembalikan ke dompet sedekah',mny(owe)):'')+
     '<div class="li-list" style="margin-top:14px">'+ws.map(w=>{
@@ -3076,7 +3148,7 @@ function openWalletsSheet(){
       const sub=(mine.length?'bulan ini +'+shortRp(inc)+' / −'+shortRp(exp):'belum ada catatan bulan ini')+(w.isSedekah&&sdkOwed(w.id)>0?' · terpakai '+shortRp(sdkOwed(w.id)):'');
       return '<button type="button" class="li-item li-btn" data-w="'+esc(w.id)+'" style="animation:none">'+
         '<span class="ic" style="background:'+w.color+'22">'+w.emoji+'</span>'+
-        '<span class="mid"><span class="t">'+esc(w.name)+(w.isSedekah?'<em class="pill-sdk">Sedekah</em>':'')+(w.isSavings?'<em class="pill-sav">Tabungan</em>':'')+'</span><span class="s">'+esc(sub)+'</span></span>'+
+        '<span class="mid"><span class="t">'+esc(w.name)+(w.isSedekah?'<em class="pill-sdk">Sedekah</em>':'')+(w.isSavings?'<em class="pill-sav">'+(w.inv?'Investasi':'Tabungan')+'</em>':'')+'</span><span class="s">'+esc(sub)+'</span></span>'+
         '<b class="num" style="flex:none;font-size:14px;color:'+(bal<0&&!hide?'var(--rose)':'inherit')+'">'+mny(bal)+'</b></button>';
     }).join('')+'</div>'+
     '<div class="row" style="margin-top:14px"><button class="btn ghost sm" id="wsMove">🔁 Pindahkan dana</button><button class="btn ghost sm" id="wsManage">Kelola dompet</button></div>';
@@ -4208,6 +4280,131 @@ function attachReorder(container,arr,onDone){
   container.addEventListener('pointerdown',down);
 }
 
+/* ================= rekening: kelompok kantong ================= */
+function accList(){return (state.prefs&&state.prefs.accounts)||[];}
+function accOfWallet(wid){return accList().find(a=>a.w.indexOf(wid)>=0)||null;}
+function accWallets(a){return state.wallets.filter(w=>{const o=accOfWallet(w.id);return !!o&&o.id===a.id;});}
+function accBalance(a){return accWallets(a).reduce((t,w)=>t+walletBalance(w),0);} /* saldo rekening tidak disimpan: selalu jumlah saldo kantongnya */
+function accLoose(){return state.wallets.filter(w=>!accOfWallet(w.id));}
+function setWalletAcc(wid,accId){
+  if(!state.prefs)state.prefs=normPrefs();
+  const L=(state.prefs.accounts||[]).map(a=>Object.assign({},a,{w:a.w.filter(x=>x!==wid)}));
+  if(accId){const t=L.find(a=>a.id===accId);if(t)t.w.push(wid);}
+  state.prefs.accounts=normAccounts(L);
+}
+function accFieldHtml(wid){
+  const L=accList();if(!L.length)return '';
+  const cur=wid?accOfWallet(wid):null;
+  return '<div class="field"><label for="wacc">Rekening</label><select class="inp" id="wacc"><option value="">Tanpa rekening</option>'+
+    L.map(a=>'<option value="'+esc(a.id)+'"'+(cur&&cur.id===a.id?' selected':'')+'>'+esc(a.emoji+' '+a.name)+'</option>').join('')+'</select></div>';
+}
+function accFieldVal(){const el=$('#wacc');return el?el.value:null;}
+function accCardHtml(){
+  const L=accList(),loose=accLoose();
+  const head='<div class="card"><h3>🏦 Rekening</h3>';
+  if(!L.length)return head+'<p class="sub">Kelompokkan kantong sesuai rekening aslinya, misalnya Bank Jago berisi Kantong Utama, GoPay Tabungan, dan tabungan lain. Saldo rekening adalah jumlah kantong di dalamnya, jadi mudah dicocokkan dengan aplikasi bank.</p><button class="btn ghost sm" id="addAcc">＋ Buat rekening</button></div>';
+  const tot=L.reduce((t,a)=>t+accBalance(a),0);
+  return head+'<p class="sub">'+L.length+' rekening · total '+rp(tot)+'. Saldo tiap rekening dihitung dari kantong di dalamnya.</p><div class="li-list" id="accList">'+
+    L.map((a,i)=>{
+      const ws=accWallets(a);
+      return '<div class="li-item" data-id="'+esc(a.id)+'" style="animation-delay:'+Math.min(i*28,260)+'ms">'+
+        '<span class="ic" style="background:'+a.color+'22">'+esc(a.emoji)+'</span>'+
+        '<span class="mid"><span class="t">'+esc(a.name)+'</span><span class="s">Saldo '+rp(accBalance(a))+' · '+ws.length+' kantong</span>'+
+        (ws.length?'<span class="s" style="display:block;white-space:normal;margin-top:4px;line-height:1.7">'+ws.map(w=>esc(w.emoji+' '+w.name)+' <b class="num">'+rp(walletBalance(w))+'</b>').join('<br>')+'</span>':'')+
+        '</span><span class="li-act">'+
+          '<button class="btn ghost sm" data-acr="'+esc(a.id)+'">Cocokkan</button>'+
+          '<button class="mini" data-eda="'+esc(a.id)+'" aria-label="Ubah '+esc(a.name)+'">'+
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>'+
+        '</span></div>';
+    }).join('')+'</div>'+
+    (loose.length?'<p class="qhint" style="margin:8px 0 0">Belum masuk rekening: '+loose.map(w=>esc(w.name)).join(', ')+'</p>':'')+
+    '<div class="row" style="margin-top:6px"><button class="btn sm" id="addAcc">＋ Tambah rekening</button></div></div>';
+}
+function wireAccCard(){
+  const aa=$('#addAcc');if(aa)aa.addEventListener('click',()=>openAccountSheet(null));
+  $$('[data-eda]').forEach(b=>b.addEventListener('click',()=>openAccountSheet(accList().find(a=>a.id===b.dataset.eda))));
+  $$('[data-acr]').forEach(b=>b.addEventListener('click',()=>openAccountReconcile(b.dataset.acr)));
+}
+function openAccountSheet(existing){
+  if(!existing&&!state.wallets.length){toast('Tambah dompet dulu ya');return;}
+  let emoji=existing?existing.emoji:'🏦',color=existing?existing.color:PALETTE[4];
+  openSheet(existing?'Ubah rekening':'Rekening baru',
+    '<div class="field"><label for="aname">Nama rekening</label>'+
+      '<input class="inp" id="aname" placeholder="Contoh: Bank Jago, Tunai, GoPay" maxlength="24" value="'+esc(existing?existing.name:'')+'"></div>'+
+    '<div class="field"><label>Kantong di rekening ini</label>'+
+      state.wallets.map(w=>{
+        const o=accOfWallet(w.id),on=!!(existing&&o&&o.id===existing.id),other=o&&!(existing&&o.id===existing.id);
+        return '<label class="chk" style="margin-bottom:6px"><input type="checkbox" data-aw="'+esc(w.id)+'"'+(on?' checked':'')+'><span><b>'+esc(w.emoji+' '+w.name)+'</b>'+
+          (other?'Sekarang di '+esc(o.name)+', akan dipindah ke sini kalau dicentang':(w.isSavings?'Tabungan':w.isSedekah?'Dompet sedekah':''))+'</span></label>';
+      }).join('')+'</div>'+
+    '<div class="field"><label>Ikon</label><div class="emo-grid" id="emoGrid">'+
+      WEMOJIS.map(e=>'<button class="emo" data-e="'+e+'" aria-pressed="'+(e===emoji)+'">'+e+'</button>').join('')+'</div></div>'+
+    '<div class="field"><label>Warna</label><div class="swatches" id="swGrid">'+
+      PALETTE.map(c=>'<button class="sw" data-c="'+c+'" style="background:'+c+'" aria-pressed="'+(c===color)+'" aria-label="Warna"></button>').join('')+'</div></div>'+
+    '<p class="qhint" style="margin:2px 0 14px">Menghapus rekening tidak menghapus kantongnya, hanya pengelompokannya.</p>'+
+    (existing?'<div class="row"><button class="btn danger" id="delAcc">Hapus</button><button class="btn" id="saveAcc">Simpan perubahan</button></div>':'<button class="btn" id="saveAcc">Buat rekening</button>'),
+    ()=>{
+      $$('#emoGrid .emo').forEach(b=>b.addEventListener('click',()=>{emoji=b.dataset.e;$$('#emoGrid .emo').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));}));
+      $$('#swGrid .sw').forEach(b=>b.addEventListener('click',()=>{color=b.dataset.c;$$('#swGrid .sw').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));}));
+      setTimeout(()=>{const f=$('#aname');if(f)f.focus();},420);
+      $('#saveAcc').addEventListener('click',()=>{
+        const name=$('#aname').value.trim();
+        if(!name){$('#aname').focus();toast('Nama rekening belum diisi');return;}
+        const ids=$$('#sheetBody [data-aw]').filter(c=>c.checked).map(c=>c.dataset.aw);
+        if(!state.prefs)state.prefs=normPrefs();
+        const L=(state.prefs.accounts||[]).map(a=>Object.assign({},a,{w:a.w.filter(x=>ids.indexOf(x)<0)}));
+        if(existing){const t=L.find(a=>a.id===existing.id);if(t)Object.assign(t,{name,emoji,color,w:ids});}
+        else L.push({id:'ac-'+uid(),name,emoji,color,w:ids});
+        state.prefs.accounts=normAccounts(L);
+        save();closeSheet();renderAll();toast(existing?'Rekening diperbarui':'Rekening "'+name+'" dibuat');
+      });
+      const del=$('#delAcc');
+      if(del)del.addEventListener('click',async ()=>{
+        if(!(await askC('Hapus rekening "'+existing.name+'"?\nKantong di dalamnya tetap ada, hanya pengelompokannya yang dilepas.')))return;
+        const snap=JSON.parse(JSON.stringify(accList()));
+        closeSheet();
+        deleteWithUndo('Rekening "'+existing.name+'" dihapus',
+          ()=>{state.prefs.accounts=normAccounts(snap.filter(a=>a.id!==existing.id));},
+          ()=>{state.prefs.accounts=normAccounts(snap);});
+      });
+    });
+}
+/* cocokkan saldo: bandingkan hitungan Kantong dengan saldo asli di aplikasi bank; selisih dicatat sebagai penyesuaian di satu kantong */
+function openAccountReconcile(id){
+  const a=accList().find(x=>x.id===id);if(!a)return;
+  const ws=accWallets(a).filter(w=>!w.isSedekah);
+  if(!ws.length){toast('Masukkan kantong ke rekening ini dulu ya');return;}
+  const app=accBalance(a),def=(ws.find(w=>!w.isSavings)||ws[0]).id;
+  openSheet('Cocokkan saldo '+a.name,
+    '<p class="sub" style="margin:0 0 12px">Isi saldo sebenarnya seperti yang tampil di aplikasi banknya. Kalau berbeda dengan hitungan Kantong, selisihnya dicatat sebagai penyesuaian.</p>'+
+    '<div class="bar-sub"><span>Hitungan Kantong</span><span class="num" style="font-weight:800">'+rp(app)+'</span></div>'+
+    '<div class="field" style="margin-top:12px"><label for="rcbal">Saldo sebenarnya</label>'+
+      '<input class="inp num" id="rcbal" inputmode="numeric" autocomplete="off" placeholder="0">'+opRowHtml()+'</div>'+
+    '<p class="qhint" id="rcdiff" style="margin:0 0 12px;font-weight:700"></p>'+
+    '<div class="field"><label for="rcw">Catat selisih di kantong</label><select class="inp" id="rcw">'+
+      ws.map(w=>'<option value="'+esc(w.id)+'"'+(w.id===def?' selected':'')+'>'+esc(w.emoji+' '+w.name)+'</option>').join('')+'</select></div>'+
+    '<p class="qhint" style="margin:0 0 14px">Penyesuaian tidak dihitung sebagai pemasukan atau pengeluaran di Rekap, hanya meluruskan saldo.</p>'+
+    '<button class="btn" id="rcSave">Cocokkan sekarang</button>',
+    ()=>{
+      const el=$('#rcbal'),dEl=$('#rcdiff');
+      moneyMask(el);wireOpButtons(el);
+      const diffNow=()=>{if(!el.value.trim())return null;return Math.round(readMoney(el)-app);};
+      const upd=()=>{const d=diffNow();
+        dEl.textContent=d===null?'':(d===0?'Sudah cocok ✓':(d>0?'Saldo asli lebih besar '+rp(d)+' dari hitungan Kantong':'Saldo asli lebih kecil '+rp(-d)+' dari hitungan Kantong'));};
+      el.addEventListener('input',upd);
+      setTimeout(()=>{if(el.isConnected)el.focus();},420);
+      $('#rcSave').addEventListener('click',()=>{
+        const d=diffNow();
+        if(d===null){el.focus();toast('Isi saldo sebenarnya dulu ya');return;}
+        if(d===0){closeSheet();toast('Saldo '+a.name+' sudah cocok ✓');return;}
+        const wid=$('#rcw').value;
+        state.tx.push({id:uid(),type:d>0?'income':'expense',amount:Math.abs(d),catId:d>0?'ic-saldo':'c-lain',walletId:wid,date:todayKey(),time:nowTime(),
+          note:'Penyesuaian saldo '+a.name,createdAt:Date.now(),pass:d<0?true:undefined});
+        save();closeSheet();renderAll();toast('Saldo '+a.name+' disesuaikan '+(d>0?'+':'−')+rp(Math.abs(d)));
+      });
+    });
+}
+
 /* ================= wallets ================= */
 function renderWallets(){
   const wallets=regularWallets(),goals=savingsWallets();
@@ -4216,14 +4413,15 @@ function renderWallets(){
   const sdkW=sedekahWallets(),totalSdk=sdkW.reduce((s,w)=>s+walletBalance(w),0),sdkOwe=sdkOwed();
   const totalIncAll=sum(incOf(state.tx)),totalExpAll=sum(expOf(state.tx));
   const list=inMonth(view.y,view.m);
-  const h='<div class="card"><h3>Total saldo</h3><p class="sub">Pemasukan dikurangi pengeluaran, sepanjang waktu'+(goals.length?', termasuk tabungan':'')+'</p>'+
+  const h='<div class="card"><h3>Total saldo</h3><p class="sub">Pemasukan dikurangi pengeluaran, sepanjang waktu'+((goals.length||sdkW.length)?', termasuk '+[goals.length?(goals.some(w=>w.inv)?'tabungan & investasi':'tabungan'):'',sdkW.length?'dana sedekah':''].filter(Boolean).join(' dan '):'')+'</p>'+
     '<div class="total-amt money" style="font-size:28px;margin-bottom:10px"><span class="rp" style="font-size:.5em">Rp</span>'+fmt(totalBal)+'</div>'+
     '<div class="bar-sub"><span title="Termasuk perpindahan dompet, utang/piutang, dan dana titipan">arus masuk total '+rp(totalIncAll)+'</span><span title="Termasuk perpindahan dompet, utang/piutang, dan dana titipan">arus keluar total '+rp(totalExpAll)+'</span></div>'+
-    ((goals.length||sdkW.length)?'<div class="bar-sub" style="margin-top:4px"><span>dompet bisa dipakai '+rp(totalBal-totalSavings-totalSdk-sdkOwe)+'</span>'+(goals.length?'<span>tabungan '+rp(totalSavings)+'</span>':'')+'</div>':'')+
+    ((goals.length||sdkW.length)?'<div class="bar-sub" style="margin-top:4px"><span>dompet bisa dipakai '+rp(totalBal-totalSavings-totalSdk-sdkOwe)+'</span>'+(goals.length?'<span>'+(goals.some(w=>w.inv)?'tabungan & investasi ':'tabungan ')+rp(totalSavings)+'</span>':'')+'</div>':'')+
     (sdkW.length?'<div class="bar-sub" style="margin-top:4px"><span>dana sedekah tersimpan '+rp(totalSdk)+'</span><span>'+(sdkOwe>0?'perlu dikembalikan '+rp(sdkOwe):'utuh 🤲')+'</span></div>':'')+
     '</div>'+
   sdkCardHtml()+
   debtCardHtml()+
+  accCardHtml()+
   '<div class="card"><h3>Dompet & sumber dana</h3>'+
     '<p class="sub">Saldo dihitung otomatis dari transaksi tiap dompet.</p>'+    '<div class="li-list" id="walList">'+
     wallets.map((w,i)=>{
@@ -4234,7 +4432,7 @@ function renderWallets(){
         (wallets.length>1?'<button class="drag-handle" type="button" aria-label="Geser urutan '+esc(w.name)+'">'+GRIP_SVG+'</button>':'')+
         '<span class="ic" style="background:'+w.color+'22">'+w.emoji+'</span>'+
         '<span class="mid"><span class="t">'+esc(w.name)+(w.isSedekah?'<em class="pill-sdk">Sedekah</em>':'')+'</span><span class="s">'+
-        'Saldo '+rp(bal)+(mine.length?' · bulan ini +'+shortRp(incM)+' / −'+shortRp(expM):'')+(w.isSedekah&&sdkOwed(w.id)>0?' · terpakai '+shortRp(sdkOwed(w.id)):'')+
+        (accOfWallet(w.id)?esc(accOfWallet(w.id).name)+' · ':'')+'Saldo '+rp(bal)+(mine.length?' · bulan ini +'+shortRp(incM)+' / −'+shortRp(expM):'')+(w.isSedekah&&sdkOwed(w.id)>0?' · terpakai '+shortRp(sdkOwed(w.id)):'')+
         '</span></span>'+
         '<span class="li-act">'+
           '<button class="mini" data-edw="'+esc(w.id)+'" aria-label="Ubah '+esc(w.name)+'">'+
@@ -4253,7 +4451,7 @@ function renderWallets(){
       '<p class="sub">Sisihkan dana ke tujuan tertentu, tetap tersambung lewat perpindahan dana antar dompet.</p>')+
     '<button class="btn ghost sm" id="goSavings">'+(goals.length?'Kelola tabungan →':'＋ Buat tabungan →')+'</button></div>';
   $('#p-wallets').innerHTML=h;
-  wireDebtCard();wireSdkCard();
+  wireDebtCard();wireSdkCard();wireAccCard();
   $('#addWal').addEventListener('click',()=>openWalletSheet(null));
   $('#goSavings').addEventListener('click',()=>{const t=$('.tab[data-p="savings"]');if(t)t.click();});
   const dt=$('#doTransfer');if(dt)dt.addEventListener('click',openTransferNew);
@@ -4498,6 +4696,7 @@ function openWalletSheet(existing,preset){
       '<label class="chk" style="margin-top:10px"><input type="checkbox" id="wneg"'+(existing&&existing.balance<0?' checked':'')+'><span><b>Saldo awal berupa utang (minus)</b>Untuk kartu kredit atau dompet yang dimulai dari posisi minus.</span></label></div>'+
     (canSdk?'<div class="field"><label class="chk"><input type="checkbox" id="wsdk"'+(existing?(existing.isSedekah?' checked':''):(wantSdk?' checked':''))+'><span><b>Dompet sedekah</b>Untuk menyimpan uang sedekah. Kalau dananya dipakai untuk keperluan lain, Kantong mencatatnya sebagai pinjaman dan mengingatkan untuk mengembalikan.</span></label></div>':
       '<p class="qhint" style="margin:0 0 14px">Dompet yang sudah punya transaksi tidak bisa dijadikan dompet sedekah. Buat dompet baru untuk sedekah.</p>')+
+    accFieldHtml(existing?existing.id:null)+
     '<div class="field"><label>Ikon</label><div class="emo-grid" id="emoGrid">'+
       WEMOJIS.map(e=>'<button class="emo" data-e="'+e+'" aria-pressed="'+(e===emoji)+'">'+e+'</button>').join('')+'</div></div>'+
     '<div class="field"><label>Warna</label><div class="swatches" id="swGrid">'+
@@ -4516,8 +4715,10 @@ function openWalletSheet(existing,preset){
         const balance=readMoney($('#wbal'))*($('#wneg').checked?-1:1);
         const sdkEl=$('#wsdk'),isSdk=sdkEl?sdkEl.checked:!!(existing&&existing.isSedekah);
         if(existing&&existing.isSedekah&&!isSdk&&sdkOwed(existing.id)>0&&!(await askC('Dompet ini bukan lagi dompet sedekah. Pantauan dana sedekah yang belum dikembalikan ('+rp(sdkOwed(existing.id))+') akan hilang. Lanjutkan?')))return;
+        let wRef=existing;
         if(existing){Object.assign(existing,{name,emoji,color,balance,isSedekah:isSdk?true:undefined});}
-        else{state.wallets.push(isSdk?{id:'w-'+uid(),name,emoji,color,balance,isSedekah:true}:{id:'w-'+uid(),name,emoji,color,balance});}
+        else{wRef=isSdk?{id:'w-'+uid(),name,emoji,color,balance,isSedekah:true}:{id:'w-'+uid(),name,emoji,color,balance};state.wallets.push(wRef);}
+        {const av=accFieldVal();if(av!==null)setWalletAcc(wRef.id,av);}
         save();closeSheet();renderAll();toast(existing?'Dompet diperbarui':(isSdk?'Dompet sedekah "'+name+'" dibuat':'Dompet "'+name+'" ditambahkan'));
       });
     });
@@ -4530,17 +4731,19 @@ function renderSavings(){
   const totalSaved=goals.reduce((s,w)=>s+walletBalance(w),0);
   const reached=goals.filter(w=>{const t=+w.target||0;return t>0&&walletBalance(w)>=t;}).length;
   const h=
-    '<div class="card"><h3>'+(goals.length?'Semua tabungan':'Belum ada tabungan')+'</h3>'+
+    '<div class="card"><h3>'+(goals.length?'Semua tabungan & investasi':'Belum ada tabungan')+'</h3>'+
     (goals.length?
       '<p class="sub">Total dana yang sudah disisihkan ke tujuan tabungan.</p>'+
       '<div class="total-amt money" style="font-size:28px;margin-bottom:8px"><span class="rp" style="font-size:.5em">Rp</span>'+fmt(totalSaved)+'</div>'+
+      (goals.some(w=>w.inv)?(()=>{const iv=goals.filter(w=>w.inv).map(invInfo),v=iv.reduce((t,x)=>t+x.val,0),g=iv.reduce((t,x)=>t+x.gain,0),m=v-g;
+        return '<div class="bar-sub"><span>investasi sekarang '+rp(v)+'</span><span style="font-weight:700;color:var(--'+(g>=0?'mint':'rose')+')">'+invGainTxt(g,m>0?g/m*100:null)+'</span></div>';})():'')+
       (totalGoal?'<div class="bar-sub"><span>target keseluruhan '+rp(totalGoal)+'</span><span>'+reached+' dari '+goals.length+' tercapai</span></div>':'')
       :
       '<p class="sub">Buat tujuan tabungan, misalnya dana darurat, liburan, atau DP rumah. Setor & tarik tersambung otomatis lewat perpindahan dana antar dompet — tidak dihitung sebagai pengeluaran atau pemasukan sungguhan.</p>'
     )+'</div>'+
     (goals.length?
-    '<div class="card"><h3>Tujuan tabungan</h3>'+
-    '<p class="sub">Ketuk 🔽 untuk setor, 🔼 untuk tarik. Saldo dompet asal ikut ter-update otomatis.</p>'+
+    '<div class="card"><h3>Tujuan tabungan & investasi</h3>'+
+    '<p class="sub">Ketuk 🔽 untuk setor, 🔼 untuk tarik. Untuk investasi, ketuk 📈 guna memperbarui nilai sekarang.</p>'+
     '<div class="li-list" id="savList">'+
     goals.map((w,i)=>{
       const p=savingsProgress(w);
@@ -4548,10 +4751,14 @@ function renderSavings(){
       const trackClass=done?'done':(p.target>0&&p.pct>=80?'warn':'');
       return '<div class="li-item" data-id="'+esc(w.id)+'" style="animation-delay:'+Math.min(i*28,260)+'ms;flex-wrap:wrap">'+
         '<span class="ic" style="background:'+w.color+'22">'+w.emoji+'</span>'+
-        '<span class="mid"><span class="t">'+esc(w.name)+'</span><span class="s">'+
-          rp(p.bal)+(p.target?' dari target '+rp(p.target):' terkumpul, belum pasang target')+
+        '<span class="mid"><span class="t">'+esc(w.name)+(w.inv?'<em class="pill-sdk" style="background:#3B82F622;color:#3B82F6">Investasi</em>':'')+'</span><span class="s">'+
+          (w.inv?(()=>{const iv=invInfo(w),da=invDaysAgo(iv.last);
+            return 'Nilai '+rp(iv.val)+' · modal '+rp(iv.modal)+' · <b style="color:var(--'+(iv.gain>=0?'mint':'rose')+')">'+invGainTxt(iv.gain,iv.pct)+'</b>'+(p.target?' · target '+rp(p.target):'')+
+              '<span style="display:block;margin-top:2px;'+(da===null||da>7?'color:#DD8B1E':'')+'">'+(da===null?'Nilai belum pernah diperbarui':(da===0?'Nilai diperbarui hari ini':'Nilai diperbarui '+da+' hari lalu'))+'</span>';})()
+          :rp(p.bal)+(p.target?' dari target '+rp(p.target):' terkumpul, belum pasang target'))+
         '</span></span>'+
         '<span class="li-act">'+
+          (w.inv?'<button class="mini" data-invup="'+esc(w.id)+'" aria-label="Perbarui nilai '+esc(w.name)+'" title="Perbarui nilai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></button>':'')+
           '<button class="mini" data-savdep="'+esc(w.id)+'" aria-label="Setor ke '+esc(w.name)+'" title="Setor">'+
           '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v13"/><path d="m7 12 5 5 5-5"/><path d="M5 21h14"/></svg></button>'+
           '<button class="mini" data-savwd="'+esc(w.id)+'" aria-label="Tarik dari '+esc(w.name)+'" title="Tarik">'+
@@ -4584,6 +4791,7 @@ function renderSavings(){
       ()=>{affected.forEach(e=>{e.walletId=fallback.id;});if(fallback)fallback.balance=(+fallback.balance||0)+carry;state.wallets=state.wallets.filter(x=>x.id!==w.id);},
       ()=>{if(fallback)fallback.balance=(+fallback.balance||0)-carry;state.wallets.splice(idx,0,w);affected.forEach(e=>{e.walletId=w.id;});});
   }));
+  $$('[data-invup]').forEach(b=>b.addEventListener('click',()=>openInvUpdate(b.dataset.invup)));
   $$('[data-savdep]').forEach(b=>b.addEventListener('click',()=>openSavingsMove(b.dataset.savdep,'in')));
   $$('[data-savwd]').forEach(b=>b.addEventListener('click',()=>openSavingsMove(b.dataset.savwd,'out')));
 }
@@ -4609,6 +4817,8 @@ function openSavingsSheet(existing){
     '<div class="field"><label for="sbal">Saldo awal <span style="color:var(--ink-3);font-weight:500">(opsional, kalau sudah punya tabungan sebelumnya)</span></label>'+
       '<input class="inp num" id="sbal" inputmode="numeric" placeholder="0" value="'+(existing&&existing.balance?nf.format(existing.balance):'')+'">'+
       opRowHtml()+'</div>'+
+    '<div class="field"><label class="chk"><input type="checkbox" id="sinv"'+(existing&&existing.inv?' checked':'')+'><span><b>Ini investasi</b>Untuk yang nilainya naik-turun, misalnya reksa dana atau saham di Bibit. Saldo awal dan setoran dianggap modal; nilai sekarang kamu perbarui sendiri dan untung/rugi dihitung otomatis.</span></label></div>'+
+    accFieldHtml(existing?existing.id:null)+
     '<div class="field"><label>Ikon</label><div class="emo-grid" id="emoGrid">'+
       SEMOJIS.map(e=>'<button class="emo" data-e="'+e+'" aria-pressed="'+(e===emoji)+'">'+e+'</button>').join('')+'</div></div>'+
     '<div class="field"><label>Warna</label><div class="swatches" id="swGrid">'+
@@ -4630,8 +4840,11 @@ function openSavingsSheet(existing){
         if(!name){$('#sname').focus();toast('Nama tabungan belum diisi');return;}
         const target=readMoney(targetEl);
         const balance=readMoney(balEl);
-        if(existing){Object.assign(existing,{name,emoji,color,balance,target});}
-        else{state.wallets.push({id:'sv-'+uid(),name,emoji,color,balance,target,isSavings:true});}
+        let sRef=existing;
+        const inv=!!$('#sinv').checked;
+        if(existing){Object.assign(existing,{name,emoji,color,balance,target,inv:inv?true:undefined});}
+        else{sRef={id:'sv-'+uid(),name,emoji,color,balance,target,isSavings:true,inv:inv?true:undefined};state.wallets.push(sRef);}
+        {const av=accFieldVal();if(av!==null)setWalletAcc(sRef.id,av);}
         save();closeSheet();renderAll();toast(existing?'Tabungan diperbarui':'Tabungan "'+name+'" dibuat');
       });
       const delBtn=$('#delSavSheet');
@@ -6146,11 +6359,11 @@ $('#setBtn').addEventListener('click',async()=>{
       $('#wipe').addEventListener('click',async ()=>{
         if(!(await askC('Hapus SEMUA transaksi beserta foto struknya dan kembalikan kategori serta dompet ke bawaan?'+(cloud.user?' Karena kamu masuk akun, ini juga menghapusnya dari akun dan perangkat lain.':''))))return;
         bakSnapshot('p','sebelum reset');
-        const snap=JSON.parse(JSON.stringify({tx:state.tx,cats:state.cats,incomeCats:state.incomeCats,wallets:state.wallets,motors:state.motors,meters:state.meters,budgets:state.budgets,recurring:state.recurring,debts:state.debts,svcs:state.svcs}));
+        const snap=JSON.parse(JSON.stringify({tx:state.tx,cats:state.cats,incomeCats:state.incomeCats,wallets:state.wallets,motors:state.motors,meters:state.meters,budgets:state.budgets,recurring:state.recurring,debts:state.debts,svcs:state.svcs,acc:state.prefs&&state.prefs.accounts}));
         closeSheet();
         deleteWithUndo('Semua data direset ke bawaan',
-          ()=>{state.tx=[];state.cats=DEFAULT_CATS.slice();state.incomeCats=DEFAULT_INCOME_CATS.slice();state.wallets=DEFAULT_WALLETS.slice();state.motors=DEFAULT_MOTORS.slice();state.meters=DEFAULT_METERS.slice();state.budgets={};state.recurring=[];state.debts=[];state.svcs=[];},
-          ()=>{state.tx=snap.tx;state.cats=snap.cats;state.incomeCats=snap.incomeCats;state.wallets=snap.wallets;state.motors=snap.motors;state.meters=snap.meters;state.budgets=snap.budgets;state.recurring=snap.recurring||[];state.debts=snap.debts||[];state.svcs=snap.svcs||[];},
+          ()=>{state.tx=[];state.cats=DEFAULT_CATS.slice();state.incomeCats=DEFAULT_INCOME_CATS.slice();state.wallets=DEFAULT_WALLETS.slice();state.motors=DEFAULT_MOTORS.slice();state.meters=DEFAULT_METERS.slice();state.budgets={};state.recurring=[];state.debts=[];state.svcs=[];if(state.prefs)state.prefs.accounts=undefined;},
+          ()=>{state.tx=snap.tx;state.cats=snap.cats;state.incomeCats=snap.incomeCats;state.wallets=snap.wallets;state.motors=snap.motors;state.meters=snap.meters;state.budgets=snap.budgets;state.recurring=snap.recurring||[];state.debts=snap.debts||[];state.svcs=snap.svcs||[];if(state.prefs)state.prefs.accounts=snap.acc;},
           ()=>{phClear();},10000);
       });
     });
@@ -7337,7 +7550,7 @@ function debtCardHtml(){
   h+='<p class="sub">'+(a.length?a.length+' catatan belum lunas':'Semua sudah lunas 🎉')+'</p>';
   if(a.length){
     h+=debtSumHtml();
-    h+='<div class="bar-sub" style="margin:2px 0 12px"><span>saldo bersih (dompet − utang + piutang)</span><span class="num">'+rp(bal-t.so+t.sl)+'</span></div>';
+    h+='<div class="bar-sub" style="margin:2px 0 12px"><span>total keuangan − utang + piutang</span><span class="num">'+rp(bal-t.so+t.sl)+'</span></div>';
   }
   h+='<div class="row"><button class="btn sm" id="debtOpen">Kelola</button><button class="btn ghost sm" id="debtAdd">＋ Catat baru</button></div></div>';
   return h;
