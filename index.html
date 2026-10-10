@@ -7980,6 +7980,8 @@ function caMicUi(){
 function caReparse(){
   const ta=$('#caText');if(!ta)return;
   const txt=ta.value;if(!txt.trim())CA.rm.clear();
+  if(CA.ai&&CA.ai.text!==txt.trim())CA.ai=null; /* teks berubah: hasil AI tidak berlaku lagi */
+  if(CA.ai){CA.td=CA.ai.items.filter(n=>!CA.rm.has(n.key));caRender();return;}
   CA.td=caParse(txt).filter(n=>!CA.rm.has(n.key)).map(n=>CA.td.find(o=>o.key===n.key&&(o.edited||!o.on))||n);
   caRender();
 }
@@ -8026,9 +8028,46 @@ function caSum(){
   b.disabled=!ok.length;b.textContent=ok.length?'Simpan '+ok.length+' catatan':'Simpan';
   const t=$('#caTips'),low=$('#caText').value.toLowerCase(),tp=[],kw=$('#caKeepWrap'),ex=$('#caEx');
   if(kw)kw.hidden=!CA.pd.length;if(ex)ex.hidden=!!(low.trim()||all.length);
+  const ab=$('#caAI');if(ab)ab.style.display=(dailyCanAI()&&low.trim())?'':'none';
   if(/\b(pinjam|utang|hutang|ngutang|piutang|minjam)\w*/.test(low))tp.push('Soal utang atau pinjaman? Untuk memantau jatuh tempo, pakai menu Utang & piutang.');
   if(/pindah dana|pindahin|tarik tunai|tarik uang|transfer (?:ke|dari) (?:rekening|dompet)/.test(low))tp.push('Memindahkan saldo antar dompet lebih tepat lewat menu Pindah dana.');
   t.innerHTML=tp.map(x=>'<p class="qhint">💡 '+esc(x)+'</p>').join('');
+}
+/* ---- AI beneran: kalimat bebas -> transaksi, lewat Edge Function 'kantong-catat' (teks dikirim ke server hanya saat tombol ditekan) ---- */
+async function caAI(){
+  const ta=$('#caText'),btn=$('#caAI');if(!ta||!btn||CA.aiBusy)return;
+  const text=ta.value.trim();if(!text)return;
+  if(!dailyCanAI()){toast('Masuk akun dulu untuk memakai AI',ICO_ALERT);return;}
+  if(navigator.onLine===false){toast('Tidak ada koneksi internet',ICO_ALERT);return;}
+  if(CA.on)caStop();
+  CA.aiBusy=true;btn.disabled=true;btn.textContent='AI sedang membaca…';
+  const W=spendWallets().length?spendWallets():regularWallets();
+  const body={text:text.slice(0,900),today:todayKey(),now:nowTime(),
+    wallets:W.map(w=>({id:w.id,name:w.name})),cats:state.cats.map(c=>({id:c.id,name:c.name})),incomeCats:state.incomeCats.map(c=>({id:c.id,name:c.name}))};
+  try{
+    const r=await cloud.sb.functions.invoke(CFG.catatFunction||'kantong-catat',{body});
+    if(r.error)throw r.error;
+    const arr=r.data&&Array.isArray(r.data.items)?r.data.items:null;
+    if(!arr)throw new Error('kosong');
+    if(!$('#caText'))return; /* pop-up sudah ditutup */
+    if($('#caText').value.trim()!==text){toast('Teks berubah saat AI bekerja, ketuk tombolnya lagi ya');return;}
+    if(!arr.length){toast('AI tidak menemukan transaksi di teks itu. Coba sebut nominalnya.',ICO_ALERT,4200);return;}
+    const td=todayKey();
+    const items=arr.slice(0,12).map((o,i)=>{
+      const inc=o.type==='income',L=inc?state.incomeCats:state.cats,note=String(o.note||'').trim().slice(0,80);
+      let catId=L.some(c=>c.id===o.catId)?o.catId:null,why='dipilih AI',fb=false;
+      if(!catId){const c=caCat(note.toLowerCase(),inc?'income':'expense',note);catId=c.id;why=c.why;fb=!!c.fb;}
+      const amt=Math.round(+o.amount);
+      return{key:'ai'+i+'|'+note.toLowerCase().slice(0,30),type:inc?'income':'expense',amount:amt>0&&amt<1e12?amt:null,guess:false,catId,why,fb,
+        note:note||catOf(catId).name,liter:+o.liter>0?+o.liter:null,walletId:W.some(w=>w.id===o.walletId)?o.walletId:quickWalletId(),
+        date:/^\d{4}-\d{2}-\d{2}$/.test(o.date)&&o.date<=td?o.date:td,time:/^([01]\d|2[0-3]):[0-5]\d$/.test(o.time)?o.time:nowTime(),approx:false,on:true,edited:false};
+    });
+    CA.ai={text,items};CA.rm=new Set();CA.td=items;caRender(true);
+  }catch(e){
+    toast((await nxAIWhy(e))+' Memakai pembacaan biasa di perangkat.',ICO_ALERT,5200);
+  }finally{
+    CA.aiBusy=false;const b=$('#caAI');if(b){b.disabled=false;b.textContent='✨ Pahami dengan AI';}
+  }
 }
 function caFind(el){const k=el.closest('.ca-card');return k&&CA.pd.concat(CA.td).find(d=>d.key===k.dataset.k);}
 async function caSave(){
@@ -8064,17 +8103,17 @@ function caHtml(){
   return '<div class="ca-hero"><button type="button" class="ca-mic" id="caMic" aria-pressed="false" aria-label="Mulai bicara"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Z"/><path d="M19 11a7 7 0 0 1-14 0M12 18v3"/></svg></button>'+
    '<div><b id="caState">Sentuh mikrofon, lalu bicara</b><span>Boleh sebut beberapa transaksi sekaligus, lengkap dengan kapan dan pakai dompet apa.</span></div></div>'+
    '<textarea class="ca-ta" id="caText" rows="3" maxlength="900" placeholder="Atau ketik / tempel di sini… mis. tadi pagi sarapan 15rb, bensin 20rb" aria-label="Teks transaksi"></textarea>'+
-   '<div class="tchips" id="caEx" style="margin-top:8px">'+ex.map(x=>'<button type="button" class="tchip" data-ex="'+esc(x)+'">'+esc(x)+'</button>').join('')+'</div>'+
+   '<button type="button" class="btn sm" id="caAI" style="display:none;margin-top:8px;width:100%">✨ Pahami dengan AI</button><div class="tchips" id="caEx" style="margin-top:8px">'+ex.map(x=>'<button type="button" class="tchip" data-ex="'+esc(x)+'">'+esc(x)+'</button>').join('')+'</div>'+
    '<div class="row" style="margin:4px 0 8px"><button type="button" class="btn ghost sm" id="caCam">📷 Foto struk</button><button type="button" class="btn ghost sm" id="caGal">🖼️ Dari galeri</button></div>'+
    '<input type="file" id="caFc" accept="image/*" capture="environment" hidden><input type="file" id="caFg" accept="image/*" multiple hidden>'+
    (PH_OK?'<label class="chk" id="caKeepWrap" style="margin-bottom:10px" hidden><input type="checkbox" id="caKeepPh" checked><span><b>Simpan foto struk bersama catatan</b>Disimpan hanya di perangkat ini.</span></label>':'')+
    '<div id="caDrafts"></div><div id="caTips"></div>'+
-   '<p class="qhint">🔒 Foto dan teks dibaca di perangkatmu, tidak pernah diunggah ke server Kantong. Suara dikenali oleh peramban/OS-mu (di banyak perangkat lewat layanan penyedianya); Kantong tidak menyimpan rekaman.</p>'+
+   '<p class="qhint">🔒 Foto struk dibaca di perangkatmu. Teks transaksi hanya dikirim ke server AI saat kamu menekan “Pahami dengan AI”, tanpa itu dibaca di perangkat. Suara dikenali oleh peramban/OS-mu (di banyak perangkat lewat layanan penyedianya); Kantong tidak menyimpan rekaman.</p>'+
    '<div class="ca-foot"><div class="ca-sum" id="caSum"></div><button type="button" class="btn" id="caSave" disabled>Simpan</button></div>';
 }
 function openAI(){
   if(!state.wallets.length){toast('Tambah dompet dulu ya');return;}
-  CA.td=[];CA.pd=[];CA.rm=new Set();CA.hist=caHist();CA.saving=false;
+  CA.td=[];CA.pd=[];CA.rm=new Set();CA.hist=caHist();CA.saving=false;CA.ai=null;CA.aiBusy=false;
   openSheet('Catat AI',caHtml(),()=>{
     const ta=$('#caText'),box=$('#caDrafts');
     ta.addEventListener('input',()=>{clearTimeout(CA.timer);CA.timer=setTimeout(caReparse,220);});
@@ -8082,7 +8121,7 @@ function openAI(){
     $$('#caEx [data-ex]').forEach(b=>b.addEventListener('click',()=>{if(CA.on)caStop();ta.value=b.dataset.ex;caReparse();}));
     $('#caCam').addEventListener('click',()=>$('#caFc').click());$('#caGal').addEventListener('click',()=>$('#caFg').click());
     ['caFc','caFg'].forEach(id=>{const el=$('#'+id);el.addEventListener('change',()=>{const f=Array.from(el.files||[]);el.value='';if(f.length)caPhotos(f);});});
-    $('#caSave').addEventListener('click',caSave);
+    $('#caSave').addEventListener('click',caSave);$('#caAI').addEventListener('click',caAI);
     box.addEventListener('change',ev=>{
       const el=ev.target,d=caFind(el),f=el.dataset.f;if(!d||!f)return;
       if(f==='on')d.on=el.checked;
