@@ -584,6 +584,27 @@ button{border:0;background:none;cursor:pointer}
 .dlg-btns .btn{height:auto;min-height:48px;padding:11px 16px;text-align:center;line-height:1.3}
 .dlg-x{display:block;width:100%;margin-top:8px;padding:11px;font-size:12.5px;font-weight:700;color:var(--ink-2);text-decoration:underline}
 @keyframes dlgIn{from{opacity:0;transform:scale(.97)}}
+/* analisis harian AI (pop-up sekali sehari) */
+.dly-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.dly-head h3{margin:0}
+.dly-head small{display:block;font-size:12px;color:var(--ink-3);font-weight:600}
+.dly-ic{width:40px;height:40px;border-radius:14px;flex:none;display:grid;place-items:center;font-size:20px;background:var(--accent-soft)}
+.dly-stats{margin:0 0 10px;border-radius:16px;background:var(--surface-2);border:1px solid var(--line);padding:2px 14px}
+.dly-row{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+.dly-row:last-child{border-bottom:0}
+.dly-row span{font-size:12.5px;color:var(--ink-2);font-weight:600;min-width:0}
+.dly-row b{font-size:14px;font-weight:700;text-align:right;flex:none}
+.dly-card .delta{margin:0 0 12px;white-space:normal;line-height:1.35}
+.dlg-card .dly-body{font-size:13.5px;line-height:1.6;color:var(--ink-2);margin-bottom:14px}
+.dlg-card .dly-body p{margin:0 0 8px;font-size:13.5px;white-space:normal}
+.dlg-card .dly-body ul{margin:0 0 8px;padding-left:18px}
+.dlg-card .dly-body li{margin-bottom:6px}
+.dlg-card .dly-body b{color:var(--ink)}
+.dly-body .ai-meta{margin-top:8px}
+.dly-retry{margin-top:10px}
+.dly-reveal{display:none}
+.dly-card.mask .dly-priv{filter:blur(9px);pointer-events:none;user-select:none;-webkit-user-select:none}
+.dly-card.mask .dly-reveal{display:block;width:100%;margin:-2px 0 12px;padding:11px;font-size:13px;font-weight:700;color:var(--accent);border-radius:12px;background:var(--accent-soft)}
 /* kunci scroll halaman saat ada pop-up / dialog / foto besar. Di desktop yang menggulir adalah <html> (bukan body),
    jadi body{overflow:hidden} saja tidak cukup dan roda mouse malah menggulir beranda di belakang pop-up. */
 html.sheet-lock,html:has(#sheet.on),html:has(.dlg),html:has(.lightbox.on){overflow:hidden}
@@ -1749,7 +1770,7 @@ function bootRec(){if(bootedRec)return;bootedRec=true;recRun(true);renderAll();}
 function docOf(s){return{v:s.v,tx:s.tx,cats:s.cats,incomeCats:s.incomeCats,wallets:s.wallets,motors:s.motors,meters:s.meters,budgets:s.budgets,recurring:s.recurring,debts:s.debts,svcs:s.svcs,prefs:s.prefs,updatedAt:s.updatedAt};}
 function capture(){return{doc:JSON.parse(JSON.stringify(docOf(state))),seq:cloud.seq};}
 function freshState(){return normalize({v:9,tx:[],cats:JSON.parse(JSON.stringify(DEFAULT_CATS)),incomeCats:JSON.parse(JSON.stringify(DEFAULT_INCOME_CATS)),wallets:JSON.parse(JSON.stringify(DEFAULT_WALLETS)),motors:JSON.parse(JSON.stringify(DEFAULT_MOTORS)),meters:JSON.parse(JSON.stringify(DEFAULT_METERS)),budgets:{},recurring:[],debts:[],svcs:[],prefs:normPrefs(),updatedAt:0});}
-function wipeLocal(){state=freshState();saveLocal();phClear();meta={};saveMeta();renderAll();}
+function wipeLocal(){state=freshState();saveLocal();phClear();meta={};saveMeta();try{dailyClear();}catch(e){}renderAll();}
 function applyDoc(doc){state=normalize(doc);saveLocal();renderAll();}
 
 /* ---- label status di footer & pengaturan ---- */
@@ -4161,7 +4182,7 @@ function renderRecap(){
     '</select></div>'+
     '<div class="row"><button class="btn ghost sm" id="aiAnalyzeMonth">Analisis bulan ini</button>'+
     '<button class="btn ghost sm" id="aiAnalyzeAll">Analisis semua data</button></div>'+
-    '<div class="ai-box" id="aiBox" hidden></div></div>';
+    '<div class="ai-box" id="aiBox" hidden></div>'+dailySettingHtml()+'</div>';
 
   el.innerHTML=html;
   requestAnimationFrame(()=>{
@@ -4213,6 +4234,13 @@ function wireRecapExport(){
   const c=$('#aiAnalyzeMonth'),d=$('#aiAnalyzeAll');
   if(c)c.addEventListener('click',()=>analyzeWithAI(inMonth(view.y,view.m),MONTHS[view.m]+' '+view.y));
   if(d)d.addEventListener('click',()=>analyzeWithAI(state.tx.slice(),'semua catatan'));
+  const tg=$('#aiDailyTg');
+  if(tg)$$('.tchip',tg).forEach(b=>b.addEventListener('click',()=>{
+    dailySetOn(b.dataset.v==='1');
+    $$('.tchip',tg).forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+    toast(b.dataset.v==='1'?'Analisis harian dinyalakan':'Analisis harian dimatikan');
+  }));
+  const ds=$('#aiDailyShow');if(ds)ds.addEventListener('click',dailyManual);
 }
 /* ================= analisis AI ================= */
 const AI_FULL_MAX=300,AI_RECENT=120; /* lebih dari ini: kirim ringkasan per bulan/kategori + transaksi terbaru saja */
@@ -6322,6 +6350,191 @@ async function nxAI(box,prompt,label){
     toast(why+' Pakai cara manual di bawah.',ICO_ALERT,5200);
   }
   finally{delete box.dataset.busy;}
+}
+
+/* ================= analisis harian AI: pop-up sekali sehari =================
+   Alur: setelah data termuat & akun masuk, sekali per hari Kantong meminta analisis ke Edge Function yang sama dengan tombol Analisis AI,
+   lalu menampilkannya di pop-up begitu layar tenang (tidak ada form/dialog/kunci yang terbuka). Hasilnya disimpan per perangkat
+   (localStorage 'kantong-ai-daily', terikat ke akun) supaya bisa dibuka lagi dari tab Rekap tanpa memanggil AI ulang.
+   Tidak muncul saat: kunci aplikasi/gerbang masuk aktif, offline, belum masuk akun, tidak ada catatan 14 hari terakhir, atau dimatikan di Rekap. */
+const DLY_KEY='kantong-ai-daily',DLY_ON='kantong-ai-daily-on';
+const DAILY={busy:false,doneDay:'',nextAt:0,idleAt:0};
+function dailyOn(){try{return localStorage.getItem(DLY_ON)!=='0';}catch(e){return true;}}
+function dailySetOn(v){try{localStorage.setItem(DLY_ON,v?'1':'0');}catch(e){}DAILY.doneDay='';DAILY.nextAt=0;}
+function dailyLoad(){try{const o=JSON.parse(localStorage.getItem(DLY_KEY)||'null');return o&&typeof o==='object'?o:null;}catch(e){return null;}}
+function dailySave(o){try{localStorage.setItem(DLY_KEY,JSON.stringify(o));}catch(e){}}
+function dailyClear(){try{localStorage.removeItem(DLY_KEY);}catch(e){}DAILY.doneDay='';}
+function dailyCur(){const c=dailyLoad();return c&&c.day===todayKey()&&c.uid&&c.uid===cloud.uid?c:null;}
+function dailyCanAI(){return !!(cloud.sb&&cloud.user&&CFG.aiFunction!==false);}
+function dailyAvail(){
+  const r=document.documentElement.classList;
+  return dailyCanAI()&&bootedRec&&cloud.status!=='boot'&&navigator.onLine!==false&&!lkIsOn()&&!r.contains('ag-on');
+}
+function dailyIdle(){ /* layar tenang: tidak ada form, dialog, foto besar, undo, atau ketikan; harus tenang dua pengecekan berturut-turut */
+  const lb=$('#lightbox'),a=document.activeElement;
+  const ok=document.visibilityState==='visible'&&!lkIsOn()&&!document.documentElement.classList.contains('ag-on')&&!sheetOpen&&!document.querySelector('.dlg')&&
+    !(lb&&lb.classList.contains('on'))&&!pendingUndo&&!(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName));
+  if(!ok){DAILY.idleAt=0;return false;}
+  if(!DAILY.idleAt){DAILY.idleAt=Date.now();return false;}
+  return Date.now()-DAILY.idleAt>=3000;
+}
+function dailyStats(){
+  const now=new Date(),t=todayKey(),y=keyOf(new Date(now.getFullYear(),now.getMonth(),now.getDate()-1));
+  const ex=realExpOf(state.tx),mk=t.slice(0,7),dd=now.getDate();
+  const pk=keyOf(new Date(now.getFullYear(),now.getMonth()-1,1)).slice(0,7);
+  const yE=ex.filter(e=>e.date===y),mE=ex.filter(e=>e.date.slice(0,7)===mk);
+  const ps=sum(ex.filter(e=>e.date.slice(0,7)===pk&&(+e.date.slice(8,10))<=dd)),m=sum(mE);
+  return{y,t,dd,now,ex,mk,pk,yExp:sum(yE),yN:yE.length,mExp:m,avg:m/dd,prevSame:ps,pct:ps>0?Math.round((m-ps)/ps*100):null};
+}
+function buildDailyPrompt(){
+  const S=dailyStats(),now=S.now,real=S.ex.concat(realIncOf(state.tx));
+  const line=e=>e.date+' '+timeTxt(e)+' | '+(e.type==='income'?'Masuk':'Keluar')+' | '+catOf(e.catId).name+' | '+walOf(e.walletId).name+' | '+String(e.note||'-').replace(/\s+/g,' ').slice(0,60)+' | Rp'+Math.round(e.amount);
+  const day=(d,n)=>{const a=real.filter(e=>e.date===d).sort((x,z)=>dtVal(x)<dtVal(z)?-1:1);return a.length?a.slice(0,n).map(line).join('\n')+(a.length>n?'\n(dan '+(a.length-n)+' transaksi lain)':''):'(tidak ada transaksi)';};
+  const mon=S.ex.filter(e=>e.date.slice(0,7)===S.mk),cat={};
+  mon.forEach(e=>{const k=catOf(e.catId).name;cat[k]=(cat[k]||0)+(+e.amount||0);});
+  const cs=Object.keys(cat).sort((a,b)=>cat[b]-cat[a]).slice(0,8).map(k=>k+' | Rp'+Math.round(cat[k])).join('\n')||'(belum ada pengeluaran)';
+  const mInc=sum(realIncOf(state.tx).filter(e=>e.date.slice(0,7)===S.mk));
+  const ago=n=>keyOf(new Date(now.getFullYear(),now.getMonth(),now.getDate()-n));
+  const a7=sum(S.ex.filter(e=>e.date>=ago(7)&&e.date<=S.y))/7,a30=sum(S.ex.filter(e=>e.date>=ago(37)&&e.date<ago(7)))/30;
+  let extra='';
+  try{
+    const rows=state.cats.filter(c=>nxLim(c.id)>0).map(c=>{const sp=sum(mon.filter(e=>e.catId===c.id)),cap=nxLim(c.id)+nxCarry(c.id,now.getFullYear(),now.getMonth());return{n:c.name,sp,cap,p:cap?Math.round(sp/cap*100):0};}).sort((a,b)=>b.p-a.p).slice(0,6);
+    if(rows.length)extra+='\n\nANGGARAN KATEGORI BULAN INI (terpakai / batas):\n'+rows.map(r=>r.n+' | Rp'+Math.round(r.sp)+' / Rp'+Math.round(r.cap)+' ('+r.p+'%)').join('\n');
+  }catch(e){}
+  try{
+    const act=debtActive().map(d=>({d,s:debtStatus(d)})).filter(x=>x.s.k==='late'||x.s.k==='today'||x.s.k==='soon').slice(0,5);
+    if(act.length)extra+='\n\nUTANG/PIUTANG MENDEKATI TEMPO ATAU TERLAMBAT:\n'+act.map(x=>(x.d.dir==='owe'?'Utang':'Piutang')+' | sisa Rp'+Math.round(debtLeft(x.d))+' | '+x.s.t).join('\n');
+  }catch(e){}
+  try{
+    const pend=recPending();
+    if(pend.length)extra+='\n\nTRANSAKSI BERULANG MENUNGGU KONFIRMASI: '+pend.length+' ('+pend.slice(0,3).map(x=>recTitle(x.r)).join(', ')+')';
+  }catch(e){}
+  return 'Kamu asisten keuangan pribadi yang ringkas, hangat, dan jujur. Ini ringkasan harian milik pengguna. Hari ini '+DAYS[now.getDay()]+', '+S.t+', jam '+nowTime()+
+    ' (kolom transaksi: Tanggal Waktu | Tipe | Kategori | Dompet | Catatan | Nominal, mata uang Rupiah). Perpindahan antar dompet, utang piutang, dan saldo awal sudah dikeluarkan.'+
+    '\n\nTRANSAKSI KEMARIN ('+S.y+'):\n'+day(S.y,40)+'\n\nTRANSAKSI HARI INI SEJAK PAGI:\n'+day(S.t,30)+
+    '\n\nBULAN INI (tanggal 1 sampai '+S.dd+'): Masuk Rp'+Math.round(mInc)+' | Keluar Rp'+Math.round(S.mExp)+' | rata-rata keluar per hari Rp'+Math.round(S.avg)+
+    '\nPengeluaran bulan lalu pada rentang tanggal yang sama: Rp'+Math.round(S.prevSame)+
+    '\nRata-rata keluar per hari: 7 hari terakhir Rp'+Math.round(a7)+', 30 hari sebelumnya Rp'+Math.round(a30)+
+    '\n\nPENGELUARAN BULAN INI PER KATEGORI (8 terbesar):\n'+cs+extra+
+    '\n\nTulis analisis harian berbahasa Indonesia dalam bentuk poin-poin (tiap baris mulai dengan "- "), maksimal sekitar 120 kata, mencakup: '+
+    'gambaran singkat kemarin, hal yang menonjol atau perlu diwaspadai (termasuk anggaran, utang, atau tren dibanding bulan lalu bila ada), '+
+    'dan satu saran konkret untuk hari ini. Kalau datanya sedikit, katakan apa adanya tanpa mengarang. Langsung ke isi, tanpa basa-basi pembuka atau penutup.';
+}
+async function dailyAsk(prompt,label){
+  const call=cloud.sb.functions.invoke(CFG.aiFunction||'kantong-ai',{body:{prompt,label,provider:aiProvPref()}});
+  const r=await Promise.race([call,new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),60000))]);
+  if(r.error||!r.data||!r.data.text)throw (r.error||new Error('kosong'));
+  return{text:String(r.data.text).slice(0,3000),provider:String(r.data.providerName||'AI')};
+}
+async function dailyGenerate(day){
+  DAILY.busy=true;const uid=cloud.uid;
+  try{
+    const r=await dailyAsk(buildDailyPrompt(),'analisis harian '+day);
+    if(uid&&uid===cloud.uid)dailySave({day,uid,text:r.text,provider:r.provider,seen:false,at:Date.now()});
+  }catch(e){
+    if(uid&&uid===cloud.uid){const c=dailyLoad(),f=(c&&c.day===day&&c.uid===uid?c.fails||0:0)+1;dailySave({day,uid,fails:f,at:Date.now()});}
+    DAILY.nextAt=Date.now()+300000;
+  }finally{DAILY.busy=false;}
+}
+function dailyTick(){
+  if(DAILY.busy||document.visibilityState!=='visible'||Date.now()<DAILY.nextAt)return;
+  const day=todayKey();
+  if(DAILY.doneDay===day)return;
+  if(!dailyOn()){DAILY.doneDay=day;return;}
+  if(!dailyAvail())return;
+  const c=dailyCur();
+  if(c){
+    if(c.seen){DAILY.doneDay=day;return;}
+    if(c.text){if(dailyIdle())dailyShow(c,true);return;}
+    if((c.fails||0)>=2){DAILY.doneDay=day;return;}
+    if(Date.now()-(c.at||0)<300000)return;
+  }
+  const from=keyOf(new Date(Date.now()-14*86400000)),recent=state.tx.filter(e=>e.date>=from);
+  if(!realExpOf(recent).length&&!realIncOf(recent).length){DAILY.nextAt=Date.now()+60000;return;}
+  dailyGenerate(day);
+}
+function dailySettingHtml(){
+  const on=dailyOn();
+  return '<div style="margin-top:14px;padding-top:14px;border-top:1px dashed var(--line)"><h3 style="font-size:14px;margin:0 0 2px">Analisis harian otomatis</h3>'+
+    '<p class="sub" style="margin-bottom:10px">Muncul sekali sehari di pop-up saat Kantong dibuka. Butuh akun yang sedang masuk.</p>'+
+    '<div class="tchips" id="aiDailyTg" role="group" aria-label="Analisis harian otomatis">'+
+      '<button type="button" class="tchip" data-v="1" aria-pressed="'+on+'">Aktif</button>'+
+      '<button type="button" class="tchip" data-v="0" aria-pressed="'+!on+'">Mati</button></div>'+
+    '<div class="row"><button class="btn ghost sm" id="aiDailyShow">Lihat analisis hari ini</button></div></div>';
+}
+function dailyManual(){
+  if(!dailyCanAI()){toast('Analisis harian butuh akun yang sedang masuk. Pakai tombol analisis di atas.',ICO_ALERT,4200);return;}
+  if(!realExpOf(state.tx).length&&!realIncOf(state.tx).length){toast('Belum ada pemasukan atau pengeluaran untuk dianalisis');return;}
+  if(DAILY.busy){toast('Analisis hari ini sedang disiapkan, tunggu sebentar');return;}
+  const c=dailyCur();
+  dailyShow(c&&c.text?c:null,false);
+}
+function dailyShow(c,auto){
+  if(document.querySelector('.dly'))return;
+  DAILY.idleAt=0;
+  const S=dailyStats(),d=S.now,prevFocus=document.activeElement,day=S.t,uid=cloud.uid;
+  const pctTxt=S.pct==null?'':(S.pct===0?'Sama dengan periode yang sama bulan lalu':(S.pct>0?'▲ ':'▼ ')+Math.abs(S.pct)+'% '+(S.pct>0?'lebih besar':'lebih kecil')+' dari periode yang sama bulan lalu');
+  const w=document.createElement('div');w.className='dlg dly';
+  w.innerHTML='<div class="dlg-card dly-card'+(isBalHidden()?' mask':'')+'" role="dialog" aria-modal="true" aria-labelledby="dlyT">'+
+    '<div class="dly-head"><span class="dly-ic" aria-hidden="true">🤖</span><div><h3 id="dlyT">Analisis harian</h3><small>'+DAYS[d.getDay()]+', '+d.getDate()+' '+MONTHS[d.getMonth()]+' '+d.getFullYear()+'</small></div></div>'+
+    '<div class="dly-priv"'+(isBalHidden()?' aria-hidden="true"':'')+'>'+
+      '<div class="dly-stats">'+
+        '<div class="dly-row"><span>Keluar kemarin'+(S.yN?' ('+S.yN+'×)':'')+'</span><b class="money num">'+rp(S.yExp)+'</b></div>'+
+        '<div class="dly-row"><span>Keluar bulan ini</span><b class="money num">'+rp(S.mExp)+'</b></div>'+
+        '<div class="dly-row"><span>Rata-rata per hari</span><b class="money num">'+rp(S.avg)+'</b></div></div>'+
+      (pctTxt?'<span class="delta '+(S.pct>0?'up':S.pct<0?'down':'')+'">'+esc(pctTxt)+'</span>':'')+
+      '<div class="dly-body" id="dlyBody" role="status" aria-live="polite"></div></div>'+
+    '<button type="button" class="dly-reveal" id="dlyReveal">Ketuk untuk menampilkan isi</button>'+
+    '<div class="dlg-btns"><button type="button" class="btn" id="dlyOk">Oke, mengerti</button></div>'+
+    '<button type="button" class="dlg-x" id="dlyOff">Matikan analisis harian</button></div>';
+  document.body.appendChild(w);
+  const card=w.querySelector('.dly-card'),body=w.querySelector('#dlyBody');
+  function onKey(e){
+    const all=document.querySelectorAll('body>.dlg');if(all[all.length-1]!==w)return;
+    if(e.key==='Escape'){e.preventDefault();close();return;}
+    if(e.key!=='Tab')return;
+    const f=Array.from(card.querySelectorAll('button')).filter(b=>b.offsetParent!==null&&!b.disabled);
+    if(!f.length)return;
+    const i=f.indexOf(document.activeElement);
+    if(e.shiftKey&&i<=0){e.preventDefault();f[f.length-1].focus();}
+    else if(!e.shiftKey&&(i<0||i===f.length-1)){e.preventDefault();f[0].focus();}
+  }
+  const lockWatch=setInterval(()=>{if(lkIsOn())close();},500); /* kunci aplikasi menyala: pop-up ikut tertutup supaya isinya tidak terlihat */
+  function close(){
+    clearInterval(lockWatch);document.removeEventListener('keydown',onKey,true);
+    if(!w.isConnected)return;
+    w.remove();
+    try{if(prevFocus&&prevFocus.focus&&document.contains(prevFocus)&&!/^(INPUT|TEXTAREA|SELECT)$/.test(prevFocus.tagName))prevFocus.focus({preventScroll:true});}catch(e){}
+    setTimeout(()=>{if(pendingReload&&!sheetOpen&&!document.querySelector('.dlg'))applyUpdate();},1000);
+  }
+  w._back=close; /* tombol kembali di HP menutup pop-up ini (lihat navPop) */
+  document.addEventListener('keydown',onKey,true);
+  w.addEventListener('click',e=>{if(e.target===w)close();});
+  w.querySelector('#dlyOk').addEventListener('click',close);
+  w.querySelector('#dlyOff').addEventListener('click',()=>{dailySetOn(false);close();toast('Analisis harian dimatikan. Nyalakan lagi di tab Rekap',null,3600);});
+  w.querySelector('#dlyReveal').addEventListener('click',()=>{card.classList.remove('mask');const p=w.querySelector('.dly-priv');if(p)p.removeAttribute('aria-hidden');setTimeout(()=>{try{w.querySelector('#dlyOk').focus({preventScroll:true});}catch(e){}},0);});
+  const meta=r=>'<div class="ai-meta">Dibuat oleh '+esc(String(r.provider||'AI'))+' dari catatanmu. Bukan saran finansial profesional.</div>';
+  const fill=r=>{body.innerHTML=mdToHtml(r.text)+meta(r);};
+  const run=async()=>{
+    body.innerHTML='<p class="ai-loading">Sedang menganalisis, biasanya 10–30 detik…</p>';
+    DAILY.busy=true;
+    try{
+      const r=await dailyAsk(buildDailyPrompt(),'analisis harian '+day);
+      if(uid&&uid===cloud.uid)dailySave({day,uid,text:r.text,provider:r.provider,seen:true,at:Date.now()});
+      if(w.isConnected)fill(r);
+    }catch(e){
+      const why=await nxAIWhy(e);
+      if(w.isConnected){
+        body.innerHTML='<p class="ai-error">'+esc(why)+'</p><button type="button" class="btn ghost sm dly-retry" id="dlyRetry">Coba lagi</button>';
+        const rb=w.querySelector('#dlyRetry');if(rb)rb.addEventListener('click',run);
+      }
+    }finally{DAILY.busy=false;}
+  };
+  if(c&&c.text){
+    fill(c);
+    if(auto&&!c.seen)dailySave(Object.assign({},c,{seen:true}));
+  }else run();
+  setTimeout(()=>{try{w.querySelector('#dlyOk').focus({preventScroll:true});}catch(e){}},60);
 }
 
 /* ================= NX2: sanitasi data, aturan kategori, tag, cadangan terenkripsi ================= */
@@ -8725,6 +8938,7 @@ function navPop(){
       const lc=$('#lkClose');
       if(document.documentElement.classList.contains('lk-on')&&lc&&!lc.hidden)lc.click();
     }else if(top!=='dlg')navCloseTop(top); /* dialog pilihan memang harus dijawab, tidak bisa ditutup dengan kembali */
+    else{const dd=$$('body>.dlg').pop();if(dd&&dd._back)dd._back();} /* pop-up informasi (mis. analisis harian) boleh ditutup dengan kembali */
     navSync();
     return;
   }
@@ -8773,6 +8987,7 @@ initCloud(); /* memuat sinkron di latar belakang; recRun(true) jalan setelah sin
 updateInstallUi();
 if(!lkIsOn())runDeepLink();
 setTimeout(sdkBootNotice,1600);
+setInterval(()=>{try{dailyTick();}catch(e){}},4000); /* analisis harian AI: cek ringan tiap 4 detik, hampir tanpa biaya setelah hari ini selesai */
 setTimeout(()=>{try{bakMaybe();}catch(e){}},6000);
 document.addEventListener('visibilitychange',()=>{if(document.hidden){try{bakMaybe();}catch(e){}}});
 })().catch(e=>{console.error('[kantong] gagal memulai',e);try{toast('Gagal memuat data. Muat ulang aplikasi; jangan mencatat dulu.');}catch(_){}});
