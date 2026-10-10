@@ -7927,7 +7927,7 @@ function caStop(msg){
   CA.on=false;clearTimeout(CA.wd);CA.sid++;
   const r=CA.rec;CA.rec=null;
   if(r){
-    try{r.onstart=r.onresult=r.onerror=r.onend=null;}catch(e){}
+    try{r.onstart=r.onspeechstart=r.onresult=r.onerror=r.onend=null;}catch(e){}
     try{r.abort();}catch(e){try{r.stop();}catch(e2){}}
   }
   caMicUi();
@@ -7938,10 +7938,15 @@ function caSession(){
   try{r=new CA_SR();}catch(e){caStop('Suara tidak bisa dimulai di peramban ini. Ketik saja ya.');return;}
   CA.rec=r;r.lang='id-ID';r.interimResults=true;r.maxAlternatives=1;r.continuous=!/Android|iPhone|iPad/i.test(navigator.userAgent);
   let cur='',heard=false,started=false;
-  r.onstart=()=>{if(id!==CA.sid)return;started=true;clearTimeout(CA.wd);};
+  r.onstart=()=>{
+    if(id!==CA.sid)return;started=true;clearTimeout(CA.wd);
+    /* mikrofon sudah jalan tapi tak ada hasil sama sekali: layanan suara perangkat kemungkinan tidak tersedia */
+    CA.wd=setTimeout(()=>{if(CA.on&&id===CA.sid&&!heard&&!CA.com.trim())caStop('Tidak ada suara yang terbaca. Layanan suara di HP/peramban ini mungkin tidak aktif. Ketuk kolom teks lalu pakai ikon mikrofon di keyboard (Gboard).');},15000);
+  };
+  r.onspeechstart=()=>{if(id!==CA.sid)return;const s=$('#caState');if(s)s.textContent='Suara terdengar, sedang memproses…';};
   r.onresult=e=>{
     if(id!==CA.sid)return;
-    started=true;clearTimeout(CA.wd);
+    started=true;heard=true;clearTimeout(CA.wd);
     cur='';for(let i=0;i<e.results.length;i++)cur+=e.results[i][0].transcript+' ';
     if(cur.trim())heard=true;
     caSet(CA.base+' '+CA.com+' '+cur);
