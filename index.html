@@ -1101,6 +1101,50 @@ div.sdk-mini{cursor:default}
 .nx-note{font-size:12px;color:var(--ink-2);margin-top:4px}.nx-w{overflow-x:auto;-webkit-overflow-scrolling:touch}.nx-t{width:100%;border-collapse:collapse;font-size:12px;margin:8px 0 18px}.nx-t th,.nx-t td{padding:7px 5px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}.nx-t th:first-child,.nx-t td:first-child{text-align:left}.nx-t th{color:var(--ink-2);font-weight:700}
 .dlg-card p{white-space:pre-line}
 html.lk-on .dlg{z-index:9100}
+
+/* ---- motor: dasbor, pengingat, tren ---- */
+.rec-entry.mh-over{border-color:color-mix(in srgb,var(--rose) 55%,var(--line))}
+.rec-entry.mh-soon{border-color:color-mix(in srgb,var(--amber) 55%,var(--line))}
+.mh-chips{display:flex;gap:8px;overflow-x:auto;margin:0 -2px 12px;padding:2px;-webkit-overflow-scrolling:touch}
+.mh-chips .tchip{flex:none;white-space:nowrap}
+.mh-hero{display:flex;align-items:center;gap:14px;padding:16px;border-radius:var(--r-l);margin-bottom:10px;
+  background:linear-gradient(140deg,color-mix(in srgb,var(--mc,var(--accent)) 24%,var(--surface)),var(--surface));
+  border:1px solid color-mix(in srgb,var(--mc,var(--accent)) 38%,var(--line))}
+.mh-hero .em{font-size:36px;line-height:1;flex:none}
+.mh-hero small{display:block;font-size:11.5px;font-weight:700;color:var(--ink-3)}
+.mh-hero b{display:block;font-size:27px;font-weight:800;letter-spacing:-.02em;line-height:1.15;white-space:nowrap}
+.mh-hero b span{font-size:13px;color:var(--ink-3);font-weight:700;margin-left:5px}
+.mh-hero .sub2{font-size:11.5px;color:var(--ink-3);font-weight:500;margin-top:2px}
+.mh-actions{display:flex;gap:8px;margin-bottom:12px}
+.mh-actions .btn{flex:1;padding:11px 10px;font-size:12.5px;white-space:nowrap}
+.mh-q{display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:8px;margin-bottom:16px}
+.mh-q button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:11px 4px;border-radius:15px;background:var(--surface-2);
+  border:1.5px solid var(--line);font-size:11.5px;font-weight:700;color:var(--ink-2);transition:transform .16s,border-color .2s}
+.mh-q button .e{font-size:20px;line-height:1.1}
+.mh-q button:hover{border-color:var(--accent);color:var(--accent)}
+.mh-q button:active{transform:scale(.94)}
+.mh-sec{font-size:13px;font-weight:800;margin:18px 0 10px}
+.mh-rem{padding:12px 13px;border-radius:16px;background:var(--surface);border:1px solid var(--line);margin-bottom:8px;box-shadow:var(--shadow-s)}
+.mh-rem .top{display:flex;align-items:center;gap:9px}
+.mh-rem .top .e{font-size:18px}
+.mh-rem .top b{flex:1;font-size:13.5px;font-weight:800;min-width:0}
+.mh-st{font-size:10.5px;font-weight:800;padding:2px 9px;border-radius:99px;white-space:nowrap}
+.mh-st.ok{background:color-mix(in srgb,var(--mint) 16%,transparent);color:var(--mint)}
+.mh-st.soon{background:color-mix(in srgb,var(--amber) 22%,transparent);color:var(--amber)}
+.mh-st.over{background:color-mix(in srgb,var(--rose) 16%,transparent);color:var(--rose)}
+.mh-st.none{background:var(--paper-2);color:var(--ink-3)}
+.mh-rem .bar{margin:10px 0 7px}
+.mh-rem .bar i{transition:none}
+.mh-rem .meta{font-size:12px;color:var(--ink-2);font-weight:600;line-height:1.55}
+.mh-rem .meta span{color:var(--ink-3);font-weight:500}
+.mh-trend{display:flex;align-items:flex-end;gap:8px;height:122px;margin:4px 0}
+.mh-trend>div{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px}
+.mh-trend .col{width:100%;max-width:36px;display:flex;flex-direction:column;justify-content:flex-end;border-radius:8px 8px 4px 4px;overflow:hidden}
+.mh-trend .col i{display:block;width:100%}
+.mh-trend small{font-size:10px;color:var(--ink-3);font-weight:700}
+.mh-trend em{font-style:normal;font-size:9.5px;color:var(--ink-3);font-weight:600;white-space:nowrap}
+.mh-leg{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:11px;color:var(--ink-3);font-weight:600;margin-top:6px}
+.mh-leg i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
 </style>
 <script>/* kunci aplikasi: tutup tampilan sebelum apa pun sempat tergambar */
 try{var c=JSON.parse(localStorage.getItem('kantong.lock')||'null');if(c&&c.on&&c.hash)document.documentElement.classList.add('lk-on');}catch(e){}
@@ -1267,6 +1311,7 @@ try{if(localStorage.getItem('kantong.gate')==='show')document.documentElement.cl
       </div>
       <div id="filterZone"></div>
       <div class="svc-row rec-entry"><button type="button" class="svc-main" id="svcEntry"></button><button type="button" class="svc-plus" id="svcAdd" aria-label="Catat jasa transfer baru"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button></div>
+      <div class="svc-row rec-entry"><button type="button" class="svc-main" id="motorEntry"></button><button type="button" class="svc-plus" id="motorAdd" aria-label="Catat isi bensin" title="Catat isi bensin"><span style="font-size:18px;line-height:1">⛽</span></button></div>
       <button type="button" class="rec-entry" id="recEntry"></button>
       <div id="txList"></div>
     </section>
@@ -1431,6 +1476,12 @@ const MOTOR_CATS=[
   {id:'c-oli',name:'Oli Mesin',emoji:'🛢️',color:'#06B6D4',motor:'oli'},
   {id:'c-servis',name:'Servis Motor',emoji:'🔧',color:'#22C55E',motor:'servis'}
 ];
+/* kategori motor tambahan (v10): pajak/STNK, sparepart & ban, cuci & parkir */
+const MOTOR_CATS2=[
+  {id:'c-pajak',name:'Pajak & STNK',emoji:'🧾',color:'#EAB308',motor:'pajak'},
+  {id:'c-sparepart',name:'Sparepart & Ban',emoji:'🔩',color:'#A855F7',motor:'sparepart'},
+  {id:'c-cucipark',name:'Cuci & Parkir',emoji:'🧼',color:'#14B8A6',motor:'lain'}
+];
 /* kategori listrik: field "meter" menandai kategori ini dipantau lewat angka meteran (dipakai fitur kWh per meteran) */
 const ELEC_CATS=[
   {id:'c-listrik',name:'Listrik',emoji:'⚡',color:'#FBBF24',meter:true}
@@ -1466,11 +1517,27 @@ const DEFAULT_CATS=[
   {id:'c-hiburan',name:'Hiburan',emoji:'🎬',color:'#8B5CF6'},
   {id:'c-rumah',name:'Rumah',emoji:'🏠',color:'#14B8A6'},
   {id:'c-lain',name:'Lainnya',emoji:'✨',color:'#64748B'}
-].concat(PHOTO_EXP_CATS).concat(MOTOR_CATS).concat(ELEC_CATS).concat(SDK_CATS);
+].concat(PHOTO_EXP_CATS).concat(MOTOR_CATS).concat(MOTOR_CATS2).concat(ELEC_CATS).concat(SDK_CATS);
 function ensureMotorCats(cats){
   const have={};cats.forEach(c=>{have[c.id]=1;});
   const extra=MOTOR_CATS.filter(c=>!have[c.id]);
   return extra.length?cats.concat(extra):cats;
+}
+function ensureMotorCats2(cats){
+  const have={};cats.forEach(c=>{have[c.id]=1;});
+  const extra=MOTOR_CATS2.filter(c=>!have[c.id]);
+  return extra.length?cats.concat(extra):cats;
+}
+/* motor: selain id/nama/ikon/warna, simpan pengaturan pengingat (oliKm, oliMon, svKm, svMon), jatuh tempo pajak (taxDue),
+   dan odometer manual terakhir (odoNow). Semua opsional; nilai tak valid dibuang. */
+function motorNorm(m){
+  const o={id:m.id,name:m.name,emoji:m.emoji,color:m.color};
+  const pn=(v,min,max)=>{v=Math.round(+v);return(isFinite(v)&&v>=min&&v<=max)?v:undefined;};
+  const a=pn(m.oliKm,100,50000),b=pn(m.oliMon,1,60),c=pn(m.svKm,100,100000),d=pn(m.svMon,1,60);
+  if(a)o.oliKm=a;if(b)o.oliMon=b;if(c)o.svKm=c;if(d)o.svMon=d;
+  if(typeof m.taxDue==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(m.taxDue))o.taxDue=m.taxDue;
+  if(m.odoNow&&isFinite(+m.odoNow.odo)&&+m.odoNow.odo>=0&&/^\d{4}-\d{2}-\d{2}$/.test(String(m.odoNow.date)))o.odoNow={odo:Math.round(+m.odoNow.odo),date:String(m.odoNow.date)};
+  return o;
 }
 function ensureElecCats(cats){
   const have={};cats.forEach(c=>{have[c.id]=1;});
@@ -1567,9 +1634,10 @@ function normPrefs(p){
     accounts:normAccounts(p&&p.accounts),
     profile:normProfile(p&&p.profile)};
 }
-let state={v:9,tx:[],cats:DEFAULT_CATS.slice(),incomeCats:DEFAULT_INCOME_CATS.slice(),wallets:DEFAULT_WALLETS.slice(),motors:DEFAULT_MOTORS.slice(),meters:DEFAULT_METERS.slice(),budgets:{},recurring:[],debts:[],svcs:[],prefs:normPrefs(),updatedAt:0};
+let state={v:10,tx:[],cats:DEFAULT_CATS.slice(),incomeCats:DEFAULT_INCOME_CATS.slice(),wallets:DEFAULT_WALLETS.slice(),motors:DEFAULT_MOTORS.slice(),meters:DEFAULT_METERS.slice(),budgets:{},recurring:[],debts:[],svcs:[],prefs:normPrefs(),updatedAt:0};
 let view={y:new Date().getFullYear(),m:new Date().getMonth(),tab:'list',listType:'expense',filter:'all',wfilter:'all',q:''};
 let lastUsed={type:'expense',cat:null,icat:null,wal:null,motor:null,meter:null};
+let mhSel=null,mhRange='m',mhReopen=null; /* dasbor motor: motor terpilih, rentang, dan motor yang dibuka lagi setelah catatan disimpan */
 
 /* ================= storage ================= */
 const LS='kantong.v1';
@@ -1577,7 +1645,7 @@ function normalize(d){return nxSanitize(normalizeRaw(d));}
 function normalizeRaw(d){
   const wallets=(d.wallets&&d.wallets.length)?d.wallets:DEFAULT_WALLETS.slice();
   const w0=wallets[0].id;
-  const motors=(d.motors&&d.motors.length)?d.motors.map(m=>({id:m.id,name:m.name,emoji:m.emoji,color:m.color})):DEFAULT_MOTORS.slice();
+  const motors=(d.motors&&d.motors.length)?d.motors.map(motorNorm):DEFAULT_MOTORS.slice();
   const m0=motors[0].id;
   const meters=(d.meters&&d.meters.length)?d.meters.map(m=>({id:m.id,name:m.name,emoji:m.emoji,color:m.color,type:m.type==='pascabayar'?'pascabayar':'prabayar'})):DEFAULT_METERS.slice();
   const lm0=meters[0].id;
@@ -1585,6 +1653,7 @@ function normalizeRaw(d){
   if(!d.v||d.v<4)cats=ensureMotorCats(cats); /* migrasi sekali: tambahkan kategori Bensin/Oli/Servis kalau belum ada */
   if(!d.v||d.v<6)cats=ensureElecCats(cats); /* migrasi sekali: tambahkan kategori Listrik kalau belum ada */
   if(!d.v||d.v<8)cats=ensurePhotoExpCats(cats); /* migrasi sekali: tambahkan kategori biaya usaha foto kalau belum ada */
+  if(!d.v||d.v<10)cats=ensureMotorCats2(cats); /* migrasi sekali: tambahkan kategori Pajak & STNK, Sparepart & Ban, Cuci & Parkir kalau belum ada */
   if(!d.v||d.v<9)cats=ensureSdkCats(cats); /* migrasi sekali: tambahkan kategori Sedekah & Infak kalau belum ada */
   let incCatsIn=(d.incomeCats&&d.incomeCats.length)?d.incomeCats:DEFAULT_INCOME_CATS.slice();
   if(!d.v||d.v<8)incCatsIn=ensurePhotoIncCats(incCatsIn);
@@ -1609,6 +1678,9 @@ function normalizeRaw(d){
       note:e.note||'',
       client:e.client?String(e.client).trim().slice(0,40):undefined,
       odo:(e.odo===null||e.odo===undefined||e.odo==='')?null:+e.odo,
+      /* bensin: liter yang diisi, dan 'full:false' kalau tangki tidak diisi penuh (dipakai untuk hitung km/L) */
+      liter:(e.liter===null||e.liter===undefined||e.liter==='')?null:(+e.liter>0&&isFinite(+e.liter)?+e.liter:null),
+      full:e.full===false?false:undefined,
       /* migrasi: catatan motor lama (tanpa motorId) dianggap milik motor pertama, supaya riwayat tetap utuh & tersambung */
       motorId:motorCatIds[catId]?(e.motorId||m0):(e.motorId||undefined),
       meter:(e.meter===null||e.meter===undefined||e.meter==='')?null:+e.meter,
@@ -1635,7 +1707,7 @@ function normalizeRaw(d){
     };
   });
   return{
-    v:9,tx,
+    v:10,tx,
     cats,
     incomeCats:incCatsIn,
     wallets:wallets.map(w=>w.isSavings?
@@ -1769,7 +1841,7 @@ function bootRec(){if(bootedRec)return;bootedRec=true;recRun(true);renderAll();}
 
 function docOf(s){return{v:s.v,tx:s.tx,cats:s.cats,incomeCats:s.incomeCats,wallets:s.wallets,motors:s.motors,meters:s.meters,budgets:s.budgets,recurring:s.recurring,debts:s.debts,svcs:s.svcs,prefs:s.prefs,updatedAt:s.updatedAt};}
 function capture(){return{doc:JSON.parse(JSON.stringify(docOf(state))),seq:cloud.seq};}
-function freshState(){return normalize({v:9,tx:[],cats:JSON.parse(JSON.stringify(DEFAULT_CATS)),incomeCats:JSON.parse(JSON.stringify(DEFAULT_INCOME_CATS)),wallets:JSON.parse(JSON.stringify(DEFAULT_WALLETS)),motors:JSON.parse(JSON.stringify(DEFAULT_MOTORS)),meters:JSON.parse(JSON.stringify(DEFAULT_METERS)),budgets:{},recurring:[],debts:[],svcs:[],prefs:normPrefs(),updatedAt:0});}
+function freshState(){return normalize({v:10,tx:[],cats:JSON.parse(JSON.stringify(DEFAULT_CATS)),incomeCats:JSON.parse(JSON.stringify(DEFAULT_INCOME_CATS)),wallets:JSON.parse(JSON.stringify(DEFAULT_WALLETS)),motors:JSON.parse(JSON.stringify(DEFAULT_MOTORS)),meters:JSON.parse(JSON.stringify(DEFAULT_METERS)),budgets:{},recurring:[],debts:[],svcs:[],prefs:normPrefs(),updatedAt:0});}
 function wipeLocal(){state=freshState();saveLocal();phClear();meta={};saveMeta();try{dailyClear();}catch(e){}renderAll();}
 function applyDoc(doc){state=normalize(doc);saveLocal();renderAll();}
 
@@ -2476,9 +2548,130 @@ function motorKmSub(e){ /* jarak sejak catatan odo sebelumnya di kategori & moto
   return {km:e.odo-prev.odo,prev};
 }
 function motorBadge(e){
-  if(e.odo==null)return '';
-  const d=motorKmSub(e);
-  return fmt(e.odo)+' km'+(d?' (+'+fmt(d.km)+' km)':'');
+  const parts=[];
+  if(e.odo!=null){const d=motorKmSub(e);parts.push(fmt(e.odo)+' km'+(d?' (+'+fmt(d.km)+' km)':''));}
+  if(e.liter!=null&&e.liter>0)parts.push(fmtL(e.liter)+' L');
+  return parts.join(' · ');
+}
+const fmtL=n=>new Intl.NumberFormat('id-ID',{maximumFractionDigits:2}).format(n||0);
+const MO_DEF={oliKm:2000,oliMon:3,svKm:4000,svMon:6};
+function moCfg(m){return{oliKm:m.oliKm||MO_DEF.oliKm,oliMon:m.oliMon||MO_DEF.oliMon,svKm:m.svKm||MO_DEF.svKm,svMon:m.svMon||MO_DEF.svMon};}
+const motorSub=e=>catOf(e.catId).motor;
+const byDt=(a,b)=>dtVal(a)===dtVal(b)?(a.createdAt||0)-(b.createdAt||0):(dtVal(a)<dtVal(b)?-1:1);
+/* semua pengeluaran motor milik satu motor */
+function motorTx(mid){return state.tx.filter(x=>x.type==='expense'&&isMotorCat(x.catId)&&motorIdOf(x)===mid);}
+/* titik odometer satu motor: dari catatan transaksi + odometer manual (motor.odoNow), urut tanggal lalu angka */
+function motorOdoPoints(mid){
+  const pts=state.tx.filter(x=>x.odo!=null&&isMotorCat(x.catId)&&motorIdOf(x)===mid).map(x=>({odo:+x.odo,date:x.date}));
+  const m=state.motors.find(z=>z.id===mid);
+  if(m&&m.odoNow)pts.push({odo:m.odoNow.odo,date:m.odoNow.date,manual:true});
+  return pts.sort((a,b)=>a.date===b.date?a.odo-b.odo:(a.date<b.date?-1:1));
+}
+function curOdo(mid){const p=motorOdoPoints(mid);return p.length?Math.max.apply(null,p.map(x=>x.odo)):null;}
+function maxTxOdo(mid){const v=state.tx.filter(x=>x.odo!=null&&isMotorCat(x.catId)&&motorIdOf(x)===mid).map(x=>+x.odo);return v.length?Math.max.apply(null,v):null;}
+/* jarak tempuh satu motor dalam rentang tanggal (inklusif). Dasarnya titik odometer terakhir SEBELUM rentang,
+   jadi jarak antar-bulan tidak hilang; kalau belum ada titik sebelumnya, dasarnya titik pertama di dalam rentang. */
+function motorKmIn(mid,from,to){
+  const pts=motorOdoPoints(mid);if(pts.length<2)return 0;
+  const inR=pts.filter(p=>(!from||p.date>=from)&&(!to||p.date<=to));
+  if(!inR.length)return 0;
+  const before=from?pts.filter(p=>p.date<from):[];
+  const base=before.length?before[before.length-1]:inR[0];
+  const end=inR[inR.length-1];
+  return end.odo>base.odo?end.odo-base.odo:0;
+}
+/* irit bensin dengan metode tangki penuh: jarak antara dua pengisian penuh (yang punya odometer) dibagi total liter
+   yang diisi sejak pengisian penuh pertama sampai yang kedua. Segmen dengan isi tanpa liter di tengahnya dilewati. */
+function fuelSegsOf(list){
+  const all=list.slice().sort(byDt),segs=[];
+  let ref=null,acc=0,ok=true;
+  all.forEach(x=>{
+    const hasL=x.liter>0;
+    if(ref){if(hasL)acc+=x.liter;else ok=false;}
+    if(x.full!==false&&x.odo!=null){
+      if(ref&&ok&&hasL&&x.odo>ref.odo&&acc>0)segs.push({x:x,date:x.date,km:x.odo-ref.odo,l:acc,kmpl:(x.odo-ref.odo)/acc});
+      ref=x;acc=0;ok=true;
+    }
+  });
+  return segs;
+}
+function motorFuelSegs(mid){return fuelSegsOf(motorTx(mid).filter(x=>motorSub(x)==='bensin'));}
+function motorFuelStats(mid,from,to){
+  const segs=motorFuelSegs(mid).filter(sg=>(!from||sg.date>=from)&&(!to||sg.date<=to));
+  const km=segs.reduce((a,sg)=>a+sg.km,0),l=segs.reduce((a,sg)=>a+sg.l,0);
+  return{n:segs.length,km,l,kmpl:l>0?km/l:null};
+}
+function addMonthsKey(k,n){
+  const d=parseKey(k),day=d.getDate();d.setDate(1);d.setMonth(d.getMonth()+n);
+  const last=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();d.setDate(Math.min(day,last));return keyOf(d);
+}
+/* pengingat ganti oli / servis berkala: dihitung dari catatan terakhir kategori itu. Menyala bila jarak ATAU waktu sudah dekat/lewat. */
+function motorReminder(m,kind){
+  const cfg=moCfg(m),km=kind==='oli'?cfg.oliKm:cfg.svKm,mon=kind==='oli'?cfg.oliMon:cfg.svMon;
+  const last=motorTx(m.id).filter(x=>motorSub(x)===kind).sort(byDt).pop();
+  if(!last)return{kind,st:'none',km,mon};
+  const cur=curOdo(m.id),r={kind,km,mon,last,st:'ok',by:'day'};
+  const sevOf=(left,near)=>left<0?2:(left<=near?1:0);
+  let sevKm=-1;
+  if(last.odo!=null&&cur!=null){r.dueKm=last.odo+km;r.leftKm=r.dueKm-cur;sevKm=sevOf(r.leftKm,Math.max(200,km*0.1));}
+  r.dueDate=addMonthsKey(last.date,mon);r.leftDays=daysBetween(todayKey(),r.dueDate);
+  const sevDay=sevOf(r.leftDays,14);
+  r.st=['ok','soon','over'][Math.max(sevKm,sevDay)];
+  if(sevKm>=sevDay&&sevKm>=0)r.by='km';
+  const fk=r.leftKm!=null?Math.max(0,(cur-last.odo)/km):0;
+  const total=daysBetween(last.date,r.dueDate)||1,fd=Math.max(0,daysBetween(last.date,todayKey())/total);
+  r.frac=Math.min(1,Math.max(fk,fd));
+  return r;
+}
+function motorTaxReminder(m){
+  if(!m.taxDue)return{kind:'pajak',st:'none'};
+  const left=daysBetween(todayKey(),m.taxDue);
+  return{kind:'pajak',st:left<0?'over':(left<=30?'soon':'ok'),leftDays:left,dueDate:m.taxDue,frac:Math.min(1,Math.max(0,1-left/365))};
+}
+/* pengingat paling mendesak di semua motor, untuk entri di beranda */
+function motorAlertScan(){
+  let best=null;
+  state.motors.forEach(m=>{
+    [motorReminder(m,'oli'),motorReminder(m,'servis'),motorTaxReminder(m)].forEach(r=>{
+      if(r.st!=='soon'&&r.st!=='over')return;
+      const sev=r.st==='over'?2:1;
+      if(!best||sev>best.sev)best={sev,r,m};
+    });
+  });
+  return best;
+}
+function motorHasReminder(){return state.motors.some(m=>motorReminder(m,'oli').st!=='none'||motorReminder(m,'servis').st!=='none'||motorTaxReminder(m).st!=='none');}
+function motorAlertText(a){
+  const r=a.r,nm=state.motors.length>1?a.m.name+': ':'';
+  const lab=r.kind==='oli'?'Ganti oli':r.kind==='servis'?'Servis':'Pajak';
+  const dayTxt=r.leftDays<0?'lewat '+(-r.leftDays)+' hari':(r.leftDays===0?'hari ini':r.leftDays+' hari lagi');
+  const when=(r.kind!=='pajak'&&r.by==='km')?(r.leftKm<0?'lewat '+fmt(-r.leftKm)+' km':fmt(r.leftKm)+' km lagi'):dayTxt;
+  return (a.sev===2?'⚠️ ':'⏰ ')+nm+lab+' '+when;
+}
+function motorSubCat(sub){return state.cats.find(c=>c.motor===sub);}
+/* buka formulir pengeluaran dengan kategori & motor terpilih; fromHub=true supaya kembali ke dasbor setelah disimpan */
+function motorQuickAdd(sub,mid,fromHub){
+  const c=motorSubCat(sub);
+  if(c)lastUsed.cat=c.id;
+  if(mid)lastUsed.motor=mid;
+  openNewType('expense');
+  if(fromHub)mhReopen=mid||mhSel;
+}
+function renderMotorEntry(){
+  const b=$('#motorEntry');if(!b)return;
+  const any=state.tx.some(x=>isMotorCat(x.catId));
+  const al=motorAlertScan();
+  const from=keyOf(new Date(view.y,view.m,1)),to=keyOf(new Date(view.y,view.m+1,0));
+  const monthCost=sum(state.tx.filter(x=>x.type==='expense'&&isMotorCat(x.catId)&&x.date>=from&&x.date<=to));
+  let sub;
+  if(!any&&!al)sub='Bensin, oli, servis, pajak, dan pengingat jadwalnya';
+  else if(al)sub=motorAlertText(al);
+  else sub=(monthCost>0?rp(monthCost)+' di '+MONTHS[view.m]:'Belum ada biaya di '+MONTHS[view.m])+' · '+(motorHasReminder()?'jadwal aman':'ketuk untuk atur pengingat');
+  const row=b.parentElement;
+  row.classList.toggle('empty-rec',!any&&!al);
+  row.classList.toggle('mh-over',!!al&&al.sev===2);
+  row.classList.toggle('mh-soon',!!al&&al.sev===1);
+  b.innerHTML='<span class="ic" style="background:color-mix(in srgb,#F97316 16%,transparent)">'+((state.motors[0]||{}).emoji||'🏍️')+'</span><span class="mid"><span class="t">Motor</span><span class="s">'+esc(sub)+'</span></span>';
 }
 /* ================= listrik / meteran ================= */
 function isMeterCat(catId){return !!catOf(catId).meter;}
@@ -3727,6 +3920,7 @@ function renderQuickActions(){
     {ic:nxIc('<path d="M4 6h16M4 12h10M4 18h6"/>'),title:'Aturan kategori',desc:'Kata kunci yang memilihkan kategori saat impor.',act:nxRulesUi},
     {ic:nxIc('<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>'),title:'Laporan tahunan',desc:'Setahun penuh, ekspor Excel atau PDF.',act:()=>nxYear(view.y)},
     {ic:ICO.target,title:'Anggaran kategori',desc:'Batas tiap kategori dan sisa yang dibawa.',act:nxCatBudget},
+    {ic:nxIc('<circle cx="5.5" cy="17" r="3"/><circle cx="18.5" cy="17" r="3"/><path d="M8.5 17h5l3-7h-3.5M13 10 10 6H7"/>'),title:'Motor',desc:'Bensin, oli, servis, pajak, dan pengingat jadwalnya.',act:()=>openMotorHub()},
     {ic:SVC_ICO,title:'Jasa transfer',desc:'Transfer untuk orang lain, biaya jasanya jadi pemasukan.',act:()=>openSvcForm(null,null)},
     {ic:DEBT_ICO,title:'Utang & piutang',desc:'Pantau pinjaman, cicilan, dan tenggatnya.',act:()=>openDebtManager()}
   ];
@@ -3807,7 +4001,7 @@ function renderList(){
     html+='<div class="day-head"><span>'+label+'</span><em>'+rp(sum(groups[k].filter(e=>!e.pass&&!e.transferId&&!e.debtId&&e.catId!=='ic-saldo')))+' · '+groups[k].length+' transaksi</em></div>';
     groups[k].forEach(e=>{
       const c=catOf(e.catId),w=walOf(e.walletId),isInc=e.type==='income';
-      const odoTxt=e.odo!=null?motorBadge(e):(e.meter!=null?meterBadge(e):'');
+      const odoTxt=(e.odo!=null||(e.liter!=null&&e.liter>0))?motorBadge(e):(e.meter!=null?meterBadge(e):'');
       const motorTxt=(isMotorCat(e.catId)&&state.motors.length>1)?motorOf(motorIdOf(e)).emoji+' '+esc(motorOf(motorIdOf(e)).name):
         (isMeterCat(e.catId)&&state.meters.length>1)?meterOf(meterIdOf(e)).emoji+' '+esc(meterOf(meterIdOf(e)).name):'';
       html+='<button class="tx" data-id="'+e.id+'" style="animation-delay:'+Math.min(n*22,300)+'ms">'+
@@ -3835,63 +4029,59 @@ function deltaTag(cur,prev){
   if(d<-2)return '<span class="tag down">▼ '+Math.abs(d)+'%</span>';
   return '<span class="tag flat">≈ tetap</span>';
 }
-function motorSubLabel(sub){return sub==='bensin'?'⛽ Bensin':sub==='oli'?'🛢️ Oli mesin':sub==='servis'?'🔧 Servis motor':sub;}
+function motorSubLabel(sub){return({bensin:'⛽ Bensin',oli:'🛢️ Oli mesin',servis:'🔧 Servis motor',pajak:'🧾 Pajak & STNK',sparepart:'🔩 Sparepart & ban',lain:'🧼 Cuci & parkir'})[sub]||sub;}
 function motorRecapHtml(list){
   const motorList=list.filter(e=>isMotorCat(e.catId));
   if(!motorList.length)return '';
   const multi=state.motors.length>1;
+  const from=keyOf(new Date(view.y,view.m,1)),to=keyOf(new Date(view.y,view.m+1,0));
   const bySub={};
-  motorList.forEach(e=>{const s=catOf(e.catId).motor;(bySub[s]=bySub[s]||{sum:0,n:0}).sum+=+e.amount;bySub[s].n++;});
-  const odoEntries=motorList.filter(e=>e.odo!=null)
-    .sort((a,b)=>dtVal(a)===dtVal(b)?(a.createdAt||0)-(b.createdAt||0):(dtVal(a)<dtVal(b)?-1:1));
-  let totalKm=0;
-  const kmBySub={};
-  odoEntries.forEach(e=>{
-    const d=motorKmSub(e);
-    if(d){totalKm+=d.km;const s=catOf(e.catId).motor;(kmBySub[s]=kmBySub[s]||[]).push(d.km);}
-  });
+  motorList.forEach(e=>{const sb=motorSub(e);const g=(bySub[sb]=bySub[sb]||{sum:0,n:0,l:0,kms:[]});g.sum+=+e.amount;g.n++;if(sb==='bensin'&&e.liter>0)g.l+=e.liter;
+    if((sb==='oli'||sb==='servis')&&e.odo!=null){const d=motorKmSub(e);if(d)g.kms.push(d.km);}});
+  const mids=[];motorList.forEach(e=>{const mm=motorIdOf(e);if(mids.indexOf(mm)<0)mids.push(mm);});
+  const kmBy={},fuelBy={};let totalKm=0,fkm=0,fl=0;
+  mids.forEach(mm=>{kmBy[mm]=motorKmIn(mm,from,to);totalKm+=kmBy[mm];const f=motorFuelStats(mm,from,to);fuelBy[mm]=f;fkm+=f.km;fl+=f.l;});
+  const kmpl=fl>0?fkm/fl:null;
   const totalCost=sum(motorList);
-  const lastOdo=state.tx.filter(x=>x.odo!=null).sort((a,b)=>dtVal(a)===dtVal(b)?(b.createdAt||0)-(a.createdAt||0):(dtVal(a)<dtVal(b)?1:-1))[0];
-  let html='<div class="card"><h3>🏍️ Motor</h3><p class="sub">Bensin, oli, dan servis bulan ini'+
-    (!multi&&lastOdo?' · odometer terakhir tercatat '+fmt(lastOdo.odo)+' km':'')+'</p>'+
+  const single=state.motors[0]?curOdo(state.motors[0].id):null;
+  let html='<div class="card"><h3>🏍️ Motor</h3><p class="sub">Bensin, oli, servis, dan biaya motor lain bulan ini'+
+    (!multi&&single!=null?' · odometer '+fmt(single)+' km':'')+'</p>'+
     '<div class="stat-grid">'+
     stat('Total biaya motor',rp(totalCost),motorList.length+' transaksi','#F97316')+
     (totalKm>0?stat('Jarak tercatat',fmt(totalKm)+' km','bulan ini','#22C55E'):
       stat('Jarak tercatat','–','isi odometer di catatan','#22C55E'))+
     (totalKm>0?stat('Biaya per km',rp(totalCost/totalKm),'rata-rata bulan ini','#06B6D4'):'')+
+    (kmpl?stat('Irit bensin',fmtL(kmpl)+' km/L','dari '+fmtL(fl)+' liter','#A855F7'):'')+
     '</div>'+
-    Object.keys(bySub).map(s=>{
-      const g=bySub[s],kms=kmBySub[s]||[];
-      const avgKm=kms.length?kms.reduce((a,b2)=>a+b2,0)/kms.length:0;
-      return '<div class="bar-row"><div class="bar-top"><span class="nm">'+motorSubLabel(s)+'<span class="c">'+g.n+'×</span></span>'+
+    Object.keys(bySub).map(sb=>{
+      const g=bySub[sb];
+      const avgKm=g.kms.length?g.kms.reduce((x,y)=>x+y,0)/g.kms.length:0;
+      let subTxt='';
+      if(sb==='bensin'&&g.l>0)subTxt=fmtL(g.l)+' liter · rata-rata '+rp(g.sum/g.l)+'/liter';
+      else if(avgKm>0)subTxt='rata-rata '+fmt(avgKm)+' km per '+(sb==='servis'?'servis':'ganti');
+      return '<div class="bar-row"><div class="bar-top"><span class="nm">'+motorSubLabel(sb)+'<span class="c">'+g.n+'×</span></span>'+
         '<span class="v">'+rp(g.sum)+'</span></div>'+
-        (avgKm>0?'<div class="bar-sub"><span>rata-rata '+fmt(avgKm)+' km per '+(s==='servis'?'servis':'isi')+'</span></div>':'')+
+        (subTxt?'<div class="bar-sub"><span>'+subTxt+'</span></div>':'')+
         '</div>';
     }).join('');
   if(multi){
-    const byMotor={},kmByMotor={},lastOdoByMotor={};
-    motorList.forEach(e=>{const mid=motorIdOf(e);(byMotor[mid]=byMotor[mid]||{sum:0,n:0}).sum+=+e.amount;byMotor[mid].n++;});
-    odoEntries.forEach(e=>{
-      const mid=motorIdOf(e);
-      const d=motorKmSub(e);
-      if(d)kmByMotor[mid]=(kmByMotor[mid]||0)+d.km;
-      lastOdoByMotor[mid]=e; /* odoEntries terurut naik tanggalnya, jadi yg terakhir ditimpa = odo terbaru */
-    });
+    const byMotor={};
+    motorList.forEach(e=>{const mm=motorIdOf(e);(byMotor[mm]=byMotor[mm]||{sum:0,n:0}).sum+=+e.amount;byMotor[mm].n++;});
     html+='<div style="margin-top:14px;padding-top:14px;border-top:1px dashed var(--line)">'+
       '<div style="font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:8px">Per kendaraan bulan ini</div>'+
       state.motors.map(m=>{
         const g=byMotor[m.id];
         if(!g)return '';
-        const km=kmByMotor[m.id]||0,lo=lastOdoByMotor[m.id];
+        const km=kmBy[m.id]||0,lo=curOdo(m.id);
         return '<div class="bar-row"><div class="bar-top"><span class="e">'+m.emoji+'</span>'+
           '<span class="nm">'+esc(m.name)+'<span class="c">'+g.n+'×</span></span>'+
           '<span class="v">'+rp(g.sum)+'</span></div>'+
           '<div class="bar-sub"><span>'+(km>0?fmt(km)+' km bulan ini':'belum ada km bulan ini')+
-          (lo?' · odometer terakhir '+fmt(lo.odo)+' km':'')+'</span></div></div>';
+          (lo!=null?' · odometer '+fmt(lo)+' km':'')+'</span></div></div>';
       }).join('')+
     '</div>';
   }
-  html+='</div>';
+  html+='<button type="button" class="btn ghost" data-motorhub="" style="margin-top:14px">Buka dasbor motor</button></div>';
   return html;
 }
 function elecRecapHtml(list){
@@ -4334,13 +4524,13 @@ async function exportCSV(list,filename){
   if(!list.length){toast('Tidak ada data untuk diunduh');return;}
   list=list.slice().sort((a,b)=>dtVal(a)<dtVal(b)?-1:1);
   const safe=t=>{t=String(t==null?'':t);return /^[=+\-@\t\r]/.test(t)?"'"+t:t;}; /* cegah teks dibaca sebagai rumus di Excel */
-  const rows=[['Tanggal','Waktu','Tipe','Kategori','Dompet','Motor','Odometer (km)','Meteran Listrik','Angka Meteran (kWh)','Token Diisi (kWh)','Catatan','Nominal','Waktu Perkiraan','Dihitung di ringkasan','Klien/Proyek','Status Sedekah','Penerima Sedekah']];
+  const rows=[['Tanggal','Waktu','Tipe','Kategori','Dompet','Motor','Odometer (km)','Meteran Listrik','Angka Meteran (kWh)','Token Diisi (kWh)','Catatan','Nominal','Waktu Perkiraan','Dihitung di ringkasan','Klien/Proyek','Status Sedekah','Penerima Sedekah','Liter Bensin','Isi Penuh']];
   list.forEach(e=>rows.push([e.date,timeOf(e),e.type==='income'?'Pemasukan':'Pengeluaran',safe(catOf(e.catId).name),safe(walOf(e.walletId).name),
     isMotorCat(e.catId)?safe(motorOf(motorIdOf(e)).name):'',e.odo!=null?String(e.odo):'',
     isMeterCat(e.catId)?safe(meterOf(meterIdOf(e)).name):'',e.meter!=null?String(e.meter):'',e.topup!=null?String(e.topup):'',
     safe(e.note||''),String(Math.round(e.amount)),e.approx?'Ya':'',
     (e.transferId||e.debtId||e.pass||e.sdk==='ret'||e.catId==='ic-saldo')?'Tidak':'Ya',safe(e.client||''),
-    e.sdk==='ret'?'Pengembalian':(e.type==='expense'&&isSdkWal(e.walletId)?(isSdkCat(e.catId)?'Penyaluran':(e.sdk==='free'?'Keluar (bukan pinjaman)':'Pinjaman')):''),safe(e.sdkTo||'')]));
+    e.sdk==='ret'?'Pengembalian':(e.type==='expense'&&isSdkWal(e.walletId)?(isSdkCat(e.catId)?'Penyaluran':(e.sdk==='free'?'Keluar (bukan pinjaman)':'Pinjaman')):''),safe(e.sdkTo||''),(e.liter!=null&&e.liter>0)?String(e.liter):'',e.liter>0?(e.full===false?'Tidak':'Ya'):'']));
   const csv='\uFEFF'+rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(';')).join('\r\n');
   await deliver(filename,csv,'text/csv');
 }
@@ -5164,9 +5354,170 @@ function renderCats(){
   attachReorder($('#motorList'),state.motors,()=>{save();renderAll();toast('Urutan motor diperbarui');});
   attachReorder($('#meterList'),state.meters,()=>{save();renderAll();toast('Urutan meteran diperbarui');});
 }
-function openMotorSheet(existing){
+
+/* ================= dasbor motor ================= */
+function mhBounds(r){
+  const t=new Date();
+  if(r==='m')return{from:keyOf(new Date(view.y,view.m,1)),to:keyOf(new Date(view.y,view.m+1,0)),label:MONTHS[view.m]+' '+view.y};
+  if(r==='6')return{from:keyOf(new Date(t.getFullYear(),t.getMonth()-5,1)),to:null,label:'6 bulan terakhir'};
+  return{from:null,to:null,label:'semua waktu'};
+}
+function mhIn(date,b){return(!b.from||date>=b.from)&&(!b.to||date<=b.to);}
+function mhRemHtml(r,m){
+  const icon=r.kind==='oli'?'🛢️':r.kind==='servis'?'🔧':'🧾';
+  const title=r.kind==='oli'?'Ganti oli':r.kind==='servis'?'Servis berkala':'Pajak tahunan (STNK)';
+  const lab={ok:'Aman',soon:'Segera',over:'Terlewat',none:r.kind==='pajak'?'Belum diatur':'Belum ada data'}[r.st];
+  const col={ok:'var(--mint)',soon:'var(--amber)',over:'var(--rose)',none:'var(--ink-3)'}[r.st];
+  let h='<div class="mh-rem"><div class="top"><span class="e">'+icon+'</span><b>'+title+'</b><span class="mh-st '+r.st+'">'+lab+'</span></div>';
+  if(r.st==='none'){
+    h+=r.kind==='pajak'?
+      '<div class="meta"><span>Isi tanggal jatuh tempo pajak lewat tombol Pengingat &amp; motor, nanti diingatkan sebelum telat.</span></div>':
+      '<div class="meta"><span>Catat '+title.toLowerCase()+' dengan odometernya, pengingat langsung jalan. Jadwal: tiap '+fmt(r.km)+' km atau '+r.mon+' bulan.</span></div>';
+    return h+'</div>';
+  }
+  h+='<div class="bar"><i style="width:'+Math.round(r.frac*100)+'%;background:'+col+'"></i></div>';
+  if(r.kind==='pajak'){
+    const dt=parseKey(r.dueDate);
+    h+='<div class="meta"><b>'+(r.leftDays<0?'lewat '+(-r.leftDays)+' hari':(r.leftDays===0?'jatuh tempo hari ini':r.leftDays+' hari lagi'))+'</b> <span>· '+dt.getDate()+' '+MON3[dt.getMonth()]+' '+dt.getFullYear()+'</span></div>'+
+      '<button type="button" class="tchip" id="mhTax" style="margin-top:8px">✅ Sudah bayar, majukan 1 tahun</button>';
+    return h+'</div>';
+  }
+  const parts=[];
+  if(r.leftKm!=null)parts.push(r.leftKm>=0?'<b>'+fmt(r.leftKm)+' km</b> lagi':'lewat <b>'+fmt(-r.leftKm)+' km</b>');
+  parts.push(r.leftDays>=0?'<b>'+r.leftDays+' hari</b> lagi':'lewat <b>'+(-r.leftDays)+' hari</b>');
+  const dt=parseKey(r.last.date);
+  h+='<div class="meta">'+parts.join(' <span>·</span> ')+'</div>'+
+    '<div class="meta"><span>Terakhir '+dt.getDate()+' '+MON3[dt.getMonth()]+(r.last.odo!=null?' di '+fmt(r.last.odo)+' km':' (tanpa odometer, isi odometer di catatan berikutnya supaya hitungan km jalan)')+' · jadwal tiap '+fmt(r.km)+' km / '+r.mon+' bulan</span></div>';
+  return h+'</div>';
+}
+function openMotorHub(mid,range){
+  if(!state.motors.length)return;
+  if(range)mhRange=range;
+  mid=mid||mhSel||lastUsed.motor||state.motors[0].id;
+  if(!state.motors.some(x=>x.id===mid))mid=state.motors[0].id;
+  mhSel=mid;
+  const m=motorOf(mid),b=mhBounds(mhRange);
+  const keepScroll=sheetOpen&&$('#sheetTitle').textContent==='Motor'?$('#sheetBody').scrollTop:0;
+  const all=motorTx(mid).sort(byDt);
+  const cur=curOdo(mid),pts=motorOdoPoints(mid),lastPt=pts.length?pts[pts.length-1]:null;
+  let h='';
+  if(state.motors.length>1)
+    h+='<div class="mh-chips">'+state.motors.map(x=>'<button type="button" class="tchip" data-mhm="'+esc(x.id)+'" aria-pressed="'+(x.id===mid)+'">'+x.emoji+' '+esc(x.name)+'</button>').join('')+'</div>';
+  h+='<div class="mh-hero" style="--mc:'+m.color+'"><span class="em">'+m.emoji+'</span><div style="min-width:0"><small>Odometer sekarang</small>'+
+    '<b class="num">'+(cur!=null?fmt(cur)+'<span>km</span>':'–')+'</b>'+
+    '<div class="sub2">'+(lastPt?'Terakhir dicatat '+recLbl(lastPt.date):'Belum ada catatan odometer')+'</div></div></div>'+
+    '<div class="mh-actions"><button type="button" class="btn ghost" id="mhOdo">📍 Perbarui odometer</button>'+
+    '<button type="button" class="btn ghost" id="mhSet">⚙️ Pengingat &amp; motor</button></div>';
+  const qs=[['bensin','⛽','Isi bensin'],['oli','🛢️','Ganti oli'],['servis','🔧','Servis'],['sparepart','➕','Lainnya']].filter(q=>motorSubCat(q[0]));
+  if(qs.length)h+='<div class="mh-q">'+qs.map(q=>'<button type="button" data-mhq="'+q[0]+'"><span class="e">'+q[1]+'</span>'+q[2]+'</button>').join('')+'</div>';
+  h+='<div class="mh-sec" style="margin-top:4px">Pengingat</div>'+
+    mhRemHtml(motorReminder(m,'oli'),m)+mhRemHtml(motorReminder(m,'servis'),m)+mhRemHtml(motorTaxReminder(m),m);
+  if(!all.length){
+    h+='<div class="empty" style="padding:26px 8px"><span class="em">🏍️</span><b>Belum ada catatan untuk '+esc(m.name)+'</b>'+
+      '<p>Mulai dari isi bensin, ganti oli, atau servis. Isi odometernya supaya jarak, biaya per km, dan pengingat ikut terhitung.</p></div>';
+    openSheet('Motor',h,()=>mhWire(mid,m));
+    return;
+  }
+  h+='<div class="mh-sec">Ringkasan</div><div class="tchips">'+
+    [['m',MONTHS[view.m]],['6','6 bulan'],['all','Semua']].map(r=>'<button type="button" class="tchip" data-mhr="'+r[0]+'" aria-pressed="'+(mhRange===r[0])+'">'+r[1]+'</button>').join('')+'</div>';
+  const txs=all.filter(x=>mhIn(x.date,b)),total=sum(txs);
+  const km=motorKmIn(mid,b.from,b.to),fs=motorFuelStats(mid,b.from,b.to);
+  const fuelTx=txs.filter(x=>motorSub(x)==='bensin'),lTx=fuelTx.filter(x=>x.liter>0);
+  const lSum=lTx.reduce((a,x)=>a+x.liter,0),lAmt=sum(lTx);
+  h+='<div class="stat-grid">'+
+    stat('Total biaya',rp(total),txs.length+' transaksi · '+b.label,'#F97316')+
+    stat('Jarak tempuh',km>0?fmt(km)+' km':'–',km>0?b.label:'isi odometer di catatan','#22C55E')+
+    stat('Biaya per km',km>0&&total>0?rp(total/km):'–','semua biaya motor','#06B6D4')+
+    stat('Irit bensin',fs.kmpl?fmtL(fs.kmpl)+' km/L':'–',fs.kmpl?fs.n+' pengisian terukur':'isi liter + odometer','#A855F7')+
+    stat('Harga per liter',lSum>0?rp(lAmt/lSum):'–',lSum>0?fmtL(lSum)+' liter':'isi liter di catatan bensin','#EAB308')+
+    stat('Bensin',rp(sum(fuelTx)),fuelTx.length+'× isi','#EF4444')+
+    '</div>';
+  if(!motorFuelSegs(mid).length)
+    h+='<p class="qhint">Cara hitung km/L: tiap isi bensin, isi jumlah liter dan odometer, lalu centang “tangki diisi sampai penuh” kalau memang penuh. Setelah dua kali isi penuh, hasilnya muncul otomatis.</p>';
+  /* rincian per kategori */
+  const bySub={};
+  txs.forEach(x=>{const sb=motorSub(x);(bySub[sb]=bySub[sb]||{sum:0,n:0,c:catOf(x.catId)});bySub[sb].sum+=+x.amount;bySub[sb].n++;});
+  const keys=Object.keys(bySub).sort((x,y)=>bySub[y].sum-bySub[x].sum);
+  if(keys.length){
+    h+='<div class="mh-sec">Rincian biaya</div>'+keys.map(k=>{
+      const g=bySub[k];
+      return '<div class="bar-row"><div class="bar-top"><span class="e">'+g.c.emoji+'</span><span class="nm">'+esc(g.c.name)+'<span class="c">'+g.n+'×</span></span><span class="v">'+rp(g.sum)+'</span></div>'+
+        '<div class="bar"><i style="width:'+Math.max(2,Math.round(g.sum/(total||1)*100))+'%;background:'+g.c.color+'"></i></div>'+
+        '<div class="bar-sub"><span>'+pct(g.sum,total)+'% dari total</span></div></div>';
+    }).join('');
+  }
+  /* tren 6 bulan */
+  const now=new Date(),months=[];
+  for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);months.push({y:d.getFullYear(),mo:d.getMonth(),fuel:0,other:0});}
+  all.forEach(x=>{const d=parseKey(x.date);const t=months.find(q=>q.y===d.getFullYear()&&q.mo===d.getMonth());if(t){if(motorSub(x)==='bensin')t.fuel+=+x.amount;else t.other+=+x.amount;}});
+  const mx=Math.max.apply(null,months.map(q=>q.fuel+q.other));
+  if(mx>0){
+    h+='<div class="mh-sec">Biaya 6 bulan terakhir</div><div class="mh-trend">'+months.map(q=>{
+      const tt=q.fuel+q.other,hh=tt>0?Math.max(4,Math.round(tt/mx*78)):0;
+      return '<div><em>'+(tt>0?shortRp(tt):'')+'</em><div class="col" style="height:'+hh+'px">'+
+        (q.other>0?'<i style="height:'+Math.round(q.other/tt*100)+'%;background:var(--accent)"></i>':'')+
+        (q.fuel>0?'<i style="height:'+Math.round(q.fuel/tt*100)+'%;background:#F97316"></i>':'')+'</div><small>'+MON3[q.mo]+'</small></div>';
+    }).join('')+'</div><div class="mh-leg"><span><i style="background:#F97316"></i>Bensin</span><span><i style="background:var(--accent)"></i>Oli, servis &amp; lainnya</span></div>';
+  }
+  /* riwayat terbaru */
+  const recent=all.slice().reverse().slice(0,8);
+  h+='<div class="mh-sec">Catatan terbaru</div>'+recent.map(x=>{
+    const c=catOf(x.catId),bd=motorBadge(x);
+    return '<button type="button" class="li-item svc-item" data-mhe="'+esc(x.id)+'"><span class="ic" style="background:color-mix(in srgb,'+c.color+' 16%,transparent)">'+c.emoji+'</span>'+
+      '<span class="mid"><span class="t">'+esc(c.name)+(x.note?' · '+esc(x.note):'')+'</span><span class="s">'+recLbl(x.date)+(bd?' · '+bd:'')+'</span></span>'+
+      '<span class="dv-amt num exp">'+rp(x.amount)+'</span></button>';
+  }).join('')+(all.length>8?'<p class="qhint" style="text-align:center">Menampilkan 8 terbaru dari '+all.length+' catatan. Selengkapnya ada di daftar pengeluaran.</p>':'');
+  openSheet('Motor',h,()=>mhWire(mid,m));
+  $('#sheetBody').scrollTop=keepScroll;
+}
+function mhWire(mid,m){
+  $$('#sheetBody [data-mhm]').forEach(b=>b.addEventListener('click',()=>openMotorHub(b.dataset.mhm)));
+  $$('#sheetBody [data-mhr]').forEach(b=>b.addEventListener('click',()=>openMotorHub(mid,b.dataset.mhr)));
+  $$('#sheetBody [data-mhq]').forEach(b=>b.addEventListener('click',()=>motorQuickAdd(b.dataset.mhq,mid,true)));
+  $$('#sheetBody [data-mhe]').forEach(b=>b.addEventListener('click',()=>{openEntry(b.dataset.mhe);mhReopen=mid;}));
+  $('#mhOdo').addEventListener('click',()=>openOdoSheet(mid));
+  $('#mhSet').addEventListener('click',()=>openMotorSheet(m,()=>openMotorHub(mid)));
+  const tx=$('#mhTax');
+  if(tx)tx.addEventListener('click',()=>{
+    m.taxDue=addMonthsKey(m.taxDue,12);
+    save();renderAll();
+    const dt=parseKey(m.taxDue);toast('Pajak berikutnya '+dt.getDate()+' '+MON3[dt.getMonth()]+' '+dt.getFullYear());
+    openMotorHub(mid);
+  });
+}
+function openOdoSheet(mid){
+  const m=motorOf(mid),cur=curOdo(mid),txMax=maxTxOdo(mid);
+  openSheet('Perbarui odometer',
+    '<p class="qhint" style="margin-top:0">'+(cur!=null?'Odometer terakhir tercatat <b>'+fmt(cur)+' km</b>. ':'')+'Lihat angka di spidometer motor lalu isi di bawah. Pengingat oli dan servis memakai angka ini.</p>'+
+    '<div class="field"><label for="odoNowIn">Odometer '+esc(m.name)+' sekarang (km)</label>'+
+      '<input class="inp" id="odoNowIn" type="number" inputmode="numeric" min="0" step="1" placeholder="Contoh: 15230" value="'+(cur!=null?cur:'')+'">'+
+      '<div id="odoNowHint" class="qhint" style="margin:6px 0 0"></div></div>'+
+    '<button type="button" class="btn" id="odoNowSave">Simpan</button>',
+    ()=>{
+      const inp=$('#odoNowIn'),hint=$('#odoNowHint');
+      function upd(){
+        const v=inp.value===''?null:+inp.value;
+        if(v==null||!isFinite(v)){hint.innerHTML='';return;}
+        if(txMax!=null&&v<txMax)hint.innerHTML='<span style="color:var(--rose)">Lebih kecil dari odometer di catatan transaksi ('+fmt(txMax)+' km).</span>';
+        else if(cur!=null&&v>cur)hint.innerHTML='<b style="color:var(--mint)">+'+fmt(v-cur)+' km</b> dari catatan terakhir.';
+        else hint.innerHTML='';
+      }
+      inp.addEventListener('input',upd);upd();
+      setTimeout(()=>{inp.focus();inp.select();},420);
+      $('#odoNowSave').addEventListener('click',()=>{
+        const raw=inp.value.trim(),v=raw===''?NaN:+raw;
+        if(!isFinite(v)||v<0){inp.focus();toast('Isi angka odometernya dulu ya',ICO_ALERT);return;}
+        if(txMax!=null&&v<txMax){inp.focus();toast('Angkanya lebih kecil dari catatan transaksi ('+fmt(txMax)+' km). Kalau catatan itu salah ketik, perbaiki dulu.',ICO_ALERT,3600);return;}
+        m.odoNow={odo:Math.round(v),date:todayKey()};
+        save();renderAll();toast('Odometer diperbarui · '+fmt(v)+' km');
+        openMotorHub(mid);
+      });
+    });
+}
+function openMotorSheet(existing,after){
   let emoji=existing?existing.emoji:MOTOR_EMOJIS[0];
   let color=existing?existing.color:PALETTE[8];
+  const num=(id,ph,val,min,step)=>'<input class="inp" id="'+id+'" type="number" inputmode="numeric" min="'+min+'" step="'+step+'" placeholder="'+ph+'" value="'+(val||'')+'">';
   openSheet(existing?'Ubah motor':'Motor baru',
     '<div class="field"><label for="moname">Nama motor</label>'+
       '<input class="inp" id="moname" placeholder="Contoh: Vario merah, Beat istri" maxlength="24" value="'+esc(existing?existing.name:'')+'"></div>'+
@@ -5174,6 +5525,16 @@ function openMotorSheet(existing){
       MOTOR_EMOJIS.map(e=>'<button class="emo" data-e="'+e+'" aria-pressed="'+(e===emoji)+'">'+e+'</button>').join('')+'</div></div>'+
     '<div class="field"><label>Warna</label><div class="swatches" id="swGrid">'+
       PALETTE.map(c=>'<button class="sw" data-c="'+c+'" style="background:'+c+'" aria-pressed="'+(c===color)+'" aria-label="Warna"></button>').join('')+'</div></div>'+
+    '<div class="subhead" style="margin-top:6px"><b>Pengingat jadwal</b><span>dihitung dari catatan terakhir</span></div>'+
+    '<div class="field"><label>Ganti oli tiap</label><div class="row" style="gap:8px">'+
+      '<div style="flex:1;min-width:0">'+num('moOliKm',fmt(MO_DEF.oliKm),existing&&existing.oliKm,100,100)+'<div class="qhint" style="margin:4px 2px 0">km</div></div>'+
+      '<div style="flex:1;min-width:0">'+num('moOliMon',MO_DEF.oliMon,existing&&existing.oliMon,1,1)+'<div class="qhint" style="margin:4px 2px 0">bulan</div></div></div></div>'+
+    '<div class="field"><label>Servis berkala tiap</label><div class="row" style="gap:8px">'+
+      '<div style="flex:1;min-width:0">'+num('moSvKm',fmt(MO_DEF.svKm),existing&&existing.svKm,100,100)+'<div class="qhint" style="margin:4px 2px 0">km</div></div>'+
+      '<div style="flex:1;min-width:0">'+num('moSvMon',MO_DEF.svMon,existing&&existing.svMon,1,1)+'<div class="qhint" style="margin:4px 2px 0">bulan</div></div></div>'+
+      '<p class="qhint" style="margin:6px 0 0">Kosongkan untuk pakai angka bawaan. Pengingat menyala begitu salah satunya (km atau bulan) hampir tercapai.</p></div>'+
+    '<div class="field"><label for="moTax">Jatuh tempo pajak tahunan <span style="color:var(--ink-3);font-weight:500">(opsional)</span></label>'+
+      '<input class="inp" id="moTax" type="date" value="'+esc(existing&&existing.taxDue?existing.taxDue:'')+'"></div>'+
     '<button class="btn" id="saveMotor" style="margin-top:8px">'+(existing?'Simpan perubahan':'Tambah motor')+'</button>',
     ()=>{
       $$('#emoGrid .emo').forEach(b=>b.addEventListener('click',()=>{emoji=b.dataset.e;
@@ -5184,9 +5545,13 @@ function openMotorSheet(existing){
       $('#saveMotor').addEventListener('click',()=>{
         const name=$('#moname').value.trim();
         if(!name){$('#moname').focus();toast('Nama motor belum diisi');return;}
-        if(existing){Object.assign(existing,{name,emoji,color});}
-        else{state.motors.push({id:'mo-'+uid(),name,emoji,color});}
-        save();closeSheet();renderAll();toast(existing?'Motor diperbarui':'Motor "'+name+'" ditambahkan');
+        const pn=(id,min,max)=>{const raw=$(id).value.trim();if(raw==='')return undefined;const v=Math.round(+raw);return(isFinite(v)&&v>=min&&v<=max)?v:undefined;};
+        const extra={oliKm:pn('#moOliKm',100,50000),oliMon:pn('#moOliMon',1,60),svKm:pn('#moSvKm',100,100000),svMon:pn('#moSvMon',1,60),taxDue:$('#moTax').value||undefined};
+        if(existing){Object.assign(existing,{name,emoji,color},extra);}
+        else{state.motors.push(Object.assign({id:'mo-'+uid(),name,emoji,color},extra));}
+        const msg=existing?'Motor diperbarui':'Motor "'+name+'" ditambahkan';
+        if(after){save();renderAll();toast(msg);after();}
+        else{save();closeSheet();renderAll();toast(msg);}
       });
     });
 }
@@ -5268,7 +5633,7 @@ function openSheet(title,body,after){
   nxTagBar();
 }
 function closeSheet(){
-  recCtx=null;
+  recCtx=null;mhReopen=null;
   $('#scrim').classList.remove('on');$('#sheet').classList.remove('on');$('#fab').classList.remove('hide');
   $('#fabQ').classList.remove('hide');
   sheetOpen=false;document.body.style.overflow='';document.documentElement.classList.remove('sheet-lock');
@@ -5492,6 +5857,12 @@ function entryForm(e,forceType,draft){
     '<input class="inp" id="odo" type="number" inputmode="numeric" min="0" step="1" placeholder="Contoh: 15230" value="'+(e&&e.odo!=null?e.odo:'')+'">'+
     '<div id="odoHint" style="font-size:11.5px;color:var(--ink-3);margin-top:6px;line-height:1.5"></div>'+
   '</div>'+
+  '<div class="field" id="litField"'+(catOf(selC).motor==='bensin'?'':' style="display:none"')+'>'+
+    '<label for="liter">Liter yang diisi <span style="color:var(--ink-3);font-weight:500">(opsional)</span></label>'+
+    '<input class="inp" id="liter" type="number" inputmode="decimal" min="0" step="0.01" placeholder="Contoh: 3.5" value="'+(e&&e.liter!=null?e.liter:'')+'">'+
+    '<label class="chk" style="margin-top:8px"><input type="checkbox" id="fullTank"'+((e&&e.full===false)?'':' checked')+'><span><b>Tangki diisi sampai penuh</b>Dipakai untuk menghitung irit bensin (km per liter). Hilangkan centang kalau cuma isi sebagian.</span></label>'+
+    '<div id="litHint" style="font-size:11.5px;color:var(--ink-3);margin-top:8px;line-height:1.5"></div>'+
+  '</div>'+
   (state.meters.length>1?'<div class="field" id="meterField"'+(isMeterCat(selC)?'':' style="display:none"')+'>'+
     '<label>Meteran</label><div class="pick" id="meterPick">'+meterPickHtml(selMe)+'</div></div>':'')+
   '<div class="field" id="mtrField"'+(isMeterCat(selC)?'':' style="display:none"')+'>'+
@@ -5646,6 +6017,25 @@ function wireEntry(existing,draft,forceType){
     else if(cur>last.odo)hintEl.innerHTML='Odometer terakhir'+motorTxt+': <b>'+lastTxt+'</b> → <b style="color:var(--mint)">'+fmt(cur-last.odo)+' km</b> ditempuh sejak itu.';
     else hintEl.innerHTML='<span style="color:var(--rose)">Angka sebaiknya lebih besar dari catatan terakhir ('+lastTxt+').</span>';
   }
+  function updateLitHint(){
+    const h=$('#litHint');if(!h)return;
+    if(catOf(cat).motor!=='bensin'){h.innerHTML='';return;}
+    const lEl=$('#liter'),oEl=$('#odo'),fEl=$('#fullTank'),dEl=$('#date'),tEl=$('#time');
+    const lv=lEl&&lEl.value!==''?+lEl.value:null,ov=oEl&&oEl.value!==''?+oEl.value:null;
+    let amtV=0;try{amtV=readMoney(amt)||0;}catch(err){amtV=0;}
+    const lines=[];
+    if(lv>0&&amtV>0)lines.push('Harga per liter ≈ <b>'+rp(amtV/lv)+'</b>');
+    const full=!(fEl&&!fEl.checked);
+    if(lv>0&&ov!=null&&full){
+      const date=(dEl&&dEl.value)||todayKey(),time=(tEl&&tEl.value)||nowTime();
+      const v={id:'__new',catId:cat,motorId:motorId,date,time,createdAt:existing?(existing.createdAt||0):Date.now(),odo:ov,liter:lv,full:true,amount:amtV};
+      const base=motorTx(motorId).filter(x=>x.id!==(existing?existing.id:null)&&motorSub(x)==='bensin');
+      const seg=fuelSegsOf(base.concat([v])).find(sg=>sg.x===v);
+      if(seg)lines.push('Irit bensin: <b style="color:var(--mint)">'+fmtL(seg.kmpl)+' km/L</b> ('+fmt(seg.km)+' km dengan '+fmtL(seg.l)+' liter)');
+      else lines.push('Belum bisa dihitung km/L: perlu isi penuh sebelumnya yang punya odometer, dan semua isi di antaranya ada literannya.');
+    }
+    h.innerHTML=lines.join('<br>');
+  }
   function updateMtrLabels(){
     const lbl=$('#mtrLabel'),tf=$('#topupField');
     const prabayar=meterType(meterId)!=='pascabayar';
@@ -5690,20 +6080,26 @@ function wireEntry(existing,draft,forceType){
     const mf=$('#motorField');if(mf)mf.style.display=isMotorCat(cat)?'':'none';
     const ef=$('#mtrField');if(ef)ef.style.display=isMeterCat(cat)?'':'none';
     const mef=$('#meterField');if(mef)mef.style.display=isMeterCat(cat)?'':'none';
+    const lf=$('#litField');if(lf)lf.style.display=(catOf(cat).motor==='bensin')?'':'none';
     updateOdoHint();
+    updateLitHint();
     updateMtrLabels();
     updateMtrHint();
     paintSdkEntry();
   }
   function wireOdoInputs(){
-    const odoEl=$('#odo');if(odoEl)odoEl.addEventListener('input',updateOdoHint);
+    const odoEl=$('#odo');if(odoEl)odoEl.addEventListener('input',()=>{updateOdoHint();updateLitHint();});
     const mtrEl=$('#mtr');if(mtrEl)mtrEl.addEventListener('input',updateMtrHint);
-    const dateEl=$('#date');if(dateEl)dateEl.addEventListener('change',()=>{updateOdoHint();updateMtrHint();});
+    const dateEl=$('#date');if(dateEl)dateEl.addEventListener('change',()=>{updateOdoHint();updateMtrHint();updateLitHint();});
+    const timeEl=$('#time');if(timeEl)timeEl.addEventListener('change',updateLitHint);
+    const litEl=$('#liter');if(litEl)litEl.addEventListener('input',updateLitHint);
+    const fullEl=$('#fullTank');if(fullEl)fullEl.addEventListener('change',updateLitHint);
+    amt.addEventListener('input',updateLitHint);
   }
   function wireMotorClicks(){
     $$('#motorPick .cp').forEach(b=>b.addEventListener('click',()=>{motorId=b.dataset.mo;
       $$('#motorPick .cp').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
-      updateOdoHint();}));
+      updateOdoHint();updateLitHint();}));
   }
   function wireMeterClicks(){
     $$('#meterPick .cp').forEach(b=>b.addEventListener('click',()=>{meterId=b.dataset.me;
@@ -5774,6 +6170,12 @@ function wireEntry(existing,draft,forceType){
       const odoEl=$('#odo'),raw=odoEl?odoEl.value.trim():'';
       if(raw!=='')odo=+raw;
     }
+    let liter=null,full;
+    if(catOf(cat).motor==='bensin'){
+      const lEl=$('#liter'),rl=lEl?lEl.value.trim().replace(',','.'):'';
+      if(rl!==''){const lv=+rl;if(isFinite(lv)&&lv>0)liter=Math.round(lv*100)/100;}
+      const fEl=$('#fullTank');full=(fEl&&!fEl.checked)?false:undefined;
+    }
     let mtr=null,topup=null;
     if(isMeterCat(cat)){
       const mtrEl=$('#mtr'),raw2=mtrEl?mtrEl.value.trim():'';
@@ -5798,10 +6200,10 @@ function wireEntry(existing,draft,forceType){
     let ph={},phErr=false;
     try{ph=await pf.commit(txId);}catch(err){phErr=true;}
     if(existing){
-      Object.assign(existing,{amount:v,catId:cat,walletId:wal,date,time,approx,incomplete:undefined,note,client,odo,motorId:mid,meter:mtr,topup,meterId:meid},ph,sx);
+      Object.assign(existing,{amount:v,catId:cat,walletId:wal,date,time,approx,incomplete:undefined,note,client,odo,liter,full,motorId:mid,meter:mtr,topup,meterId:meid},ph,sx);
       toast('Perubahan tersimpan');
     }else{
-      state.tx.push(Object.assign({id:txId,type:curType,amount:v,catId:cat,walletId:wal,date,time,approx,note,client,odo,motorId:mid,meter:mtr,topup,meterId:meid,createdAt:Date.now()},ph,sx));
+      state.tx.push(Object.assign({id:txId,type:curType,amount:v,catId:cat,walletId:wal,date,time,approx,note,client,odo,liter,full,motorId:mid,meter:mtr,topup,meterId:meid,createdAt:Date.now()},ph,sx));
       celebrate(curType==='income'?'var(--mint)':'var(--accent)');
     }
     lastUsed.type=curType;if(!isSdkWal(wal))lastUsed.wal=wal;
@@ -5810,9 +6212,11 @@ function wireEntry(existing,draft,forceType){
     if(meid)lastUsed.meter=meid;
     if(curType==='expense')lastUsed.cat=cat;else lastUsed.icat=cat;
     save();
+    const mhBack=mhReopen;
     const d=parseKey(date);view.y=d.getFullYear();view.m=d.getMonth();
     view.listType=curType;
     closeSheet();renderAll();
+    if(mhBack)setTimeout(()=>openMotorHub(mhBack),320);
     if(phErr)setTimeout(()=>toast('Foto gagal disimpan, catatan tetap tersimpan',ICO_ALERT),1500);
     if(!existing&&sx.sdkDue)setTimeout(()=>sdkNotice('borrow',wal,v,sx.sdkDue),350);
     else if(sx.sdk==='ret')setTimeout(()=>sdkNotice('ret',wal,v),350);
@@ -6770,7 +7174,7 @@ function renderAll(){
   if(view.tab==='cats')renderCats();
   moveGlider();
   moveSegGlider($('#listSeg'));
-  renderQuickActions();renderSvcEntry();renderRecEntry();renderSdkDue();renderSdkNudge();renderDataNudge();renderDebtDue();renderRecDue();
+  renderQuickActions();renderSvcEntry();renderMotorEntry();renderRecEntry();renderSdkDue();renderSdkNudge();renderDataNudge();renderDebtDue();renderRecDue();
   checkRemind();
 }
 
@@ -8391,6 +8795,9 @@ function openSvcForm(ex,done){
 }
 $('#svcEntry').addEventListener('click',()=>openSvcManager());
 $('#svcAdd').addEventListener('click',()=>openSvcForm(null,null));
+$('#motorEntry').addEventListener('click',()=>openMotorHub());
+$('#motorAdd').addEventListener('click',()=>motorQuickAdd('bensin',null,false));
+document.addEventListener('click',ev=>{const t=ev.target.closest?ev.target.closest('[data-motorhub]'):null;if(t)openMotorHub(t.dataset.motorhub||undefined);});
 $('#sideSvcBtn').addEventListener('click',()=>openSvcManager());
 
 /* ================= kunci aplikasi: PIN + biometrik (opsional) =================
