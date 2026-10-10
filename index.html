@@ -7647,7 +7647,7 @@ function wireQuick(){
 }
 
 /* ================= CATAT AI: suara, ketik, foto struk -> catatan. Diproses di perangkat (tanpa server Kantong) ================= */
-const CA={td:[],pd:[],rm:new Set(),on:false,rec:null,hist:null,timer:0,fail:0,base:'',com:'',local:false,retry:0,saving:false};
+const CA={td:[],pd:[],rm:new Set(),on:false,rec:null,hist:null,timer:0,fail:0,base:'',com:'',sid:0,wd:0,saving:false};
 const CA_SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 const CA_W={nol:0,satu:1,dua:2,tiga:3,empat:4,lima:5,enam:6,tujuh:7,delapan:8,sembilan:9,sepuluh:10,sebelas:11};
 const CA_WR=new RegExp('\\b(?:seratus|seribu|sejuta|semiliar|semilyar|sepuluh|sebelas|nol|satu|dua|tiga|empat|lima|enam|tujuh|delapan|sembilan|belas|puluh|ratus|ribu|juta|miliar|milyar|setengah|koma)(?:\\s+(?:seratus|seribu|sejuta|semiliar|semilyar|sepuluh|sebelas|nol|satu|dua|tiga|empat|lima|enam|tujuh|delapan|sembilan|belas|puluh|ratus|ribu|juta|miliar|milyar|setengah|koma))*\\b','gi');
@@ -7919,31 +7919,54 @@ async function caPhotos(files){
 function caListen(){
   if(CA.on){caStop();return;}
   if(!CA_SR){toast('Peramban ini belum mendukung suara. Ketik saja, atau pakai ikon mikrofon di keyboard HP.',ICO_ALERT,4500);return;}
-  CA.base=$('#caText').value.trim();CA.com='';CA.fail=0;CA.local='processLocally' in CA_SR.prototype;CA.on=true;caMicUi();caSession();
+  CA.base=$('#caText').value.trim();CA.com='';CA.fail=0;CA.on=true;caMicUi();caSession();
   try{navigator.vibrate&&navigator.vibrate(15);}catch(e){}
 }
-function caStop(){CA.on=false;try{CA.rec&&CA.rec.stop();}catch(e){}caMicUi();}
+/* berhenti: batalkan sesi lama sepenuhnya (abort melepas mikrofon seketika; stop() bisa menggantung menunggu server) */
+function caStop(msg){
+  CA.on=false;clearTimeout(CA.wd);CA.sid++;
+  const r=CA.rec;CA.rec=null;
+  if(r){
+    try{r.onstart=r.onresult=r.onerror=r.onend=null;}catch(e){}
+    try{r.abort();}catch(e){try{r.stop();}catch(e2){}}
+  }
+  caMicUi();
+  if(msg)toast(msg,ICO_ALERT,4500);
+}
 function caSession(){
-  const r=new CA_SR();CA.rec=r;r.lang='id-ID';r.interimResults=true;r.maxAlternatives=1;r.continuous=!/Android|iPhone|iPad/i.test(navigator.userAgent);
-  if(CA.local){try{r.processLocally=true;}catch(e){}}
-  let cur='';
-  r.onresult=e=>{cur='';for(let i=0;i<e.results.length;i++)cur+=e.results[i][0].transcript+' ';caSet(CA.base+' '+CA.com+' '+cur);};
+  const id=++CA.sid;let r;
+  try{r=new CA_SR();}catch(e){caStop('Suara tidak bisa dimulai di peramban ini. Ketik saja ya.');return;}
+  CA.rec=r;r.lang='id-ID';r.interimResults=true;r.maxAlternatives=1;r.continuous=!/Android|iPhone|iPad/i.test(navigator.userAgent);
+  let cur='',heard=false,started=false;
+  r.onstart=()=>{if(id!==CA.sid)return;started=true;clearTimeout(CA.wd);};
+  r.onresult=e=>{
+    if(id!==CA.sid)return;
+    started=true;clearTimeout(CA.wd);
+    cur='';for(let i=0;i<e.results.length;i++)cur+=e.results[i][0].transcript+' ';
+    if(cur.trim())heard=true;
+    caSet(CA.base+' '+CA.com+' '+cur);
+  };
   r.onerror=e=>{
+    if(id!==CA.sid)return;
     const c=e.error;
-    if((c==='language-not-supported'||c==='service-not-allowed')&&CA.local){CA.local=false;CA.retry=1;return;}
     if(c==='no-speech'||c==='aborted')return;
-    CA.on=false;
-    toast(c==='not-allowed'||c==='service-not-allowed'?'Izin mikrofon ditolak. Aktifkan lewat ikon gembok di peramban.':c==='audio-capture'?'Mikrofon tidak ditemukan.':c==='network'?'Pengenalan suara butuh koneksi di peramban ini. Ketik saja ya.':'Suara gagal dikenali ('+c+')',ICO_ALERT,4500);
+    caStop(c==='not-allowed'||c==='service-not-allowed'?'Izin mikrofon ditolak. Aktifkan lewat ikon gembok di peramban.':c==='audio-capture'?'Mikrofon tidak ditemukan.':c==='network'?'Pengenalan suara butuh koneksi di peramban ini. Ketik saja ya.':c==='language-not-supported'?'Bahasa Indonesia belum didukung pengenal suara di perangkat ini.':'Suara gagal dikenali ('+c+')');
   };
   r.onend=()=>{
+    if(id!==CA.sid)return;
     CA.com+=' '+cur;cur='';
-    if(CA.on&&CA.rec===r&&++CA.fail<40)setTimeout(()=>{if(CA.on)caSession();},CA.retry?0:150);else CA.on=false;
-    CA.retry=0;caMicUi();
+    if(heard)CA.fail=0;else CA.fail++;
+    if(!CA.on){CA.rec=null;caMicUi();return;}
+    if(CA.fail>=4){caStop('Tidak ada suara yang terdengar. Coba lagi lebih dekat ke mikrofon, atau ketik saja.');return;}
+    setTimeout(()=>{if(CA.on&&id===CA.sid)caSession();},150);
   };
-  try{r.start();}catch(e){CA.on=false;caMicUi();}
+  /* kalau mikrofon tidak merespons sama sekali (mis. aplikasi terpasang di iOS/WebView), jangan menggantung selamanya */
+  clearTimeout(CA.wd);
+  CA.wd=setTimeout(()=>{if(CA.on&&id===CA.sid&&!started)caStop('Mikrofon tidak merespons di perangkat ini. Pakai ikon mikrofon di keyboard HP, atau ketik saja.');},8000);
+  try{r.start();}catch(e){caStop('Mikrofon gagal dimulai. Coba sentuh sekali lagi.');}
 }
-function aiCleanup(){if(CA.on){CA.on=false;try{CA.rec&&CA.rec.stop();}catch(e){}}clearTimeout(CA.timer);}
-function caSet(v){const ta=$('#caText');if(!ta)return;ta.value=v.replace(/\s+/g,' ').trim();caReparse();}
+function aiCleanup(){if(CA.on||CA.rec)caStop();clearTimeout(CA.timer);}
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&CA.on)caStop();});
 function caMicUi(){
   const b=$('#caMic');if(!b)return;
   b.setAttribute('aria-pressed',String(CA.on));b.setAttribute('aria-label',CA.on?'Berhenti merekam':'Mulai bicara');
