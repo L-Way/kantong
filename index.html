@@ -7904,13 +7904,21 @@ async function caPhotos(files){
   for(const f of Array.from(files||[])){
     if(CA.pd.length>=6){toast('Maksimal 6 foto sekali catat');break;}
     const d={key:'ph'+Date.now()+Math.random().toString(36).slice(2,6),type:'expense',amount:null,guess:false,catId:(state.cats.find(c=>/lain/i.test(c.name))||state.cats[0]).id,why:'',fb:true,note:'',liter:null,
-      walletId:quickWalletId(),date:todayKey(),time:nowTime(),approx:false,on:true,edited:false,ocr:'busy',pct:0,photo:null,photoAt:null,raw:''};
+      walletId:quickWalletId(),date:todayKey(),time:nowTime(),approx:false,on:true,edited:false,ocr:'busy',pct:0,ai:caPhotoAI(),photo:null,photoAt:null,raw:''};
     CA.pd.push(d);caRender();
     try{
-      const [data,w,prep]=await Promise.all([compressPhoto(f),photoTime(f),caPrep(f)]);
+      const [data,w]=await Promise.all([compressPhoto(f),photoTime(f)]);
       d.photo=data;d.photoAt=w?w.date.getTime():null;caRender();
-      const txt=await runReceiptOCR(prep,m=>{if(m&&m.status==='recognizing text'){d.pct=Math.round((m.progress||0)*100);const el=document.querySelector('[data-pg="'+d.key+'"]');if(el)el.textContent='Membaca struk… '+d.pct+'%';}});
-      d.raw=txt;Object.assign(d,caReceipt(txt,w));d.ocr=d.amount?'done':'part';
+      let done=false;
+      if(d.ai){
+        try{await caAIPhoto(f,d,w);done=true;}
+        catch(e){d.ai=false;caRender();toast((await nxAIWhy(e))+' Membaca struk dengan cara biasa di perangkat.',ICO_ALERT,4500);}
+      }
+      if(!done){
+        const prep=await caPrep(f);
+        const txt=await runReceiptOCR(prep,m=>{if(m&&m.status==='recognizing text'){d.pct=Math.round((m.progress||0)*100);const el=document.querySelector('[data-pg="'+d.key+'"]');if(el)el.textContent='Membaca struk… '+d.pct+'%';}});
+        d.raw=txt;Object.assign(d,caReceipt(txt,w));d.ocr=d.amount?'done':'part';
+      }
     }catch(e){d.ocr='err';if(e&&e.message==='load-fail')toast('Pembaca struk perlu internet sekali untuk mengunduh modulnya. Isi manual dulu ya.',ICO_ALERT,4500);if(!d.photo){CA.pd.splice(CA.pd.indexOf(d),1);toast('Foto tidak bisa dibaca',ICO_ALERT);}}
     caRender();
   }
@@ -7987,7 +7995,7 @@ function caReparse(){
 }
 function caDup(d){return d.amount>0&&state.tx.some(e=>e.date===d.date&&e.type===d.type&&Math.round(e.amount)===Math.round(d.amount)&&e.walletId===d.walletId);}
 function caBd(d){
-  if(d.ocr==='busy')return '<span class="ca-bg" data-pg="'+esc(d.key)+'">Membaca struk… '+(d.pct||0)+'%</span>';
+  if(d.ocr==='busy')return '<span class="ca-bg" data-pg="'+esc(d.key)+'">'+(d.ai?'AI sedang membaca struk…':'Membaca struk… '+(d.pct||0)+'%')+'</span>';
   const b=[];
   if(d.ocr==='err')b.push('<span class="ca-bg w">Struk belum terbaca, isi manual ya</span>');
   else if(d.ocr==='part')b.push('<span class="ca-bg w">Total tidak terbaca, isi manual</span>');
@@ -8029,9 +8037,50 @@ function caSum(){
   const t=$('#caTips'),low=$('#caText').value.toLowerCase(),tp=[],kw=$('#caKeepWrap'),ex=$('#caEx');
   if(kw)kw.hidden=!CA.pd.length;if(ex)ex.hidden=!!(low.trim()||all.length);
   const ab=$('#caAI');if(ab)ab.style.display=(dailyCanAI()&&low.trim())?'':'none';
+  const aw=$('#caAIPhWrap');if(aw)aw.style.display=dailyCanAI()?'':'none';
   if(/\b(pinjam|utang|hutang|ngutang|piutang|minjam)\w*/.test(low))tp.push('Soal utang atau pinjaman? Untuk memantau jatuh tempo, pakai menu Utang & piutang.');
   if(/pindah dana|pindahin|tarik tunai|tarik uang|transfer (?:ke|dari) (?:rekening|dompet)/.test(low))tp.push('Memindahkan saldo antar dompet lebih tepat lewat menu Pindah dana.');
   t.innerHTML=tp.map(x=>'<p class="qhint">💡 '+esc(x)+'</p>').join('');
+}
+/* satu hasil AI -> draf catatan; id kategori/dompet dari server dicek lagi terhadap data di perangkat */
+function caAIDraft(o,key,W){
+  const td=todayKey(),inc=o.type==='income',L=inc?state.incomeCats:state.cats,note=String(o.note||'').trim().slice(0,80);
+  let catId=L.some(c=>c.id===o.catId)?o.catId:null,why='dipilih AI',fb=false;
+  if(!catId){const c=caCat(note.toLowerCase(),inc?'income':'expense',note);catId=c.id;why=c.why;fb=!!c.fb;}
+  const amt=Math.round(+o.amount);
+  return{key,type:inc?'income':'expense',amount:amt>0&&amt<1e12?amt:null,guess:false,catId,why,fb,
+    note:note||catOf(catId).name,liter:+o.liter>0?+o.liter:null,walletId:W.some(w=>w.id===o.walletId)?o.walletId:quickWalletId(),
+    date:/^\d{4}-\d{2}-\d{2}$/.test(o.date)&&o.date<=td?o.date:td,time:/^([01]\d|2[0-3]):[0-5]\d$/.test(o.time)?o.time:nowTime(),approx:false,on:true,edited:false};
+}
+function caWalletList(){return spendWallets().length?spendWallets():regularWallets();}
+/* foto struk dibaca AI (Gemini lewat kantong-catat). Foto dikirim ke server hanya kalau kotak "Baca struk dengan AI" aktif */
+const CA_APH='kantong-ca-aiph';
+function caPhPref(){try{return localStorage.getItem(CA_APH)!=='0';}catch(e){return true;}}
+function caPhotoAI(){
+  if(!dailyCanAI()||navigator.onLine===false)return false;
+  const el=$('#caAIPh');return el?el.checked:caPhPref();
+}
+async function caAIImg(file){
+  const u=URL.createObjectURL(file);
+  try{
+    const im=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=u;});
+    const sc=Math.min(1,1600/Math.max(im.naturalWidth,im.naturalHeight)),W=Math.max(1,Math.round(im.naturalWidth*sc)),H=Math.max(1,Math.round(im.naturalHeight*sc));
+    const c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,W,H);g.drawImage(im,0,0,W,H);
+    let q=.8,out=c.toDataURL('image/jpeg',q);
+    while(out.length>2.2e6&&q>.4){q-=.15;out=c.toDataURL('image/jpeg',q);}
+    return out;
+  }finally{URL.revokeObjectURL(u);}
+}
+async function caAIPhoto(f,d,w){
+  const img=await caAIImg(f),W=caWalletList();
+  const r=await cloud.sb.functions.invoke(CFG.catatFunction||'kantong-catat',{body:{image:img,mime:'image/jpeg',today:todayKey(),now:nowTime(),
+    wallets:W.map(x=>({id:x.id,name:x.name})),cats:state.cats.map(c=>({id:c.id,name:c.name})),incomeCats:[]}});
+  if(r.error)throw r.error;
+  const o=r.data&&Array.isArray(r.data.items)?r.data.items[0]:null;
+  if(!o||!(+o.amount>0))throw new Error('kosong');
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(o.date)&&w&&w.trust){o.date=keyOf(w.date);if(!/^\d{2}:\d{2}$/.test(o.time))o.time=hhmm(w.date);}
+  const x=caAIDraft(o,d.key,W);
+  Object.assign(d,{type:'expense',amount:x.amount,catId:x.catId,why:x.why,fb:x.fb,note:x.note,liter:x.liter,walletId:x.walletId,date:x.date,time:x.time,approx:false,guess:false,raw:'',ocr:'done'});
 }
 /* ---- AI beneran: kalimat bebas -> transaksi, lewat Edge Function 'kantong-catat' (teks dikirim ke server hanya saat tombol ditekan) ---- */
 async function caAI(){
@@ -8052,16 +8101,7 @@ async function caAI(){
     if(!$('#caText'))return; /* pop-up sudah ditutup */
     if($('#caText').value.trim()!==text){toast('Teks berubah saat AI bekerja, ketuk tombolnya lagi ya');return;}
     if(!arr.length){toast('AI tidak menemukan transaksi di teks itu. Coba sebut nominalnya.',ICO_ALERT,4200);return;}
-    const td=todayKey();
-    const items=arr.slice(0,12).map((o,i)=>{
-      const inc=o.type==='income',L=inc?state.incomeCats:state.cats,note=String(o.note||'').trim().slice(0,80);
-      let catId=L.some(c=>c.id===o.catId)?o.catId:null,why='dipilih AI',fb=false;
-      if(!catId){const c=caCat(note.toLowerCase(),inc?'income':'expense',note);catId=c.id;why=c.why;fb=!!c.fb;}
-      const amt=Math.round(+o.amount);
-      return{key:'ai'+i+'|'+note.toLowerCase().slice(0,30),type:inc?'income':'expense',amount:amt>0&&amt<1e12?amt:null,guess:false,catId,why,fb,
-        note:note||catOf(catId).name,liter:+o.liter>0?+o.liter:null,walletId:W.some(w=>w.id===o.walletId)?o.walletId:quickWalletId(),
-        date:/^\d{4}-\d{2}-\d{2}$/.test(o.date)&&o.date<=td?o.date:td,time:/^([01]\d|2[0-3]):[0-5]\d$/.test(o.time)?o.time:nowTime(),approx:false,on:true,edited:false};
-    });
+    const items=arr.slice(0,12).map((o,i)=>caAIDraft(o,'ai'+i+'|'+String(o.note||'').toLowerCase().slice(0,30),W));
     CA.ai={text,items};CA.rm=new Set();CA.td=items;caRender(true);
   }catch(e){
     toast((await nxAIWhy(e))+' Memakai pembacaan biasa di perangkat.',ICO_ALERT,5200);
@@ -8106,9 +8146,10 @@ function caHtml(){
    '<button type="button" class="btn sm" id="caAI" style="display:none;margin-top:8px;width:100%">✨ Pahami dengan AI</button><div class="tchips" id="caEx" style="margin-top:8px">'+ex.map(x=>'<button type="button" class="tchip" data-ex="'+esc(x)+'">'+esc(x)+'</button>').join('')+'</div>'+
    '<div class="row" style="margin:4px 0 8px"><button type="button" class="btn ghost sm" id="caCam">📷 Foto struk</button><button type="button" class="btn ghost sm" id="caGal">🖼️ Dari galeri</button></div>'+
    '<input type="file" id="caFc" accept="image/*" capture="environment" hidden><input type="file" id="caFg" accept="image/*" multiple hidden>'+
+   '<label class="chk" id="caAIPhWrap" style="margin-bottom:10px;display:none"><input type="checkbox" id="caAIPh"'+(caPhPref()?' checked':'')+'><span><b>Baca struk dengan AI</b>Foto dikirim ke server AI untuk dibaca, lebih akurat. Matikan kalau mau dibaca di perangkat saja.</span></label>'+
    (PH_OK?'<label class="chk" id="caKeepWrap" style="margin-bottom:10px" hidden><input type="checkbox" id="caKeepPh" checked><span><b>Simpan foto struk bersama catatan</b>Disimpan hanya di perangkat ini.</span></label>':'')+
    '<div id="caDrafts"></div><div id="caTips"></div>'+
-   '<p class="qhint">🔒 Foto struk dibaca di perangkatmu. Teks transaksi hanya dikirim ke server AI saat kamu menekan “Pahami dengan AI”, tanpa itu dibaca di perangkat. Suara dikenali oleh peramban/OS-mu (di banyak perangkat lewat layanan penyedianya); Kantong tidak menyimpan rekaman.</p>'+
+   '<p class="qhint">🔒 Teks dan foto hanya dikirim ke server AI saat kamu menekan “Pahami dengan AI” atau memilih membaca struk dengan AI; selain itu dibaca di perangkatmu. Suara dikenali oleh peramban/OS-mu (di banyak perangkat lewat layanan penyedianya); Kantong tidak menyimpan rekaman.</p>'+
    '<div class="ca-foot"><div class="ca-sum" id="caSum"></div><button type="button" class="btn" id="caSave" disabled>Simpan</button></div>';
 }
 function openAI(){
@@ -8121,7 +8162,7 @@ function openAI(){
     $$('#caEx [data-ex]').forEach(b=>b.addEventListener('click',()=>{if(CA.on)caStop();ta.value=b.dataset.ex;caReparse();}));
     $('#caCam').addEventListener('click',()=>$('#caFc').click());$('#caGal').addEventListener('click',()=>$('#caFg').click());
     ['caFc','caFg'].forEach(id=>{const el=$('#'+id);el.addEventListener('change',()=>{const f=Array.from(el.files||[]);el.value='';if(f.length)caPhotos(f);});});
-    $('#caSave').addEventListener('click',caSave);$('#caAI').addEventListener('click',caAI);
+    $('#caSave').addEventListener('click',caSave);$('#caAI').addEventListener('click',caAI);$('#caAIPh').addEventListener('change',e=>{try{localStorage.setItem(CA_APH,e.target.checked?'1':'0');}catch(x){}});
     box.addEventListener('change',ev=>{
       const el=ev.target,d=caFind(el),f=el.dataset.f;if(!d||!f)return;
       if(f==='on')d.on=el.checked;
