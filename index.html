@@ -101,7 +101,7 @@ button{border:0;background:none;cursor:pointer}
   margin-top:2px;max-width:100%;min-width:0;font-variant-numeric:tabular-nums}
 .clock span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .clock #clockTime{color:var(--accent);font-weight:700}
-.icon-btn{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;
+.icon-btn{flex:none;width:38px;height:38px;border-radius:12px;display:grid;place-items:center;
   background:var(--surface);border:1px solid var(--line);color:var(--ink-2);box-shadow:var(--shadow-s);
   transition:transform .18s cubic-bezier(.2,.9,.3,1.4), color .2s, background .2s}
 .icon-btn:hover{color:var(--accent)}
@@ -1236,9 +1236,6 @@ try{if(localStorage.getItem('kantong.gate')==='show')document.documentElement.cl
     </button>
     <button class="icon-btn" id="lockBtn" aria-label="Kunci Kantong sekarang" title="Kunci sekarang" hidden>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="3"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
-    </button>
-    <button class="icon-btn" id="themeBtn" aria-label="Ganti tema terang atau gelap">
-      <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
     </button>
     <button class="icon-btn" id="setBtn" aria-label="Pengaturan">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1v.3a2 2 0 1 1-4 0v-.2a1.6 1.6 0 0 0-2.8-1.1l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.6 1.6 0 0 0 4.5 15H4a2 2 0 1 1 0-4h.2A1.6 1.6 0 0 0 5.3 8.2l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H10a1.6 1.6 0 0 0 1-1.5V4a2 2 0 1 1 4 0v.2a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V10a1.6 1.6 0 0 0 1.5 1h.3a2 2 0 1 1 0 4h-.2a1.6 1.6 0 0 0-1.4 1Z"/></svg>
@@ -3198,18 +3195,8 @@ if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('messag
 function applyTheme(t){
   document.documentElement.setAttribute('data-theme',t);pwaThemeColor(t);
   try{localStorage.setItem('kantong.theme',t);}catch(e){}
-  const dark=t==='dark'||(t==='auto'&&matchMedia('(prefers-color-scheme:dark)').matches);
-  $('#themeIcon').innerHTML=dark
-    ?'<circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/>'
-    :'<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/>';
 }
 (function(){let t='auto';try{t=localStorage.getItem('kantong.theme')||'auto';}catch(e){}applyTheme(t);})();
-$('#themeBtn').addEventListener('click',()=>{
-  const cur=document.documentElement.getAttribute('data-theme');
-  const dark=cur==='dark'||(cur==='auto'&&matchMedia('(prefers-color-scheme:dark)').matches);
-  applyTheme(dark?'light':'dark');
-  toast(dark?'Tema terang':'Tema gelap');
-});
 
 /* ================= PWA: pasang ke layar utama + jalan offline ================= */
 let deferredInstallPrompt=null;
@@ -7060,6 +7047,9 @@ $('#setBtn').addEventListener('click',async()=>{
       '<span class="mid"><span class="t">'+state.tx.length+' transaksi tercatat</span>'+
       '<span class="s">masuk '+rp(totalInc)+' · keluar '+rp(totalExp)+' · '+regularWallets().length+' dompet'+(savingsWallets().length?' · '+savingsWallets().length+' tabungan':'')+(state.motors.length>1?' · '+state.motors.length+' motor':'')+(state.meters.length>1?' · '+state.meters.length+' meteran listrik':'')+'</span></span></div>'+
     accountSettingsHtml()+
+    (function(){let cur='auto';try{cur=localStorage.getItem('kantong.theme')||'auto';}catch(e){}
+      return '<div class="field" style="margin-top:16px"><label>Tema</label><div class="tchips" id="thSet">'+
+        [['auto','Otomatis'],['light','Terang'],['dark','Gelap']].map(o=>'<button type="button" class="tchip" data-t="'+o[0]+'" aria-pressed="'+(o[0]===cur)+'">'+o[1]+'</button>').join('')+'</div></div>';})()+
     lockSettingsHtml()+
     '<div class="field" id="pwaField" style="display:none;margin-top:16px"><label>Aplikasi</label>'+
       '<button type="button" class="btn ghost sm" id="pwaInstallBtn" style="display:none">📲 Pasang di layar utama</button>'+
@@ -7084,6 +7074,11 @@ $('#setBtn').addEventListener('click',async()=>{
       $('#stAcct').addEventListener('click',openAccount);
       $('#stProf').addEventListener('click',openProfile);
       lkWireSettings();
+      $$('#thSet .tchip').forEach(b=>b.addEventListener('click',()=>{
+        applyTheme(b.dataset.t);
+        $$('#thSet .tchip').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+        toast('Tema: '+b.textContent);
+      }));
       wireRemindSettings();wireSdkSettings();wirePushSettings();wireHealth();
       wirePwaInstall();
       $('#sExp').addEventListener('click',()=>exportCSV(state.tx.slice(),'kantong-semua.csv'));
